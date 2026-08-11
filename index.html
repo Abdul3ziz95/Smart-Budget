@@ -1081,7 +1081,10 @@
                     </button>
                     <p id="userStatus" style="text-align:center; margin:5px 0 0; font-size:0.9em; color:var(--text-dark);">غير مسجل</p>
                     <button id="syncBtn" class="secondary" onclick="syncNow()" style="display:none;">
-                        <i class="fas fa-sync" style="margin-left:10px;"></i> مزامنة مع Drive الآن
+                        <i class="fas fa-upload" style="margin-left:10px;"></i> مزامنة مع Drive (رفع)
+                    </button>
+                    <button id="restoreBtn" class="secondary" onclick="restoreFromDrive()" style="display:none;">
+                        <i class="fas fa-download" style="margin-left:10px;"></i> استعادة من Drive (تحميل)
                     </button>
                 </div>
             </div>
@@ -1372,6 +1375,7 @@
             document.getElementById('googleLoginBtn').style.display = 'none';
             document.getElementById('googleLogoutBtn').style.display = 'inline-block';
             document.getElementById('syncBtn').style.display = 'inline-block';
+            document.getElementById('restoreBtn').style.display = 'inline-block';
             document.getElementById('userStatus').textContent = '✅ متصل بـ Drive';
         }
 
@@ -1379,6 +1383,7 @@
             document.getElementById('googleLoginBtn').style.display = 'inline-block';
             document.getElementById('googleLogoutBtn').style.display = 'none';
             document.getElementById('syncBtn').style.display = 'none';
+            document.getElementById('restoreBtn').style.display = 'none';
             document.getElementById('userStatus').textContent = '❌ غير مسجل';
         }
 
@@ -1426,7 +1431,7 @@
                 }
 
                 console.log('File saved to Drive');
-                toastMsg('تم حفظ البيانات في Google Drive');
+                toastMsg('تم رفع البيانات بنجاح إلى Google Drive');
                 return true;
             } catch (error) {
                 console.error('Error saving to Drive:', error);
@@ -1493,30 +1498,65 @@
 
             updateStats();
             updateBalanceDisplay();
-            toastMsg('تم مزامنة البيانات من Drive');
+            toastMsg('تم استعادة البيانات من Drive بنجاح');
         }
 
+        // =================== رفع البيانات إلى Drive ===================
         async function syncNow() {
             if (!accessToken) {
                 toastMsg('الرجاء تسجيل الدخول أولاً');
                 return;
             }
-
-            toastMsg('جاري المزامنة...');
-            const cloudData = await loadDataFromDrive();
-            if (cloudData) {
-                applyCloudData(cloudData);
+            toastMsg('جاري رفع البيانات إلى Drive...');
+            const data = {
+                exp: db.exp,
+                rig: db.rig,
+                deb: db.deb,
+                bal: db.bal,
+                lastUpdated: new Date().toISOString()
+            };
+            const success = await saveDataToDrive(data);
+            if (success) {
+                toastMsg('تم رفع البيانات بنجاح إلى Drive');
             } else {
-                const localData = {
-                    exp: db.exp,
-                    rig: db.rig,
-                    deb: db.deb,
-                    bal: db.bal
-                };
-                await saveDataToDrive(localData);
+                toastMsg('فشل رفع البيانات إلى Drive');
             }
         }
 
+        // =================== استعادة البيانات من Drive ===================
+        async function restoreFromDrive() {
+            if (!accessToken) {
+                toastMsg('الرجاء تسجيل الدخول أولاً');
+                return;
+            }
+            toastMsg('جاري تحميل البيانات من Drive...');
+            const cloudData = await loadDataFromDrive();
+            if (cloudData) {
+                // استبدال البيانات المحلية بالكامل
+                if (cloudData.exp) db.exp = cloudData.exp;
+                if (cloudData.rig) db.rig = cloudData.rig;
+                if (cloudData.deb) db.deb = cloudData.deb;
+                if (cloudData.bal) {
+                    db.bal = cloudData.bal;
+                    currentBalance = db.bal.amount || 0;
+                }
+
+                // حفظ في IndexedDB
+                await saveData('exp', db.exp);
+                await saveData('rig', db.rig);
+                await saveData('deb', db.deb);
+                await saveData('bal', db.bal);
+
+                // تحديث الواجهة
+                updateStats();
+                updateBalanceDisplay();
+                toastMsg('تم استعادة البيانات من Drive بنجاح');
+            } else {
+                toastMsg('لا يوجد ملف سابق على Drive لاستعادته');
+            }
+        }
+
+        // =================== مزامنة تلقائية (اختياري) ===================
         async function autoSyncToDrive() {
             if (!accessToken) return;
             const data = {
@@ -2474,7 +2514,7 @@
         }
 
         // =============================================================
-        // 19. NAVIGATION FUNCTIONS (MISSING)
+        // 19. NAVIGATION FUNCTIONS
         // =============================================================
         function openSidebar() {
             openLayer('sidebar');
