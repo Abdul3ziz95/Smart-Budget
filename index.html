@@ -1172,7 +1172,7 @@
         // 0.  GOOGLE DRIVE CONFIGURATION
         // =============================================================
         const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
-        const API_KEY = ''; // ليس ضرورياً
+        const API_KEY = ''; // اتركه فارغاً، لكن يمكنك إضافة مفتاح API من Google Cloud Console إذا واجهت مشاكل
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
         const FILE_NAME = 'smart_budget_data.json';
 
@@ -1302,7 +1302,7 @@
         };
 
         // =============================================================
-        // 3.  GOOGLE DRIVE API FUNCTIONS
+        // 3.  GOOGLE DRIVE API FUNCTIONS (المعدلة باستخدام gapi.client)
         // =============================================================
         function initGapi() {
             gapi.load('client', async () => {
@@ -1387,6 +1387,7 @@
             document.getElementById('userStatus').textContent = '❌ غير مسجل';
         }
 
+        // =================== دالة الرفع إلى Drive (معدلة) ===================
         async function saveDataToDrive(data) {
             if (!accessToken) {
                 toastMsg('الرجاء تسجيل الدخول أولاً');
@@ -1394,43 +1395,43 @@
             }
 
             try {
-                // البحث عن الملف القديم
-                const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and 'appDataFolder' in parents&fields=files(id)`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    }
-                );
-                const searchResult = await searchResponse.json();
-                const existingFile = searchResult.files && searchResult.files[0];
+                // 1. البحث عن الملف القديم
+                const searchResponse = await gapi.client.drive.files.list({
+                    q: `name='${FILE_NAME}' and 'appDataFolder' in parents`,
+                    fields: 'files(id)'
+                });
+                const existingFile = searchResponse.result.files && searchResponse.result.files[0];
 
-                const fileData = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                // 2. تجهيز البيانات
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 const metadata = {
                     name: FILE_NAME,
                     parents: ['appDataFolder']
                 };
 
-                let uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+                let response;
                 if (existingFile) {
-                    uploadUrl = `https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=multipart`;
+                    // تحديث الملف الموجود
+                    response = await gapi.client.drive.files.update({
+                        fileId: existingFile.id,
+                        resource: metadata,
+                        media: {
+                            mimeType: 'application/json',
+                            body: blob
+                        }
+                    });
+                } else {
+                    // إنشاء ملف جديد
+                    response = await gapi.client.drive.files.create({
+                        resource: metadata,
+                        media: {
+                            mimeType: 'application/json',
+                            body: blob
+                        }
+                    });
                 }
 
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', fileData);
-
-                const method = existingFile ? 'PATCH' : 'POST';
-                const response = await fetch(uploadUrl, {
-                    method: method,
-                    headers: { 'Authorization': `Bearer ${accessToken}` },
-                    body: form
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
-                }
-
-                console.log('File saved to Drive');
+                console.log('File saved to Drive:', response);
                 toastMsg('تم رفع البيانات بنجاح إلى Google Drive');
                 return true;
             } catch (error) {
@@ -1440,6 +1441,7 @@
             }
         }
 
+        // =================== دالة التحميل من Drive (معدلة) ===================
         async function loadDataFromDrive() {
             if (!accessToken) {
                 console.log('No access token, cannot load from Drive');
@@ -1447,32 +1449,25 @@
             }
 
             try {
-                const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and 'appDataFolder' in parents&fields=files(id)`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    }
-                );
-                const searchResult = await searchResponse.json();
-
-                if (!searchResult.files || searchResult.files.length === 0) {
+                // البحث عن الملف
+                const response = await gapi.client.drive.files.list({
+                    q: `name='${FILE_NAME}' and 'appDataFolder' in parents`,
+                    fields: 'files(id)'
+                });
+                const files = response.result.files;
+                if (!files || files.length === 0) {
                     console.log('No file found on Drive');
                     return null;
                 }
 
-                const fileId = searchResult.files[0].id;
-                const fileResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    }
-                );
-
-                if (!fileResponse.ok) {
-                    throw new Error(`Failed to download file: ${fileResponse.status}`);
-                }
-
-                const data = await fileResponse.json();
+                const fileId = files[0].id;
+                // تحميل محتوى الملف
+                const fileResponse = await gapi.client.drive.files.get({
+                    fileId: fileId,
+                    alt: 'media'
+                });
                 console.log('Data loaded from Drive successfully');
-                return data;
+                return fileResponse.result;
             } catch (error) {
                 console.error('Error loading from Drive:', error);
                 toastMsg('فشل تحميل البيانات من Drive');
@@ -1501,7 +1496,7 @@
             toastMsg('تم استعادة البيانات من Drive بنجاح');
         }
 
-        // =================== رفع البيانات إلى Drive ===================
+        // =================== زر الرفع (مزامنة) ===================
         async function syncNow() {
             if (!accessToken) {
                 toastMsg('الرجاء تسجيل الدخول أولاً');
@@ -1523,7 +1518,7 @@
             }
         }
 
-        // =================== استعادة البيانات من Drive ===================
+        // =================== زر الاستعادة (تحميل) ===================
         async function restoreFromDrive() {
             if (!accessToken) {
                 toastMsg('الرجاء تسجيل الدخول أولاً');
@@ -1556,7 +1551,7 @@
             }
         }
 
-        // =================== مزامنة تلقائية (اختياري) ===================
+        // =================== مزامنة تلقائية اختيارية ===================
         async function autoSyncToDrive() {
             if (!accessToken) return;
             const data = {
