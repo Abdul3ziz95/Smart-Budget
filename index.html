@@ -1069,7 +1069,7 @@
             <button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button>
         </div>
         <div class="sidebar-content">
-            <!-- قسم Google Drive الجديد -->
+            <!-- قسم Google Drive -->
             <div class="card" style="margin:0 15px 15px; border-top:5px solid var(--s);">
                 <p style="font-weight:bold; margin-top:0; color:var(--p);">حساب Google Drive</p>
                 <div style="display:flex; flex-direction:column; gap:10px;">
@@ -1080,12 +1080,14 @@
                         <i class="fas fa-sign-out-alt" style="margin-left:10px;"></i> تسجيل الخروج
                     </button>
                     <p id="userStatus" style="text-align:center; margin:5px 0 0; font-size:0.9em; color:var(--text-dark);">غير مسجل</p>
-                    <button id="syncBtn" class="secondary" onclick="syncNow()" style="display:none;">
-                        <i class="fas fa-upload" style="margin-left:10px;"></i> مزامنة مع Drive (رفع)
-                    </button>
-                    <button id="restoreBtn" class="secondary" onclick="restoreFromDrive()" style="display:none;">
-                        <i class="fas fa-download" style="margin-left:10px;"></i> استعادة من Drive (تحميل)
-                    </button>
+                    <div style="display:flex; gap:10px;">
+                        <button id="syncBtn" class="secondary" onclick="syncNow()" style="display:none; flex:1;">
+                            <i class="fas fa-upload" style="margin-left:10px;"></i> رفع
+                        </button>
+                        <button id="restoreBtn" class="secondary" onclick="restoreFromDrive()" style="display:none; flex:1;">
+                            <i class="fas fa-download" style="margin-left:10px;"></i> تحميل
+                        </button>
+                    </div>
                 </div>
             </div>
             <!-- بقية عناصر القائمة -->
@@ -1139,7 +1141,7 @@
                 <li><i class="fas fa-clipboard-list" style="color:var(--s);"></i> الالتزامات المالية المستحقة عليك.</li>
             </ul>
             <p class="card" style="border-top:3px solid var(--danger);">
-                <strong>ملاحظة:</strong> تُحفظ البيانات محلياً باستخدام IndexedDB. استخدم التصدير لعمل نسخة احتياطية دورية.
+                <strong>ملاحظة:</strong> تُحفظ البيانات محلياً باستخدام IndexedDB، وتُزامن تلقائياً مع Drive عند تسجيل الدخول.
             </p>
             <p style="text-align:center; margin-top:20px; color:#999; font-size:0.9em;">الإصدار 4.0</p>
         </div>
@@ -1165,19 +1167,20 @@
     <div class="toast" id="toast"></div>
 
     <!-- ==========================================================
-    JAVASCRIPT
+    JAVASCRIPT (المعدل للمزامنة التلقائية)
     ========================================================== -->
     <script>
         // =============================================================
         // 0.  GOOGLE DRIVE CONFIGURATION
         // =============================================================
         const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
-        const API_KEY = ''; // اتركه فارغاً، لكن يمكنك إضافة مفتاح API من Google Cloud Console إذا واجهت مشاكل
+        const API_KEY = ''; // يمكن تركها فارغة
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
         const FILE_NAME = 'smart_budget_data.json';
 
         let tokenClient;
         let accessToken = null;
+        let isSyncing = false; // لمنع التزامن المتكرر
 
         // =============================================================
         // 1.  INDEXED DB SETUP
@@ -1296,13 +1299,12 @@
             } else {
                 historyStack.push(history.state);
             }
-            // تهيئة Google APIs
             initGapi();
             initGis();
         };
 
         // =============================================================
-        // 3.  GOOGLE DRIVE API FUNCTIONS (المعدلة باستخدام gapi.client)
+        // 3.  GOOGLE DRIVE API FUNCTIONS (باستخدام gapi.client)
         // =============================================================
         function initGapi() {
             gapi.load('client', async () => {
@@ -1316,9 +1318,12 @@
                     if (savedToken) {
                         accessToken = savedToken;
                         updateUIForSignedIn();
+                        // تحميل البيانات من Drive تلقائياً عند بدء التشغيل
                         loadDataFromDrive().then(data => {
                             if (data) {
-                                applyCloudData(data);
+                                applyCloudData(data, false);
+                            } else {
+                                console.log('لا يوجد ملف على Drive، نبدأ ببيانات جديدة');
                             }
                         });
                     }
@@ -1342,9 +1347,13 @@
                     localStorage.setItem('drive_token', accessToken);
                     updateUIForSignedIn();
                     toastMsg('تم تسجيل الدخول بنجاح');
+                    // تحميل البيانات بعد تسجيل الدخول
                     loadDataFromDrive().then(data => {
                         if (data) {
-                            applyCloudData(data);
+                            applyCloudData(data, false);
+                        } else {
+                            // إن لم يوجد ملف، نقوم برفع البيانات الحالية (فارغة في البداية)
+                            syncNow();
                         }
                     });
                 },
@@ -1387,122 +1396,163 @@
             document.getElementById('userStatus').textContent = '❌ غير مسجل';
         }
 
-        // =================== دالة الرفع إلى Drive (معدلة) ===================
+        // =================== رفع البيانات إلى Drive (باستخدام gapi.client) ===================
         async function saveDataToDrive(data) {
             if (!accessToken) {
-                toastMsg('الرجاء تسجيل الدخول أولاً');
+                console.warn('لا يوجد توكن للرفع');
                 return false;
             }
+            if (isSyncing) return false;
+            isSyncing = true;
 
             try {
-                // 1. البحث عن الملف القديم
+                // البحث عن الملف الموجود
                 const searchResponse = await gapi.client.drive.files.list({
                     q: `name='${FILE_NAME}' and 'appDataFolder' in parents`,
-                    fields: 'files(id)'
+                    fields: 'files(id)',
+                    access_token: accessToken
                 });
-                const existingFile = searchResponse.result.files && searchResponse.result.files[0];
+                const files = searchResponse.result.files;
+                const existingFile = files && files.length > 0 ? files[0] : null;
 
-                // 2. تجهيز البيانات
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const metadata = {
-                    name: FILE_NAME,
-                    parents: ['appDataFolder']
-                };
+                // تحضير الملف
+                const fileContent = JSON.stringify(data, null, 2);
+                const blob = new Blob([fileContent], { type: 'application/json' });
 
                 let response;
                 if (existingFile) {
                     // تحديث الملف الموجود
                     response = await gapi.client.drive.files.update({
                         fileId: existingFile.id,
-                        resource: metadata,
+                        resource: { name: FILE_NAME },
                         media: {
                             mimeType: 'application/json',
                             body: blob
-                        }
+                        },
+                        access_token: accessToken
                     });
                 } else {
                     // إنشاء ملف جديد
                     response = await gapi.client.drive.files.create({
-                        resource: metadata,
+                        resource: {
+                            name: FILE_NAME,
+                            parents: ['appDataFolder']
+                        },
                         media: {
                             mimeType: 'application/json',
                             body: blob
-                        }
+                        },
+                        access_token: accessToken
                     });
                 }
 
-                console.log('File saved to Drive:', response);
-                toastMsg('تم رفع البيانات بنجاح إلى Google Drive');
+                console.log('تم رفع البيانات إلى Drive بنجاح');
+                isSyncing = false;
                 return true;
             } catch (error) {
-                console.error('Error saving to Drive:', error);
-                toastMsg('فشل الحفظ في Drive: ' + error.message);
+                console.error('فشل الرفع:', error);
+                isSyncing = false;
+                // محاولة تجديد التوكن
+                if (error.status === 401) {
+                    toastMsg('انتهت صلاحية الجلسة، جاري إعادة المصادقة...');
+                    await refreshToken();
+                    return await saveDataToDrive(data);
+                }
                 return false;
             }
         }
 
-        // =================== دالة التحميل من Drive (معدلة) ===================
+        // =================== تحميل البيانات من Drive (باستخدام gapi.client) ===================
         async function loadDataFromDrive() {
             if (!accessToken) {
-                console.log('No access token, cannot load from Drive');
+                console.log('لا يوجد توكن للتحميل');
                 return null;
             }
 
             try {
-                // البحث عن الملف
-                const response = await gapi.client.drive.files.list({
+                const searchResponse = await gapi.client.drive.files.list({
                     q: `name='${FILE_NAME}' and 'appDataFolder' in parents`,
-                    fields: 'files(id)'
+                    fields: 'files(id)',
+                    access_token: accessToken
                 });
-                const files = response.result.files;
+                const files = searchResponse.result.files;
                 if (!files || files.length === 0) {
-                    console.log('No file found on Drive');
+                    console.log('لا يوجد ملف على Drive');
                     return null;
                 }
 
                 const fileId = files[0].id;
-                // تحميل محتوى الملف
-                const fileResponse = await gapi.client.drive.files.get({
+                const response = await gapi.client.drive.files.get({
                     fileId: fileId,
-                    alt: 'media'
+                    alt: 'media',
+                    access_token: accessToken
                 });
-                console.log('Data loaded from Drive successfully');
-                return fileResponse.result;
+
+                console.log('تم تحميل البيانات من Drive بنجاح');
+                return response.result;
             } catch (error) {
-                console.error('Error loading from Drive:', error);
-                toastMsg('فشل تحميل البيانات من Drive');
+                console.error('فشل التحميل:', error);
+                if (error.status === 401) {
+                    await refreshToken();
+                    return await loadDataFromDrive();
+                }
                 return null;
             }
         }
 
-        function applyCloudData(cloudData) {
-            if (!cloudData) return;
-
-            if (cloudData.exp) db.exp = cloudData.exp;
-            if (cloudData.rig) db.rig = cloudData.rig;
-            if (cloudData.deb) db.deb = cloudData.deb;
-            if (cloudData.bal) {
-                db.bal = cloudData.bal;
-                currentBalance = db.bal.amount || 0;
-            }
-
-            saveData('exp', db.exp);
-            saveData('rig', db.rig);
-            saveData('deb', db.deb);
-            saveData('bal', db.bal);
-
-            updateStats();
-            updateBalanceDisplay();
-            toastMsg('تم استعادة البيانات من Drive بنجاح');
+        // =================== تجديد التوكن ===================
+        function refreshToken() {
+            return new Promise((resolve) => {
+                if (!tokenClient) {
+                    resolve(false);
+                    return;
+                }
+                tokenClient.requestAccessToken({
+                    prompt: 'none',
+                    callback: (resp) => {
+                        if (resp.error) {
+                            console.error('فشل تجديد التوكن:', resp);
+                            resolve(false);
+                        } else {
+                            accessToken = resp.access_token;
+                            localStorage.setItem('drive_token', accessToken);
+                            resolve(true);
+                        }
+                    }
+                });
+            });
         }
 
-        // =================== زر الرفع (مزامنة) ===================
-        async function syncNow() {
-            if (!accessToken) {
-                toastMsg('الرجاء تسجيل الدخول أولاً');
-                return;
+        // =================== تطبيق البيانات المستعادة ===================
+        function applyCloudData(cloudData, showToast = true) {
+            if (!cloudData) return;
+            try {
+                if (cloudData.exp) db.exp = cloudData.exp;
+                if (cloudData.rig) db.rig = cloudData.rig;
+                if (cloudData.deb) db.deb = cloudData.deb;
+                if (cloudData.bal) {
+                    db.bal = cloudData.bal;
+                    currentBalance = db.bal.amount || 0;
+                }
+
+                saveData('exp', db.exp);
+                saveData('rig', db.rig);
+                saveData('deb', db.deb);
+                saveData('bal', db.bal);
+
+                updateStats();
+                updateBalanceDisplay();
+                if (showToast) toastMsg('✅ تم استعادة البيانات من Drive');
+            } catch (e) {
+                console.error('خطأ في تطبيق البيانات:', e);
+                toastMsg('❌ فشل تطبيق البيانات المستعادة');
             }
-            toastMsg('جاري رفع البيانات إلى Drive...');
+        }
+
+        // =================== المزامنة التلقائية بعد أي تغيير ===================
+        async function autoSyncToDrive() {
+            if (!accessToken) return;
+            // نجمع البيانات الحالية
             const data = {
                 exp: db.exp,
                 rig: db.rig,
@@ -1512,48 +1562,19 @@
             };
             const success = await saveDataToDrive(data);
             if (success) {
-                toastMsg('تم رفع البيانات بنجاح إلى Drive');
+                console.log('تمت المزامنة التلقائية مع Drive');
             } else {
-                toastMsg('فشل رفع البيانات إلى Drive');
+                console.warn('فشلت المزامنة التلقائية مع Drive');
             }
         }
 
-        // =================== زر الاستعادة (تحميل) ===================
-        async function restoreFromDrive() {
+        // =================== زر الرفع اليدوي ===================
+        async function syncNow() {
             if (!accessToken) {
                 toastMsg('الرجاء تسجيل الدخول أولاً');
                 return;
             }
-            toastMsg('جاري تحميل البيانات من Drive...');
-            const cloudData = await loadDataFromDrive();
-            if (cloudData) {
-                // استبدال البيانات المحلية بالكامل
-                if (cloudData.exp) db.exp = cloudData.exp;
-                if (cloudData.rig) db.rig = cloudData.rig;
-                if (cloudData.deb) db.deb = cloudData.deb;
-                if (cloudData.bal) {
-                    db.bal = cloudData.bal;
-                    currentBalance = db.bal.amount || 0;
-                }
-
-                // حفظ في IndexedDB
-                await saveData('exp', db.exp);
-                await saveData('rig', db.rig);
-                await saveData('deb', db.deb);
-                await saveData('bal', db.bal);
-
-                // تحديث الواجهة
-                updateStats();
-                updateBalanceDisplay();
-                toastMsg('تم استعادة البيانات من Drive بنجاح');
-            } else {
-                toastMsg('لا يوجد ملف سابق على Drive لاستعادته');
-            }
-        }
-
-        // =================== مزامنة تلقائية اختيارية ===================
-        async function autoSyncToDrive() {
-            if (!accessToken) return;
+            toastMsg('⏳ جاري رفع البيانات...');
             const data = {
                 exp: db.exp,
                 rig: db.rig,
@@ -1561,11 +1582,31 @@
                 bal: db.bal,
                 lastUpdated: new Date().toISOString()
             };
-            await saveDataToDrive(data);
+            const success = await saveDataToDrive(data);
+            if (success) {
+                toastMsg('✅ تم رفع البيانات إلى Drive');
+            } else {
+                toastMsg('❌ فشل الرفع، تحقق من وحدة التحكم');
+            }
+        }
+
+        // =================== زر التحميل اليدوي ===================
+        async function restoreFromDrive() {
+            if (!accessToken) {
+                toastMsg('الرجاء تسجيل الدخول أولاً');
+                return;
+            }
+            toastMsg('⏳ جاري تحميل البيانات...');
+            const cloudData = await loadDataFromDrive();
+            if (cloudData) {
+                applyCloudData(cloudData, true);
+            } else {
+                toastMsg('ℹ️ لا يوجد ملف سابق على Drive');
+            }
         }
 
         // =============================================================
-        // 4.  IMAGE FUNCTIONS
+        // 4.  IMAGE FUNCTIONS (بدون تغيير)
         // =============================================================
         function showImageSourceModal() {
             openLayer('imageSource');
@@ -1872,7 +1913,8 @@
             try {
                 await saveData('bal', db.bal);
                 updateBalanceDisplay();
-                await autoSyncToDrive();
+                // مزامنة تلقائية بعد تغيير الرصيد (غير متزامنة)
+                autoSyncToDrive();
                 return true;
             } catch (e) {
                 console.error('Balance save failed', e);
@@ -1915,7 +1957,7 @@
         }
 
         // =============================================================
-        // 9.  CRUD — EXPENSES
+        // 9.  CRUD — EXPENSES (مع إضافة المزامنة التلقائية)
         // =============================================================
         async function addExpense() {
             const eAmount = document.getElementById('eAmount');
@@ -1953,14 +1995,14 @@
                 await processBalanceChange(amount, 'expense', `مصروف: ${data.الفئة} (${data.الوصف || '—'})`, data.clientId,
                     isEditing, oldAmount);
                 toastMsg(isEditing ? 'تم تعديل المصروف' : 'تم حفظ المصروف');
-                await autoSyncToDrive();
+                // المزامنة التلقائية تحدث داخل processBalanceChange
                 postSaveCleanup(isEditing, 'exp');
             } catch (err) { toastMsg('فشل الحفظ.');
                 console.error(err); }
         }
 
         // =============================================================
-        // 10. CRUD — RIGHTS
+        // 10. CRUD — RIGHTS (مع المزامنة التلقائية)
         // =============================================================
         function updateRightFields(type, currentData = null) {
             const container = document.getElementById('rDynamicFields');
@@ -2026,14 +2068,13 @@
                 await processBalanceChange(paid, 'right_collection', `تحصيل: ${data.النوع} (${data.الجهة})`, data.clientId,
                     isEditing, oldPaid);
                 toastMsg(isEditing ? 'تم تعديل الحق' : 'تم حفظ الحق');
-                await autoSyncToDrive();
                 postSaveCleanup(isEditing, 'rig');
             } catch (err) { toastMsg('فشل الحفظ.');
                 console.error(err); }
         }
 
         // =============================================================
-        // 11. CRUD — DEBTS
+        // 11. CRUD — DEBTS (مع المزامنة التلقائية)
         // =============================================================
         function updateDebtFields(type, currentData = null) {
             const container = document.getElementById('dDynamicFields');
@@ -2144,7 +2185,6 @@
                 await processBalanceChange(paidAmount, 'debt_payment', `دفعة: ${data.النوع} (${data.الجهة})`, data.clientId,
                     isEditing, oldPaid);
                 toastMsg(isEditing ? 'تم تعديل الالتزام' : 'تم حفظ الالتزام');
-                await autoSyncToDrive();
                 postSaveCleanup(isEditing, 'deb');
             } catch (err) { toastMsg('فشل الحفظ.');
                 console.error(err); }
@@ -2165,7 +2205,7 @@
         }
 
         // =============================================================
-        // 13. DETAIL & LOG RENDERING
+        // 13. DETAIL & LOG RENDERING (بدون تغيير)
         // =============================================================
         function _renderDetailContent(o, type) {
             const el = document.getElementById('detailContent');
@@ -2275,7 +2315,7 @@
         }
 
         // =============================================================
-        // 14. EDIT TRANSACTION
+        // 14. EDIT TRANSACTION (بدون تغيير)
         // =============================================================
         function editTransaction() {
             if (!editMode) return;
@@ -2336,7 +2376,7 @@
         }
 
         // =============================================================
-        // 15. DELETE TRANSACTION
+        // 15. DELETE TRANSACTION (مع المزامنة التلقائية)
         // =============================================================
         async function deleteTransaction() {
             if (!editMode) return;
@@ -2359,7 +2399,7 @@
                 }
                 editMode = null;
                 await loadAllData();
-                await autoSyncToDrive();
+                autoSyncToDrive(); // مزامنة تلقائية بعد الحذف
                 toastMsg('تم الحذف بنجاح');
                 updateStats();
                 updateBalanceDisplay();
@@ -2460,7 +2500,7 @@
                     await loadAllData();
                     updateStats();
                     updateBalanceDisplay();
-                    await autoSyncToDrive();
+                    autoSyncToDrive();
                     toastMsg('تم استيراد البيانات وتحديثها!');
                 } catch (err) { toastMsg('فشل الاستيراد. تأكد من صيغة الملف.');
                     console.error(err); } finally { event.target.value = null; }
@@ -2501,7 +2541,9 @@
                         saveData('bal', db.bal).then(() => {
                             loadAllData().then(() => { updateStats();
                                 updateBalanceDisplay();
-                                toastMsg('تم حذف جميع البيانات!'); });
+                                toastMsg('تم حذف جميع البيانات!');
+                                autoSyncToDrive();
+                            });
                         });
                     } };
                 req.onerror = () => toastMsg('فشل حذف البيانات.');
