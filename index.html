@@ -28,14 +28,10 @@
             --card-bg: #fff;
             --input-bg: #fff;
             --border-color: #ddd;
-            --tab-active-bg: #fff;
             --radius: 14px;
             --transition: 0.25s ease;
         }
 
-        /* ============================================================
-           DARK MODE
-           ============================================================ */
         body.dark-mode {
             --p: #90e0ef;
             --s: #48cae4;
@@ -53,9 +49,6 @@
             --tab-active-bg: #2d2d2d;
         }
 
-        /* ============================================================
-           RESET & BASE
-           ============================================================ */
         * {
             box-sizing: border-box;
         }
@@ -80,9 +73,6 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        /* ============================================================
-           HEADER
-           ============================================================ */
         header {
             background: var(--p);
             color: var(--text-light);
@@ -114,9 +104,6 @@
             transform: scale(1.1);
         }
 
-        /* ============================================================
-           TABS
-           ============================================================ */
         .tabs {
             display: flex;
             background: var(--card-bg);
@@ -146,9 +133,6 @@
             background: color-mix(in srgb, var(--bg) 85%, var(--p));
         }
 
-        /* ============================================================
-           SECTIONS
-           ============================================================ */
         .section {
             display: none;
             padding: 15px;
@@ -166,9 +150,6 @@
             transition: background var(--transition), border-color var(--transition);
         }
 
-        /* ============================================================
-           OVERVIEW
-           ============================================================ */
         #overview .balance-display {
             text-align: center;
             padding: 30px 20px;
@@ -247,9 +228,6 @@
             color: var(--danger);
         }
 
-        /* ============================================================
-           FORM ELEMENTS
-           ============================================================ */
         input,
         select,
         .datetime-container input[type="date"],
@@ -283,7 +261,6 @@
             box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.3);
         }
 
-        /* --- date / time container --- */
         .datetime-container {
             position: relative;
             width: 100%;
@@ -293,7 +270,6 @@
         .datetime-container input[type="datetime-local"] {
             margin: 0;
             padding-left: 44px;
-            /* make room for icon */
         }
         .datetime-container .cal-icon {
             position: absolute;
@@ -305,8 +281,6 @@
             pointer-events: none;
             z-index: 2;
         }
-
-        /* hide the native calendar icon in WebKit browsers */
         input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="datetime-local"]::-webkit-calendar-picker-indicator {
             opacity: 0;
@@ -318,9 +292,6 @@
             cursor: pointer;
         }
 
-        /* ============================================================
-           BUTTONS
-           ============================================================ */
         button.action {
             background: var(--p);
             color: var(--text-light);
@@ -358,9 +329,6 @@
             background: color-mix(in srgb, var(--input-bg) 80%, #999);
         }
 
-        /* ============================================================
-           TOAST - Modern & Elegant
-           ============================================================ */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -387,7 +355,7 @@
         .toast.show {
             display: block;
             animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
-                       toastOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.5s forwards;
+                toastOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.5s forwards;
         }
         .toast.success {
             border-right: 5px solid var(--success);
@@ -433,9 +401,6 @@
             }
         }
 
-        /* ============================================================
-           CURRENCY & HIDDEN BALANCE
-           ============================================================ */
         .currency-symbol {
             color: var(--p);
             font-weight: bold;
@@ -449,9 +414,6 @@
             color: var(--p);
         }
 
-        /* ============================================================
-           MODALS
-           ============================================================ */
         .modal {
             position: fixed;
             top: 0;
@@ -494,9 +456,6 @@
             padding: 15px;
         }
 
-        /* ============================================================
-           SIDEBAR
-           ============================================================ */
         .sidebar {
             position: fixed;
             top: 0;
@@ -564,9 +523,6 @@
             width: 28px;
         }
 
-        /* ============================================================
-           DARK MODE TOGGLE (switch)
-           ============================================================ */
         .switch-container {
             display: flex;
             justify-content: space-between;
@@ -615,9 +571,6 @@
             transform: translateX(20px);
         }
 
-        /* ============================================================
-           LIST ITEMS
-           ============================================================ */
         .list-item {
             background: var(--card-bg);
             padding: 16px;
@@ -646,9 +599,6 @@
             color: #aaa;
         }
 
-        /* ============================================================
-           IMAGE SOURCE MODAL (small popup)
-           ============================================================ */
         #imageSourceModal {
             position: fixed;
             top: 50%;
@@ -681,9 +631,6 @@
             width: 100%;
         }
 
-        /* ============================================================
-           RESPONSIVE
-           ============================================================ */
         @media (max-width: 450px) {
             .tabs button {
                 padding: 12px 4px;
@@ -697,9 +644,6 @@
             }
         }
 
-        /* ============================================================
-           STATUS BADGE
-           ============================================================ */
         .status-badge {
             display: inline-block;
             padding: 2px 12px;
@@ -728,9 +672,6 @@
             color: #fff;
         }
 
-        /* ============================================================
-           RIGHTS / DEBTS ENHANCED FIELDS
-           ============================================================ */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -745,7 +686,6 @@
             }
         }
 
-        /* inline helper text */
         .field-hint {
             font-size: 0.8em;
             color: #888;
@@ -757,9 +697,6 @@
             color: #aaa;
         }
 
-        /* ============================================================
-           LOG SEARCH
-           ============================================================ */
         #search {
             padding: 12px 16px;
             border-radius: 10px;
@@ -777,9 +714,6 @@
             box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.2);
         }
 
-        /* ============================================================
-           CURRENCY LIST
-           ============================================================ */
         #currencyList button {
             text-align: right;
             display: flex;
@@ -787,9 +721,6 @@
             align-items: center;
         }
 
-        /* ============================================================
-           EDIT INDICATOR
-           ============================================================ */
         .edit-indicator {
             background: var(--warning);
             color: #333;
@@ -801,9 +732,6 @@
             margin-bottom: 10px;
         }
 
-        /* ============================================================
-           LOG ITEM HINT
-           ============================================================ */
         .log-item-hint {
             font-size: 0.75em;
             color: var(--s);
@@ -815,115 +743,203 @@
             color: #90e0ef;
         }
 
-        /* ============================================================
-           DRIVE BACKUP LIST
-           ============================================================ */
-        .backup-item {
+        /* ===== DRIVE BACKUP STYLES ===== */
+        .drive-backup-card {
+            border-top: 5px solid #4285F4 !important;
+        }
+
+        .drive-main-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #4285F4;
+            color: #fff;
+            border: none;
+            padding: 18px;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+        }
+        .drive-main-btn:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+        }
+        .drive-main-btn i {
+            font-size: 26px;
+        }
+        .drive-main-btn.connected {
+            background: var(--success);
+            box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
+        }
+        .drive-main-btn.connected:hover {
+            background: #21867a;
+        }
+
+        .drive-status-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
+            padding: 8px 12px;
+            margin-top: 10px;
             background: var(--input-bg);
-            border-radius: 10px;
-            margin-bottom: 10px;
+            border-radius: 8px;
             border: 1px solid var(--border-color);
-            transition: all 0.2s;
+            font-size: 0.9em;
         }
-        .backup-item:hover {
-            border-color: var(--p);
-            box-shadow: var(--shadow-light);
+        .drive-status-bar .status-text {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .backup-item .info {
-            flex: 1;
+        .drive-status-bar .status-text.connected {
+            color: var(--success);
         }
-        .backup-item .name {
-            font-weight: bold;
-            font-size: 0.95em;
+        .drive-status-bar .status-text.disconnected {
+            color: var(--danger);
         }
-        .backup-item .meta {
-            font-size: 0.8em;
+
+        .backup-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.9em;
+        }
+        .backup-table th {
+            text-align: right;
+            padding: 10px 8px;
+            border-bottom: 2px solid var(--border-color);
             color: #888;
-            margin-top: 2px;
+            font-weight: 700;
+            font-size: 0.85em;
         }
-        body.dark-mode .backup-item .meta {
+        .backup-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .backup-table tr:hover td {
+            background: color-mix(in srgb, var(--input-bg) 90%, var(--p));
+        }
+        .backup-table .file-name {
+            font-weight: 600;
+            color: var(--p);
+        }
+        .backup-table .file-size {
+            color: #888;
+            font-size: 0.85em;
+        }
+        body.dark-mode .backup-table .file-size {
             color: #aaa;
         }
-        .backup-item .actions {
+        .backup-table .file-actions {
             display: flex;
-            gap: 8px;
+            gap: 6px;
+            justify-content: flex-end;
         }
-        .backup-item .actions button {
+        .backup-table .file-actions button {
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 1.1em;
-            padding: 6px 10px;
-            border-radius: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 1em;
             transition: all 0.2s;
         }
-        .backup-item .actions .restore-btn {
+        .backup-table .file-actions .restore-btn {
             color: var(--success);
         }
-        .backup-item .actions .restore-btn:hover {
+        .backup-table .file-actions .restore-btn:hover {
             background: var(--success);
             color: #fff;
         }
-        .backup-item .actions .delete-btn {
+        .backup-table .file-actions .delete-btn {
             color: var(--danger);
         }
-        .backup-item .actions .delete-btn:hover {
+        .backup-table .file-actions .delete-btn:hover {
             background: var(--danger);
             color: #fff;
         }
+
         .backup-count {
             text-align: center;
             font-size: 0.85em;
             color: #888;
-            margin-top: 10px;
+            margin-top: 12px;
+            padding: 8px;
+            background: var(--input-bg);
+            border-radius: 8px;
         }
         body.dark-mode .backup-count {
             color: #aaa;
         }
-        .drive-connect-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: #4285F4;
-            color: #fff;
-            border: none;
-            padding: 14px;
-            width: 100%;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        .drive-connect-btn:hover {
-            background: #3367d6;
-            transform: translateY(-2px);
-        }
-        .drive-connect-btn.connected {
-            background: var(--success);
-        }
-        .drive-status {
-            text-align: center;
-            font-size: 0.9em;
-            margin: 8px 0;
-            color: var(--text-dark);
-        }
+
         .drive-empty {
             text-align: center;
             color: #999;
-            padding: 20px 0;
+            padding: 25px 0;
         }
         .drive-empty i {
             font-size: 2.5em;
             display: block;
             margin-bottom: 10px;
             color: var(--border-color);
+        }
+
+        /* Confirm backup modal */
+        #confirmBackupModal .modal-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        #confirmBackupModal .modal-content i {
+            font-size: 3em;
+            color: #4285F4;
+            margin-bottom: 15px;
+        }
+        #confirmBackupModal .modal-content p {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        #confirmBackupModal .modal-content .btn-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+        #confirmBackupModal .modal-content .btn-group button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        #confirmBackupModal .modal-content .btn-group .confirm-btn {
+            background: #4285F4;
+            color: #fff;
+        }
+        #confirmBackupModal .modal-content .btn-group .confirm-btn:hover {
+            background: #3367d6;
+        }
+        #confirmBackupModal .modal-content .btn-group .cancel-btn {
+            background: var(--input-bg);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+        }
+        #confirmBackupModal .modal-content .btn-group .cancel-btn:hover {
+            background: color-mix(in srgb, var(--input-bg) 80%, #999);
         }
     </style>
 </head>
@@ -1209,6 +1225,24 @@
     <div class="sidebar-overlay" id="imageSourceOverlay" style="z-index:140; display:none;" onclick="closeImageSource()"></div>
 
     <!-- ==========================================================
+    CONFIRM BACKUP MODAL
+    ========================================================== -->
+    <div class="modal" id="confirmBackupModal">
+        <header>
+            <span class="title">نسخ احتياطي</span>
+            <button onclick="closeLayer('confirmBackup')"><i class="fas fa-times"></i></button>
+        </header>
+        <div class="modal-content">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟</p>
+            <div class="btn-group">
+                <button class="confirm-btn" onclick="performBackup()">نعم، احفظ النسخة</button>
+                <button class="cancel-btn" onclick="closeLayer('confirmBackup')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================
     SIDEBAR
     ========================================================== -->
     <div class="sidebar-overlay" onclick="closeLayer('sidebar')"></div>
@@ -1218,27 +1252,32 @@
             <button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button>
         </div>
         <div class="sidebar-content">
-            <!-- قسم Google Drive الجديد -->
-            <div class="card" style="margin:0 15px 15px; border-top:5px solid var(--s);">
-                <p style="font-weight:bold; margin-top:0; color:var(--p);">النسخ الاحتياطي مع Google Drive</p>
+            <!-- قسم Google Drive الجديد - زر واحد فقط -->
+            <div class="card drive-backup-card" style="margin:0 15px 15px;">
+                <p style="font-weight:bold; margin-top:0; color:#4285F4;">
+                    <i class="fab fa-google-drive"></i> النسخ الاحتياطي مع Google Drive
+                </p>
 
-                <!-- زر الاتصال -->
-                <button id="driveConnectBtn" class="drive-connect-btn" onclick="toggleDriveConnection()">
+                <!-- الزر الرئيسي -->
+                <button id="driveMainBtn" class="drive-main-btn" onclick="handleDriveClick()">
                     <i class="fab fa-google-drive"></i>
-                    <span id="driveBtnText">ربط حساب Google Drive</span>
+                    <span id="driveBtnText">Google Drive</span>
                 </button>
-                <div class="drive-status" id="driveStatus">⚠️ غير متصل</div>
+
+                <!-- حالة الاتصال -->
+                <div class="drive-status-bar">
+                    <span class="status-text" id="driveStatusText">
+                        <i class="fas fa-circle" style="font-size:0.7em;"></i>
+                        <span id="driveStatusLabel">غير متصل</span>
+                    </span>
+                    <span id="driveAccountEmail" style="font-size:0.85em;color:#888;"></span>
+                </div>
 
                 <!-- قائمة النسخ المحفوظة -->
-                <div id="backupListContainer" style="margin-top:15px;">
+                <div id="backupListContainer" style="margin-top:12px;">
                     <div id="backupList"></div>
                     <div class="backup-count" id="backupCount">عدد النسخ المرفوعة : 0</div>
                 </div>
-
-                <!-- زر حفظ نسخة جديدة -->
-                <button class="action" onclick="uploadNewBackup()" style="margin-top:10px; background:var(--success);">
-                    <i class="fas fa-cloud-upload-alt" style="margin-left:10px;"></i> حفظ نسخة احتياطية جديدة
-                </button>
             </div>
 
             <!-- بقية عناصر القائمة -->
@@ -1326,13 +1365,14 @@
         // =============================================================
         const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
-        const FOLDER_NAME = 'SmartBudgetBackups';
-        const FILE_PREFIX = 'smart_budget_backup_';
+        const FILE_PREFIX = 'market_';
+        const FILE_EXTENSION = '.db';
 
         let tokenClient;
         let accessToken = null;
         let isDriveConnected = false;
         let backupFiles = [];
+        let userEmail = '';
 
         // =============================================================
         // 1.  INDEXED DB SETUP
@@ -1362,7 +1402,8 @@
             'about': { elementId: 'aboutModal', type: 'modal' },
             'balanceAction': { elementId: 'balanceActionModal', type: 'modal' },
             'balanceLog': { elementId: 'balanceLogModal', type: 'modal' },
-            'imageSource': { elementId: 'imageSourceModal', type: 'menu' }
+            'imageSource': { elementId: 'imageSourceModal', type: 'menu' },
+            'confirmBackup': { elementId: 'confirmBackupModal', type: 'modal' }
         };
         let historyStack = [];
 
@@ -1467,8 +1508,10 @@
                     });
                     console.log('Google API loaded');
                     const savedToken = localStorage.getItem('drive_token');
-                    if (savedToken) {
+                    const savedEmail = localStorage.getItem('drive_email');
+                    if (savedToken && savedEmail) {
                         accessToken = savedToken;
+                        userEmail = savedEmail;
                         isDriveConnected = true;
                         updateDriveUI();
                         await loadBackupList();
@@ -1491,6 +1534,20 @@
                     }
                     accessToken = resp.access_token;
                     localStorage.setItem('drive_token', accessToken);
+
+                    // Get user email
+                    try {
+                        const userInfo = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+                            headers: { 'Authorization': `Bearer ${accessToken}` }
+                        });
+                        const userData = await userInfo.json();
+                        userEmail = userData.email || '';
+                        localStorage.setItem('drive_email', userEmail);
+                    } catch (e) {
+                        console.error('Error getting user email:', e);
+                        userEmail = '';
+                    }
+
                     isDriveConnected = true;
                     updateDriveUI();
                     toastMsg('تم ربط حساب Google Drive ✅', "success");
@@ -1500,11 +1557,12 @@
             console.log('GIS loaded');
         }
 
-        function toggleDriveConnection() {
-            if (isDriveConnected) {
-                signOut();
-            } else {
+        function handleDriveClick() {
+            if (!isDriveConnected) {
                 signIn();
+            } else {
+                // إذا كان متصلاً، نفتح نافذة تأكيد النسخ الاحتياطي
+                openLayer('confirmBackup');
             }
         }
 
@@ -1519,28 +1577,34 @@
         function signOut() {
             accessToken = null;
             localStorage.removeItem('drive_token');
+            localStorage.removeItem('drive_email');
             isDriveConnected = false;
+            userEmail = '';
             backupFiles = [];
             updateDriveUI();
             toastMsg('تم فصل حساب Google Drive', "info");
         }
 
         function updateDriveUI() {
-            const btn = document.getElementById('driveConnectBtn');
-            const status = document.getElementById('driveStatus');
+            const btn = document.getElementById('driveMainBtn');
             const btnText = document.getElementById('driveBtnText');
+            const statusText = document.getElementById('driveStatusText');
+            const statusLabel = document.getElementById('driveStatusLabel');
+            const emailEl = document.getElementById('driveAccountEmail');
 
             if (isDriveConnected) {
-                btn.className = 'drive-connect-btn connected';
-                btnText.textContent = '🔗 متصل بحساب Google Drive';
-                status.innerHTML = '✅ متصل';
-                status.style.color = 'var(--success)';
+                btn.className = 'drive-main-btn connected';
+                btnText.textContent = '📁 Google Drive';
+                statusText.className = 'status-text connected';
+                statusLabel.textContent = '✅ متصل';
+                emailEl.textContent = userEmail || '';
                 loadBackupList();
             } else {
-                btn.className = 'drive-connect-btn';
-                btnText.textContent = 'ربط حساب Google Drive';
-                status.innerHTML = '⚠️ غير متصل';
-                status.style.color = 'var(--danger)';
+                btn.className = 'drive-main-btn';
+                btnText.textContent = 'Google Drive';
+                statusText.className = 'status-text disconnected';
+                statusLabel.textContent = '❌ غير متصل';
+                emailEl.textContent = '';
                 document.getElementById('backupList').innerHTML = '';
                 document.getElementById('backupCount').textContent = 'عدد النسخ المرفوعة : 0';
             }
@@ -1555,7 +1619,7 @@
 
             try {
                 const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q=name contains '${FILE_PREFIX}' and 'appDataFolder' in parents&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
+                    `https://www.googleapis.com/drive/v3/files?q=name contains '${FILE_PREFIX}' and name contains '${FILE_EXTENSION}' and 'appDataFolder' in parents&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
                     }
                 );
@@ -1576,7 +1640,7 @@
                 container.innerHTML = `
                     <div class="drive-empty">
                         <i class="fab fa-google-drive"></i>
-                        <p>قم بربط حساب Google Drive لعرض النسخ الاحتياطية</p>
+                        <p>اضغط على زر Google Drive لربط حسابك</p>
                     </div>
                 `;
                 countEl.textContent = 'عدد النسخ المرفوعة : 0';
@@ -1588,14 +1652,27 @@
                     <div class="drive-empty">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p>لا توجد نسخ احتياطية محفوظة</p>
-                        <p style="font-size:0.85em;color:#888;">قم بحفظ نسخة جديدة باستخدام الزر أدناه</p>
+                        <p style="font-size:0.85em;color:#888;">اضغط على زر Google Drive لإنشاء نسخة جديدة</p>
                     </div>
                 `;
                 countEl.textContent = 'عدد النسخ المرفوعة : 0';
                 return;
             }
 
-            container.innerHTML = backupFiles.map(file => {
+            let tableHtml = `
+                <table class="backup-table">
+                    <thead>
+                        <tr>
+                            <th>اسم النسخة</th>
+                            <th>التاريخ</th>
+                            <th>الحجم</th>
+                            <th style="text-align:left;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            backupFiles.forEach(file => {
                 const date = new Date(file.createdTime);
                 const formattedDate = date.toLocaleString('ar-EG', {
                     year: 'numeric',
@@ -1605,30 +1682,35 @@
                     minute: '2-digit'
                 });
                 const size = file.size ? (parseInt(file.size) / 1024).toFixed(1) + 'KB' : 'غير معروف';
-                const name = file.name.replace(FILE_PREFIX, '').replace('.json', '');
+                const name = file.name.replace(FILE_PREFIX, '').replace(FILE_EXTENSION, '');
 
-                return `
-                    <div class="backup-item">
-                        <div class="info">
-                            <div class="name">${name}</div>
-                            <div class="meta">📅 ${formattedDate} · 💾 ${size}</div>
-                        </div>
-                        <div class="actions">
-                            <button class="restore-btn" onclick="restoreBackup('${file.id}')" title="استعادة النسخة">
-                                <i class="fas fa-download"></i>
-                            </button>
-                            <button class="delete-btn" onclick="deleteBackup('${file.id}')" title="حذف النسخة">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
+                tableHtml += `
+                    <tr>
+                        <td class="file-name">${name}</td>
+                        <td>${formattedDate}</td>
+                        <td class="file-size">${size}</td>
+                        <td>
+                            <div class="file-actions">
+                                <button class="restore-btn" onclick="restoreBackup('${file.id}')" title="استعادة النسخة">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="delete-btn" onclick="deleteBackup('${file.id}')" title="حذف النسخة">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 `;
-            }).join('');
+            });
 
+            tableHtml += `</tbody></table>`;
+            container.innerHTML = tableHtml;
             countEl.textContent = `عدد النسخ المرفوعة : ${backupFiles.length}`;
         }
 
-        async function uploadNewBackup() {
+        async function performBackup() {
+            closeLayer('confirmBackup');
+
             if (!accessToken) {
                 toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
                 return;
@@ -1640,11 +1722,12 @@
                 deb: db.deb,
                 bal: db.bal,
                 currency: currentCurrency,
-                backupDate: new Date().toISOString()
+                backupDate: new Date().toISOString(),
+                version: '4.0'
             };
 
             const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-            const fileName = `${FILE_PREFIX}${timestamp}.json`;
+            const fileName = `${FILE_PREFIX}${timestamp}${FILE_EXTENSION}`;
 
             try {
                 const fileData = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1677,7 +1760,7 @@
         }
 
         async function restoreBackup(fileId) {
-            if (!confirm('هل أنت متأكد من استعادة هذه النسخة؟ سيتم استبدال جميع البيانات الحالية.')) return;
+            if (!confirm('⚠️ هل أنت متأكد من استعادة هذه النسخة؟ سيتم استبدال جميع البيانات الحالية.')) return;
 
             try {
                 const response = await fetch(
@@ -1716,6 +1799,7 @@
                 updateStats();
                 updateBalanceDisplay();
                 toastMsg('تم استعادة البيانات بنجاح 🔄', "success");
+                await loadBackupList();
             } catch (error) {
                 console.error('Error restoring backup:', error);
                 toastMsg('فشل استعادة النسخة: ' + error.message, "error");
@@ -1940,17 +2024,17 @@
                 const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
                 const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
                 return `
-                  <div class="list-item" style="border-right-color:${color};">
-                    <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
-                      <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
-                      <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
-                    </div>
-                    <div class="details">
-                      <span>الرصيد بعد: ${formatCurrency(i.الرصيد_بعد_العملية)}</span>
-                      <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span>
-                    </div>
-                  </div>
-                `;
+                      <div class="list-item" style="border-right-color:${color};">
+                        <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
+                          <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
+                          <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
+                        </div>
+                        <div class="details">
+                          <span>الرصيد بعد: ${formatCurrency(i.الرصيد_بعد_العملية)}</span>
+                          <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span>
+                        </div>
+                      </div>
+                    `;
             }).join('');
         }
 
@@ -2006,9 +2090,9 @@
             container.innerHTML = '';
 
             let paidHtml = `
-                <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل / المدفوع" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
-                <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن</span>
-              `;
+                    <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل / المدفوع" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
+                    <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن</span>
+                  `;
             container.innerHTML = paidHtml;
 
             const statusEl = document.getElementById('rStatus');
@@ -2086,18 +2170,18 @@
                 statusSelect.value = '';
 
                 let html = `
-                    <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
-                    <span class="field-hint">المبلغ الكلي للالتزام</span>
-                  `;
+                        <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
+                        <span class="field-hint">المبلغ الكلي للالتزام</span>
+                      `;
                 if (type === 'قرض') {
                     html += `
-                        <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
-                        <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
-                      `;
+                            <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
+                            <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
+                          `;
                 } else {
                     html += `
-                        <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
-                      `;
+                            <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
+                          `;
                 }
                 container.innerHTML = html;
             } else {
@@ -2219,14 +2303,14 @@
             html += `</div>`;
             if (o.صورة && type === 'exp') {
                 html += `<div class="card" style="border-top-color:var(--s);">
-                  <h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> صورة الفاتورة</h3>
-                  <img src="${o.صورة}" alt="الفاتورة" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" />
-                </div>`;
+                      <h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> صورة الفاتورة</h3>
+                      <img src="${o.صورة}" alt="الفاتورة" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" />
+                    </div>`;
             }
             html += `<div style="display:flex;gap:10px;margin-top:20px;">
-                  <button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> تعديل</button>
-                  <button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> حذف</button>
-                </div>`;
+                      <button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> تعديل</button>
+                      <button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> حذف</button>
+                    </div>`;
             el.innerHTML = html;
         }
 
@@ -2297,18 +2381,18 @@
                 const itemId = i.clientId || i.id || `temp-${Date.now()}`;
 
                 return `
-                      <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
-                        <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
-                          <span>${imgIcon} ${desc} ${entityDisplay}</span>
-                          <span style="color:${amountColor};">${amountDisplay}</span>
-                        </div>
-                        <div class="details">
-                          <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
-                          <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
-                        </div>
-                        <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
-                      </div>
-                    `;
+                          <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
+                            <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+                              <span>${imgIcon} ${desc} ${entityDisplay}</span>
+                              <span style="color:${amountColor};">${amountDisplay}</span>
+                            </div>
+                            <div class="details">
+                              <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
+                              <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
+                            </div>
+                            <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
+                          </div>
+                        `;
             }).join('');
         }
 
@@ -2438,11 +2522,11 @@
                 c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
             );
             list.innerHTML = filtered.map(c => `
-                <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
-                  <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
-                  ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
-                </button>
-              `).join('');
+                    <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
+                      <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
+                      ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
+                    </button>
+                  `).join('');
         }
 
         function setCurrency(code) {
@@ -2757,7 +2841,6 @@
                 `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
             updateBalanceDisplay();
             updateStats();
-            // تحديث حالة Drive
             updateDriveUI();
         });
     </script>
