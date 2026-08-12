@@ -53,9 +53,6 @@
             --tab-active-bg: #2d2d2d;
         }
 
-        /* ============================================================
-           RESET & BASE
-           ============================================================ */
         * {
             box-sizing: border-box;
         }
@@ -146,9 +143,6 @@
             background: color-mix(in srgb, var(--bg) 85%, var(--p));
         }
 
-        /* ============================================================
-           SECTIONS
-           ============================================================ */
         .section {
             display: none;
             padding: 15px;
@@ -283,7 +277,6 @@
             box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.3);
         }
 
-        /* --- date / time container --- */
         .datetime-container {
             position: relative;
             width: 100%;
@@ -293,7 +286,6 @@
         .datetime-container input[type="datetime-local"] {
             margin: 0;
             padding-left: 44px;
-            /* make room for icon */
         }
         .datetime-container .cal-icon {
             position: absolute;
@@ -306,7 +298,6 @@
             z-index: 2;
         }
 
-        /* hide the native calendar icon in WebKit browsers */
         input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="datetime-local"]::-webkit-calendar-picker-indicator {
             opacity: 0;
@@ -433,9 +424,6 @@
             }
         }
 
-        /* ============================================================
-           CURRENCY & HIDDEN BALANCE
-           ============================================================ */
         .currency-symbol {
             color: var(--p);
             font-weight: bold;
@@ -564,9 +552,6 @@
             width: 28px;
         }
 
-        /* ============================================================
-           DARK MODE TOGGLE (switch)
-           ============================================================ */
         .switch-container {
             display: flex;
             justify-content: space-between;
@@ -615,9 +600,6 @@
             transform: translateX(20px);
         }
 
-        /* ============================================================
-           LIST ITEMS
-           ============================================================ */
         .list-item {
             background: var(--card-bg);
             padding: 16px;
@@ -646,9 +628,6 @@
             color: #aaa;
         }
 
-        /* ============================================================
-           IMAGE SOURCE MODAL (small popup)
-           ============================================================ */
         #imageSourceModal {
             position: fixed;
             top: 50%;
@@ -681,9 +660,6 @@
             width: 100%;
         }
 
-        /* ============================================================
-           RESPONSIVE
-           ============================================================ */
         @media (max-width: 450px) {
             .tabs button {
                 padding: 12px 4px;
@@ -697,9 +673,6 @@
             }
         }
 
-        /* ============================================================
-           STATUS BADGE
-           ============================================================ */
         .status-badge {
             display: inline-block;
             padding: 2px 12px;
@@ -728,9 +701,6 @@
             color: #fff;
         }
 
-        /* ============================================================
-           RIGHTS / DEBTS ENHANCED FIELDS
-           ============================================================ */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -745,7 +715,6 @@
             }
         }
 
-        /* inline helper text */
         .field-hint {
             font-size: 0.8em;
             color: #888;
@@ -757,9 +726,6 @@
             color: #aaa;
         }
 
-        /* ============================================================
-           LOG SEARCH
-           ============================================================ */
         #search {
             padding: 12px 16px;
             border-radius: 10px;
@@ -777,9 +743,6 @@
             box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.2);
         }
 
-        /* ============================================================
-           CURRENCY LIST
-           ============================================================ */
         #currencyList button {
             text-align: right;
             display: flex;
@@ -787,9 +750,6 @@
             align-items: center;
         }
 
-        /* ============================================================
-           EDIT INDICATOR
-           ============================================================ */
         .edit-indicator {
             background: var(--warning);
             color: #333;
@@ -801,9 +761,6 @@
             margin-bottom: 10px;
         }
 
-        /* ============================================================
-           LOG ITEM HINT
-           ============================================================ */
         .log-item-hint {
             font-size: 0.75em;
             color: var(--s);
@@ -815,36 +772,34 @@
             color: #90e0ef;
         }
 
-        /* ============================================================
-           SYNC STATUS INDICATOR
-           ============================================================ */
-        .sync-indicator {
-            display: inline-flex;
+        /* زر المزامنة المخصص */
+        .sync-btn {
+            background: var(--p);
+            color: var(--text-light);
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
             align-items: center;
             gap: 8px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
+            justify-content: center;
+            font-family: inherit;
+            width: 100%;
         }
-        .sync-indicator.synced {
-            color: var(--success);
-            border-color: var(--success);
+        .sync-btn:hover {
+            opacity: 0.85;
+            transform: scale(1.02);
         }
-        .sync-indicator.syncing {
-            color: var(--warning);
-            border-color: var(--warning);
-            animation: pulse 1s infinite;
+        .sync-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
-        .sync-indicator.error {
-            color: var(--danger);
-            border-color: var(--danger);
-        }
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+        .sync-btn i.fa-spin {
+            animation: fa-spin 1s infinite linear;
         }
     </style>
 </head>
@@ -857,9 +812,7 @@
     <header>
         <button onclick="openSidebar()"><i class="fas fa-bars"></i></button>
         <span class="title">ميزانيتك المالية الذكية</span>
-        <span id="syncStatus" class="sync-indicator" style="font-size:0.6em; padding:2px 8px;">
-            <i class="fas fa-cloud"></i> <span id="syncStatusText">جاري...</span>
-        </span>
+        <button style="visibility:hidden;"><i class="fas fa-search"></i></button>
     </header>
 
     <!-- ==========================================================
@@ -1141,7 +1094,7 @@
             <button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button>
         </div>
         <div class="sidebar-content">
-            <!-- قسم Google Drive الجديد -->
+            <!-- قسم Google Drive -->
             <div class="card" style="margin:0 15px 15px; border-top:5px solid var(--s);">
                 <p style="font-weight:bold; margin-top:0; color:var(--p);">حساب Google Drive</p>
                 <div style="display:flex; flex-direction:column; gap:10px;">
@@ -1152,15 +1105,12 @@
                         <i class="fas fa-sign-out-alt" style="margin-left:10px;"></i> تسجيل الخروج
                     </button>
                     <p id="userStatus" style="text-align:center; margin:5px 0 0; font-size:0.9em; color:var(--text-dark);">غير مسجل</p>
-                    <button id="syncBtn" class="secondary" onclick="forceSyncNow()" style="display:none;">
-                        <i class="fas fa-sync" style="margin-left:10px;"></i> مزامنة فورية مع Drive
+                    <button id="syncBtn" class="sync-btn" onclick="forceSyncNow()" style="display:none;">
+                        <i class="fas fa-cloud-upload-alt"></i> مزامنة مع Drive
                     </button>
-                    <div style="display:flex; gap:10px; font-size:0.8em; color:#888; justify-content:center;">
-                        <span><i class="fas fa-clock"></i> <span id="lastSyncTime">—</span></span>
-                    </div>
                 </div>
             </div>
-            <!-- بقية عناصر القائمة -->
+
             <div class="card" style="margin:0 15px 15px; border-top:5px solid var(--s);">
                 <p style="font-weight:bold; margin-top:0; color:var(--p);">الإعدادات العامة</p>
 
@@ -1213,7 +1163,7 @@
             <p class="card" style="border-top:3px solid var(--danger);">
                 <strong>ملاحظة:</strong> تُحفظ البيانات محلياً باستخدام IndexedDB. المزامنة مع Google Drive تتيح لك الوصول لبياناتك من أي جهاز.
             </p>
-            <p style="text-align:center; margin-top:20px; color:#999; font-size:0.9em;">الإصدار 5.0 - مع مزامنة تلقائية</p>
+            <p style="text-align:center; margin-top:20px; color:#999; font-size:0.9em;">الإصدار 6.0 - مزامنة حقيقية مع Drive</p>
         </div>
     </div>
 
@@ -1241,25 +1191,20 @@
     ========================================================== -->
     <script>
         // =============================================================
-        // 0.  GOOGLE DRIVE CONFIGURATION
+        // 0.  GOOGLE DRIVE CONFIGURATION - REAL SYNC
         // =============================================================
         const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
-        const API_KEY = ''; // ليس ضرورياً
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
         const FILE_NAME = 'smart_budget_data.json';
-        const SYNC_INTERVAL = 30000; // 30 ثانية
 
-        let tokenClient;
         let accessToken = null;
-        let lastSyncTime = null;
-        let syncTimer = null;
-        let isSyncing = false;
+        let isGoogleReady = false;
 
         // =============================================================
         // 1.  INDEXED DB SETUP
         // =============================================================
         const IDB_NAME = "MySmartBudgetDB";
-        const IDB_VERSION = 6;
+        const IDB_VERSION = 7;
         const STORE_NAMES = ["exp", "rig", "deb", "bal"];
 
         let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] } };
@@ -1271,7 +1216,6 @@
             editMode = null,
             balanceActionType = null;
         let selectedImageFile = null;
-        let dataVersion = 0;
 
         // =============================================================
         // 2.  NAVIGATION / LAYERS
@@ -1373,70 +1317,73 @@
             } else {
                 historyStack.push(history.state);
             }
-            // تهيئة Google APIs
-            initGapi();
-            initGis();
+            initGoogleAPIs();
         };
 
         // =============================================================
-        // 3.  GOOGLE DRIVE API FUNCTIONS - Enhanced with Auto-Sync
+        // 3.  GOOGLE APIS INIT - FIXED
         // =============================================================
-        function initGapi() {
-            gapi.load('client', async () => {
+        function initGoogleAPIs() {
+            // تحميل GAPI
+            gapi.load('client', async function() {
                 try {
                     await gapi.client.init({
-                        apiKey: API_KEY,
-                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+                        clientId: CLIENT_ID,
+                        scope: SCOPES,
                     });
-                    console.log('Google API loaded');
+                    console.log('✅ GAPI Client initialized');
+
+                    // التحقق من وجود توكن محفوظ
                     const savedToken = localStorage.getItem('drive_token');
                     if (savedToken) {
                         accessToken = savedToken;
+                        gapi.client.setToken({ access_token: accessToken });
                         updateUIForSignedIn();
-                        await loadAndMergeData();
+                        // تحميل البيانات من Drive
+                        await loadDataFromDrive();
+                    } else {
+                        updateUIForSignedOut();
                     }
-                    startAutoSync();
+                    isGoogleReady = true;
                 } catch (error) {
-                    console.error('Error loading GAPI:', error);
+                    console.error('❌ GAPI init error:', error);
+                    toastMsg('خطأ في تهيئة Google API', 'error');
                 }
             });
         }
 
-        function initGis() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
+        // =============================================================
+        // 4.  AUTHENTICATION - FIXED
+        // =============================================================
+        function signIn() {
+            const tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
                 callback: async (resp) => {
                     if (resp.error) {
-                        console.error('Auth error:', resp.error);
-                        toastMsg('فشل تسجيل الدخول: ' + resp.error, "error");
+                        console.error('❌ Auth error:', resp.error);
+                        toastMsg('فشل تسجيل الدخول: ' + resp.error, 'error');
                         return;
                     }
                     accessToken = resp.access_token;
                     localStorage.setItem('drive_token', accessToken);
+                    gapi.client.setToken({ access_token: accessToken });
                     updateUIForSignedIn();
-                    toastMsg('تم تسجيل الدخول بنجاح ✅', "success");
-                    await loadAndMergeData();
-                    startAutoSync();
+                    toastMsg('✅ تم تسجيل الدخول بنجاح', 'success');
+
+                    // تحميل البيانات من Drive
+                    await loadDataFromDrive();
                 },
             });
-            console.log('GIS loaded');
-        }
-
-        function signIn() {
-            if (!tokenClient) {
-                toastMsg('جاري تحميل خدمة المصادقة...', "info");
-                return;
-            }
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
 
         function signOut() {
             accessToken = null;
             localStorage.removeItem('drive_token');
+            gapi.client.setToken(null);
             updateUIForSignedOut();
-            toastMsg('تم تسجيل الخروج', "info");
-            stopAutoSync();
+            toastMsg('تم تسجيل الخروج', 'info');
         }
 
         function updateUIForSignedIn() {
@@ -1444,7 +1391,6 @@
             document.getElementById('googleLogoutBtn').style.display = 'inline-block';
             document.getElementById('syncBtn').style.display = 'inline-block';
             document.getElementById('userStatus').textContent = '✅ متصل بـ Drive';
-            updateSyncStatus('synced', 'متصل');
         }
 
         function updateUIForSignedOut() {
@@ -1452,162 +1398,128 @@
             document.getElementById('googleLogoutBtn').style.display = 'none';
             document.getElementById('syncBtn').style.display = 'none';
             document.getElementById('userStatus').textContent = '❌ غير مسجل';
-            updateSyncStatus('error', 'غير متصل');
-        }
-
-        function updateSyncStatus(status, text) {
-            const el = document.getElementById('syncStatus');
-            const textEl = document.getElementById('syncStatusText');
-            el.className = 'sync-indicator ' + status;
-            textEl.textContent = text;
-        }
-
-        function updateLastSyncTime() {
-            const now = new Date();
-            lastSyncTime = now;
-            document.getElementById('lastSyncTime').textContent = now.toLocaleTimeString('ar-EG');
         }
 
         // =============================================================
-        // 4.  SMART DATA MERGING - The Core Feature
+        // 5.  DRIVE OPERATIONS - REAL SYNC
         // =============================================================
-        async function loadAndMergeData() {
-            if (!accessToken) return;
+        async function saveDataToDrive(data) {
+            if (!accessToken) {
+                console.log('⚠️ No access token, cannot save to Drive');
+                return false;
+            }
 
             try {
-                updateSyncStatus('syncing', 'جاري التحميل...');
-                const cloudData = await loadDataFromDrive();
+                // البحث عن الملف الموجود
+                let fileId = null;
+                try {
+                    const searchResponse = await gapi.client.drive.files.list({
+                        q: `name='${FILE_NAME}' and 'appDataFolder' in parents`,
+                        fields: 'files(id)',
+                        spaces: 'appDataFolder'
+                    });
+                    const files = searchResponse.result.files || [];
+                    if (files.length > 0) {
+                        fileId = files[0].id;
+                    }
+                } catch (searchError) {
+                    console.log('Search error (might be first time):', searchError);
+                }
+
+                // تحويل البيانات إلى JSON
+                const jsonData = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonData], { type: 'application/json' });
+
+                if (fileId) {
+                    // تحديث الملف الموجود
+                    const response = await gapi.client.drive.files.update({
+                        fileId: fileId,
+                        media: {
+                            mimeType: 'application/json',
+                            body: blob
+                        },
+                        fields: 'id'
+                    });
+                    console.log('✅ File updated on Drive');
+                } else {
+                    // إنشاء ملف جديد
+                    const response = await gapi.client.drive.files.create({
+                        resource: {
+                            name: FILE_NAME,
+                            parents: ['appDataFolder'],
+                            mimeType: 'application/json'
+                        },
+                        media: {
+                            mimeType: 'application/json',
+                            body: blob
+                        },
+                        fields: 'id'
+                    });
+                    console.log('✅ File created on Drive');
+                }
+
+                toastMsg('✅ تم حفظ البيانات في Drive', 'success');
+                return true;
+
+            } catch (error) {
+                console.error('❌ Error saving to Drive:', error);
+                toastMsg('❌ فشل الحفظ في Drive: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        async function loadDataFromDrive() {
+            if (!accessToken) {
+                console.log('⚠️ No access token, cannot load from Drive');
+                return false;
+            }
+
+            try {
+                // البحث عن الملف
+                const searchResponse = await gapi.client.drive.files.list({
+                    q: `name='${FILE_NAME}' and 'appDataFolder' in parents`,
+                    fields: 'files(id)',
+                    spaces: 'appDataFolder'
+                });
+
+                const files = searchResponse.result.files || [];
+                if (files.length === 0) {
+                    console.log('ℹ️ No file found on Drive');
+                    // رفع البيانات المحلية لأول مرة
+                    await uploadLocalData();
+                    return false;
+                }
+
+                const fileId = files[0].id;
+
+                // تحميل الملف
+                const response = await gapi.client.drive.files.get({
+                    fileId: fileId,
+                    alt: 'media'
+                });
+
+                const cloudData = response.result;
 
                 if (cloudData) {
                     // دمج البيانات من السحابة مع المحلية
-                    const merged = mergeData(cloudData);
-                    await saveAllData(merged);
-                    toastMsg('تم دمج البيانات من السحابة بنجاح 🔄', "success");
-                } else {
-                    // لا توجد بيانات في السحابة، نقوم برفع البيانات المحلية
-                    await uploadLocalData();
+                    await mergeCloudData(cloudData);
+                    toastMsg('✅ تم تحميل البيانات من Drive', 'success');
+                    return true;
                 }
 
-                await loadAllData();
-                updateStats();
-                updateBalanceDisplay();
-                updateLastSyncTime();
-                updateSyncStatus('synced', 'مزامن');
+                return false;
 
             } catch (error) {
-                console.error('Sync error:', error);
-                updateSyncStatus('error', 'خطأ');
-                toastMsg('حدث خطأ أثناء المزامنة', "error");
-            }
-        }
-
-        function mergeData(cloudData) {
-            // دمج ذكي: الاحتفاظ بأحدث التعديلات بناءً على الطابع الزمني
-            const merged = {
-                exp: [...db.exp],
-                rig: [...db.rig],
-                deb: [...db.deb],
-                bal: { ...db.bal }
-            };
-
-            // دمج المصروفات
-            if (cloudData.exp) {
-                const localMap = new Map(merged.exp.map(e => [e.clientId || e.id, e]));
-                cloudData.exp.forEach(cloudItem => {
-                    const key = cloudItem.clientId || cloudItem.id;
-                    const localItem = localMap.get(key);
-                    if (!localItem) {
-                        // عنصر جديد من السحابة
-                        merged.exp.push(cloudItem);
-                    } else {
-                        // مقارنة التواريخ - نأخذ الأحدث
-                        const cloudTime = new Date(cloudItem._updated || cloudItem.التاريخ || 0);
-                        const localTime = new Date(localItem._updated || localItem.التاريخ || 0);
-                        if (cloudTime > localTime) {
-                            const index = merged.exp.indexOf(localItem);
-                            merged.exp[index] = cloudItem;
-                        }
-                    }
-                });
-            }
-
-            // دمج الحقوق
-            if (cloudData.rig) {
-                const localMap = new Map(merged.rig.map(e => [e.clientId || e.id, e]));
-                cloudData.rig.forEach(cloudItem => {
-                    const key = cloudItem.clientId || cloudItem.id;
-                    const localItem = localMap.get(key);
-                    if (!localItem) {
-                        merged.rig.push(cloudItem);
-                    } else {
-                        const cloudTime = new Date(cloudItem._updated || cloudItem.تاريخ_الاستحقاق || 0);
-                        const localTime = new Date(localItem._updated || localItem.تاريخ_الاستحقاق || 0);
-                        if (cloudTime > localTime) {
-                            const index = merged.rig.indexOf(localItem);
-                            merged.rig[index] = cloudItem;
-                        }
-                    }
-                });
-            }
-
-            // دمج الالتزامات
-            if (cloudData.deb) {
-                const localMap = new Map(merged.deb.map(e => [e.clientId || e.id, e]));
-                cloudData.deb.forEach(cloudItem => {
-                    const key = cloudItem.clientId || cloudItem.id;
-                    const localItem = localMap.get(key);
-                    if (!localItem) {
-                        merged.deb.push(cloudItem);
-                    } else {
-                        const cloudTime = new Date(cloudItem._updated || cloudItem.تاريخ_الاستحقاق || 0);
-                        const localTime = new Date(localItem._updated || localItem.تاريخ_الاستحقاق || 0);
-                        if (cloudTime > localTime) {
-                            const index = merged.deb.indexOf(localItem);
-                            merged.deb[index] = cloudItem;
-                        }
-                    }
-                });
-            }
-
-            // دمج الرصيد - نأخذ الرصيد الأحدث
-            if (cloudData.bal) {
-                const cloudTime = new Date(cloudData.bal._updated || 0);
-                const localTime = new Date(db.bal._updated || 0);
-                if (cloudTime > localTime || db.bal.amount === 0) {
-                    merged.bal = cloudData.bal;
+                console.error('❌ Error loading from Drive:', error);
+                // إذا كان الخطأ 404، الملف غير موجود
+                if (error.status === 404) {
+                    console.log('ℹ️ File not found on Drive, uploading local data...');
+                    await uploadLocalData();
                 } else {
-                    // دمج حركات الرصيد
-                    const localChangesMap = new Map(db.bal.changes.map(c => [c.id, c]));
-                    cloudData.bal.changes.forEach(cloudChange => {
-                        if (!localChangesMap.has(cloudChange.id)) {
-                            merged.bal.changes.push(cloudChange);
-                        }
-                    });
-                    // ترتيب الحركات
-                    merged.bal.changes.sort((a, b) => new Date(b.التاريخ) - new Date(a.التاريخ));
-                    // تحديث الرصيد
-                    if (merged.bal.changes.length > 0) {
-                        merged.bal.amount = merged.bal.changes[0].الرصيد_بعد_العملية || merged.bal.amount;
-                    }
+                    toastMsg('❌ فشل تحميل البيانات من Drive', 'error');
                 }
+                return false;
             }
-
-            // إضافة طابع زمني للتعديل
-            const timestamp = new Date().toISOString();
-            merged.exp.forEach(e => e._updated = e._updated || timestamp);
-            merged.rig.forEach(e => e._updated = e._updated || timestamp);
-            merged.deb.forEach(e => e._updated = e._updated || timestamp);
-            merged.bal._updated = timestamp;
-
-            return merged;
-        }
-
-        async function saveAllData(data) {
-            // حفظ جميع البيانات في IndexedDB
-            await saveData('exp', data.exp);
-            await saveData('rig', data.rig);
-            await saveData('deb', data.deb);
-            await saveData('bal', data.bal);
         }
 
         async function uploadLocalData() {
@@ -1623,149 +1535,137 @@
         }
 
         // =============================================================
-        // 5.  AUTO SYNC SYSTEM
+        // 6.  MERGE DATA - SMART
         // =============================================================
-        function startAutoSync() {
-            stopAutoSync();
-            syncTimer = setInterval(async () => {
-                if (!accessToken || isSyncing) return;
-                try {
-                    isSyncing = true;
-                    updateSyncStatus('syncing', 'جاري المزامنة...');
-                    await loadAndMergeData();
-                    updateSyncStatus('synced', 'مزامن');
-                } catch (error) {
-                    console.error('Auto sync error:', error);
-                    updateSyncStatus('error', 'خطأ');
-                } finally {
-                    isSyncing = false;
-                }
-            }, SYNC_INTERVAL);
-            console.log('Auto-sync started (every ' + SYNC_INTERVAL / 1000 + 's)');
-        }
+        async function mergeCloudData(cloudData) {
+            if (!cloudData) return;
 
-        function stopAutoSync() {
-            if (syncTimer) {
-                clearInterval(syncTimer);
-                syncTimer = null;
-                console.log('Auto-sync stopped');
-            }
-        }
-
-        async function forceSyncNow() {
-            if (!accessToken) {
-                toastMsg('الرجاء تسجيل الدخول أولاً', "error");
-                return;
-            }
-            if (isSyncing) {
-                toastMsg('جاري المزامنة بالفعل...', "info");
-                return;
-            }
-            try {
-                isSyncing = true;
-                updateSyncStatus('syncing', 'جاري المزامنة...');
-                await loadAndMergeData();
-                updateSyncStatus('synced', 'مزامن');
-                toastMsg('تمت المزامنة بنجاح ✅', "success");
-            } catch (error) {
-                console.error('Force sync error:', error);
-                updateSyncStatus('error', 'خطأ');
-                toastMsg('فشلت المزامنة', "error");
-            } finally {
-                isSyncing = false;
-            }
-        }
-
-        // =============================================================
-        // 6.  DRIVE DATA OPERATIONS
-        // =============================================================
-        async function saveDataToDrive(data) {
-            if (!accessToken) {
-                return false;
-            }
-
-            try {
-                const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and 'appDataFolder' in parents&fields=files(id)`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
+            // دمج المصروفات
+            if (cloudData.exp && cloudData.exp.length > 0) {
+                const localMap = new Map(db.exp.map(e => [e.clientId || e.id, e]));
+                cloudData.exp.forEach(cloudItem => {
+                    const key = cloudItem.clientId || cloudItem.id;
+                    if (!localMap.has(key)) {
+                        db.exp.push(cloudItem);
+                    } else {
+                        const localItem = localMap.get(key);
+                        const cloudTime = new Date(cloudItem._updated || cloudItem.التاريخ || 0);
+                        const localTime = new Date(localItem._updated || localItem.التاريخ || 0);
+                        if (cloudTime > localTime) {
+                            const idx = db.exp.indexOf(localItem);
+                            db.exp[idx] = cloudItem;
+                        }
                     }
-                );
-                const searchResult = await searchResponse.json();
-                const existingFile = searchResult.files && searchResult.files[0];
-
-                const fileData = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const metadata = {
-                    name: FILE_NAME,
-                    parents: ['appDataFolder']
-                };
-
-                let uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-                if (existingFile) {
-                    uploadUrl = `https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=multipart`;
-                }
-
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', fileData);
-
-                const method = existingFile ? 'PATCH' : 'POST';
-                const response = await fetch(uploadUrl, {
-                    method: method,
-                    headers: { 'Authorization': `Bearer ${accessToken}` },
-                    body: form
                 });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
-                }
-
-                updateLastSyncTime();
-                return true;
-            } catch (error) {
-                console.error('Error saving to Drive:', error);
-                return false;
             }
+
+            // دمج الحقوق
+            if (cloudData.rig && cloudData.rig.length > 0) {
+                const localMap = new Map(db.rig.map(e => [e.clientId || e.id, e]));
+                cloudData.rig.forEach(cloudItem => {
+                    const key = cloudItem.clientId || cloudItem.id;
+                    if (!localMap.has(key)) {
+                        db.rig.push(cloudItem);
+                    } else {
+                        const localItem = localMap.get(key);
+                        const cloudTime = new Date(cloudItem._updated || cloudItem.تاريخ_الاستحقاق || 0);
+                        const localTime = new Date(localItem._updated || localItem.تاريخ_الاستحقاق || 0);
+                        if (cloudTime > localTime) {
+                            const idx = db.rig.indexOf(localItem);
+                            db.rig[idx] = cloudItem;
+                        }
+                    }
+                });
+            }
+
+            // دمج الالتزامات
+            if (cloudData.deb && cloudData.deb.length > 0) {
+                const localMap = new Map(db.deb.map(e => [e.clientId || e.id, e]));
+                cloudData.deb.forEach(cloudItem => {
+                    const key = cloudItem.clientId || cloudItem.id;
+                    if (!localMap.has(key)) {
+                        db.deb.push(cloudItem);
+                    } else {
+                        const localItem = localMap.get(key);
+                        const cloudTime = new Date(cloudItem._updated || cloudItem.تاريخ_الاستحقاق || 0);
+                        const localTime = new Date(localItem._updated || localItem.تاريخ_الاستحقاق || 0);
+                        if (cloudTime > localTime) {
+                            const idx = db.deb.indexOf(localItem);
+                            db.deb[idx] = cloudItem;
+                        }
+                    }
+                });
+            }
+
+            // دمج الرصيد
+            if (cloudData.bal) {
+                const cloudTime = new Date(cloudData.bal._updated || 0);
+                const localTime = new Date(db.bal._updated || 0);
+                if (cloudTime > localTime) {
+                    db.bal = cloudData.bal;
+                    currentBalance = db.bal.amount || 0;
+                } else {
+                    // دمج حركات الرصيد
+                    const localChangesMap = new Map(db.bal.changes.map(c => [c.id, c]));
+                    cloudData.bal.changes.forEach(cloudChange => {
+                        if (!localChangesMap.has(cloudChange.id)) {
+                            db.bal.changes.push(cloudChange);
+                        }
+                    });
+                    db.bal.changes.sort((a, b) => new Date(b.التاريخ) - new Date(a.التاريخ));
+                    if (db.bal.changes.length > 0) {
+                        db.bal.amount = db.bal.changes[0].الرصيد_بعد_العملية || db.bal.amount;
+                        currentBalance = db.bal.amount;
+                    }
+                }
+            }
+
+            // حفظ جميع البيانات في IndexedDB
+            await saveData('exp', db.exp);
+            await saveData('rig', db.rig);
+            await saveData('deb', db.deb);
+            await saveData('bal', db.bal);
+
+            // تحديث الواجهة
+            await loadAllData();
+            updateStats();
+            updateBalanceDisplay();
         }
 
-        async function loadDataFromDrive() {
-            if (!accessToken) {
-                return null;
-            }
+        // =============================================================
+        // 7.  FORCE SYNC
+        // =============================================================
+        async function forceSyncNow() {
+            const btn = document.getElementById('syncBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المزامنة...';
 
             try {
-                const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and 'appDataFolder' in parents&fields=files(id)`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    }
-                );
-                const searchResult = await searchResponse.json();
+                // أولاً: رفع البيانات المحلية إلى Drive
+                const data = {
+                    exp: db.exp,
+                    rig: db.rig,
+                    deb: db.deb,
+                    bal: db.bal,
+                    _updated: new Date().toISOString()
+                };
+                await saveDataToDrive(data);
 
-                if (!searchResult.files || searchResult.files.length === 0) {
-                    return null;
-                }
+                // ثانياً: تحميل البيانات من Drive (دمج)
+                await loadDataFromDrive();
 
-                const fileId = searchResult.files[0].id;
-                const fileResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    }
-                );
-
-                if (!fileResponse.ok) {
-                    throw new Error(`Failed to download file: ${fileResponse.status}`);
-                }
-
-                const data = await fileResponse.json();
-                return data;
+                toastMsg('✅ تمت المزامنة بنجاح', 'success');
             } catch (error) {
-                console.error('Error loading from Drive:', error);
-                return null;
+                console.error('❌ Sync error:', error);
+                toastMsg('❌ فشلت المزامنة: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> مزامنة مع Drive';
             }
         }
 
         // =============================================================
-        // 7.  TOAST NOTIFICATION
+        // 8.  TOAST
         // =============================================================
         function toastMsg(message, type = "info") {
             const t = document.getElementById('toast');
@@ -1783,7 +1683,7 @@
         }
 
         // =============================================================
-        // 8.  FORMATTING HELPERS
+        // 9.  FORMATTING HELPERS
         // =============================================================
         const ARABIC_CURRENCIES = [
             { code: 'SDG', symbol: 'ج.س', name: 'جنيه سوداني' },
@@ -1880,7 +1780,7 @@
         }
 
         // =============================================================
-        // 9.  BALANCE
+        // 10. BALANCE
         // =============================================================
         function toggleBalanceVisibility() {
             balanceHidden = !balanceHidden;
@@ -1927,7 +1827,7 @@
             try {
                 await saveData('bal', db.bal);
                 updateBalanceDisplay();
-                // مزامنة تلقائية بعد كل تغيير
+                // مزامنة تلقائية بعد التغيير
                 await autoSyncAfterChange();
                 return true;
             } catch (e) {
@@ -1994,7 +1894,7 @@
         }
 
         // =============================================================
-        // 10. CRUD — EXPENSES
+        // 11. CRUD — EXPENSES
         // =============================================================
         async function addExpense() {
             const eAmount = document.getElementById('eAmount');
@@ -2039,7 +1939,7 @@
         }
 
         // =============================================================
-        // 11. CRUD — RIGHTS
+        // 12. CRUD — RIGHTS
         // =============================================================
         function updateRightFields(type, currentData = null) {
             const container = document.getElementById('rDynamicFields');
@@ -2112,7 +2012,7 @@
         }
 
         // =============================================================
-        // 12. CRUD — DEBTS
+        // 13. CRUD — DEBTS
         // =============================================================
         function updateDebtFields(type, currentData = null) {
             const container = document.getElementById('dDynamicFields');
@@ -2230,7 +2130,7 @@
         }
 
         // =============================================================
-        // 13. POST-SAVE CLEANUP
+        // 14. POST-SAVE CLEANUP
         // =============================================================
         function postSaveCleanup(isEditing, type) {
             _visualClose('detail', false);
@@ -2244,7 +2144,7 @@
         }
 
         // =============================================================
-        // 14. DETAIL & LOG RENDERING
+        // 15. DETAIL & LOG RENDERING
         // =============================================================
         function _renderDetailContent(o, type) {
             const el = document.getElementById('detailContent');
@@ -2355,7 +2255,7 @@
         }
 
         // =============================================================
-        // 15. EDIT TRANSACTION
+        // 16. EDIT TRANSACTION
         // =============================================================
         function editTransaction() {
             if (!editMode) return;
@@ -2416,7 +2316,7 @@
         }
 
         // =============================================================
-        // 16. DELETE TRANSACTION
+        // 17. DELETE TRANSACTION
         // =============================================================
         async function deleteTransaction() {
             if (!editMode) return;
@@ -2450,7 +2350,7 @@
         }
 
         // =============================================================
-        // 17. STATS
+        // 18. STATS
         // =============================================================
         function updateStats() {
             let expTotal = 0,
@@ -2472,7 +2372,7 @@
         }
 
         // =============================================================
-        // 18. CURRENCY
+        // 19. CURRENCY
         // =============================================================
         function renderCurrencyList() {
             const list = document.getElementById('currencyList');
@@ -2502,7 +2402,7 @@
         }
 
         // =============================================================
-        // 19. EXPORT / IMPORT / RESET
+        // 20. EXPORT / IMPORT / RESET
         // =============================================================
         function exportData() {
             if (!IDB_connection) return toastMsg('لا يمكن الاتصال بقاعدة البيانات.', "error");
@@ -2590,7 +2490,7 @@
         }
 
         // =============================================================
-        // 20. NAVIGATION FUNCTIONS
+        // 21. NAVIGATION FUNCTIONS
         // =============================================================
         function openSidebar() {
             openLayer('sidebar');
@@ -2635,7 +2535,7 @@
         }
 
         // =============================================================
-        // 21. IMAGE FUNCTIONS
+        // 22. IMAGE FUNCTIONS
         // =============================================================
         function showImageSourceModal() {
             openLayer('imageSource');
@@ -2689,7 +2589,7 @@
         }
 
         // =============================================================
-        // 22. INDEXED DB OPERATIONS
+        // 23. INDEXED DB OPERATIONS
         // =============================================================
         function initDB() {
             return new Promise((resolve, reject) => {
@@ -2773,7 +2673,7 @@
         }
 
         // =============================================================
-        // 23. DARK MODE
+        // 24. DARK MODE
         // =============================================================
         function loadDarkModePreference() {
             if (localStorage.getItem('darkMode') === 'true') {
@@ -2790,7 +2690,7 @@
         loadDarkModePreference();
 
         // =============================================================
-        // 24. INIT
+        // 25. INIT
         // =============================================================
         document.addEventListener('DOMContentLoaded', () => {
             const now = new Date().toISOString().slice(0, 10);
@@ -2804,7 +2704,7 @@
             updateStats();
         });
 
-        // عند إغلاق الصفحة، نقوم بمزامنة نهائية
+        // عند إغلاق الصفحة، مزامنة نهائية
         window.addEventListener('beforeunload', async () => {
             if (accessToken) {
                 try {
