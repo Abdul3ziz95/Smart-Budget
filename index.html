@@ -4,9 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ميزانيتك الذكية | Smart Budget</title>
-    <!-- Google APIs -->
+    <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
 
@@ -772,7 +771,6 @@
             color: #90e0ef;
         }
 
-        /* زر المزامنة المخصص */
         .sync-btn {
             background: var(--p);
             color: var(--text-light);
@@ -797,9 +795,6 @@
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
-        }
-        .sync-btn i.fa-spin {
-            animation: fa-spin 1s infinite linear;
         }
     </style>
 </head>
@@ -1074,7 +1069,7 @@
     </div>
 
     <!-- ==========================================================
-    IMAGE SOURCE MODAL (small popup)
+    IMAGE SOURCE MODAL
     ========================================================== -->
     <div id="imageSourceModal">
         <h3>اختيار مصدر الصورة</h3>
@@ -1163,7 +1158,7 @@
             <p class="card" style="border-top:3px solid var(--danger);">
                 <strong>ملاحظة:</strong> تُحفظ البيانات محلياً باستخدام IndexedDB. المزامنة مع Google Drive تتيح لك الوصول لبياناتك من أي جهاز.
             </p>
-            <p style="text-align:center; margin-top:20px; color:#999; font-size:0.9em;">الإصدار 6.0 - مزامنة حقيقية مع Drive</p>
+            <p style="text-align:center; margin-top:20px; color:#999; font-size:0.9em;">الإصدار 7.0 - مزامنة حقيقية مع Drive</p>
         </div>
     </div>
 
@@ -1187,24 +1182,24 @@
     <div class="toast" id="toast"></div>
 
     <!-- ==========================================================
-    JAVASCRIPT
+    JAVASCRIPT - FIXED VERSION
     ========================================================== -->
     <script>
         // =============================================================
-        // 0.  GOOGLE DRIVE CONFIGURATION - REAL SYNC
+        // 0.  GOOGLE DRIVE CONFIGURATION - USING FETCH DIRECTLY
         // =============================================================
         const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
         const FILE_NAME = 'smart_budget_data.json';
 
         let accessToken = null;
-        let isGoogleReady = false;
+        let tokenClient = null;
 
         // =============================================================
         // 1.  INDEXED DB SETUP
         // =============================================================
         const IDB_NAME = "MySmartBudgetDB";
-        const IDB_VERSION = 7;
+        const IDB_VERSION = 8;
         const STORE_NAMES = ["exp", "rig", "deb", "bal"];
 
         let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] } };
@@ -1317,71 +1312,64 @@
             } else {
                 historyStack.push(history.state);
             }
-            initGoogleAPIs();
+            initGoogleAuth();
         };
 
         // =============================================================
-        // 3.  GOOGLE APIS INIT - FIXED
+        // 3.  GOOGLE AUTH - USING GIS ONLY (NO GAPI)
         // =============================================================
-        function initGoogleAPIs() {
-            // تحميل GAPI
-            gapi.load('client', async function() {
-                try {
-                    await gapi.client.init({
-                        clientId: CLIENT_ID,
-                        scope: SCOPES,
-                    });
-                    console.log('✅ GAPI Client initialized');
-
-                    // التحقق من وجود توكن محفوظ
-                    const savedToken = localStorage.getItem('drive_token');
-                    if (savedToken) {
-                        accessToken = savedToken;
-                        gapi.client.setToken({ access_token: accessToken });
+        function initGoogleAuth() {
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: async (resp) => {
+                        if (resp.error) {
+                            console.error('❌ Auth error:', resp.error);
+                            toastMsg('فشل تسجيل الدخول: ' + resp.error, 'error');
+                            return;
+                        }
+                        accessToken = resp.access_token;
+                        localStorage.setItem('drive_token', accessToken);
                         updateUIForSignedIn();
-                        // تحميل البيانات من Drive
+                        toastMsg('✅ تم تسجيل الدخول بنجاح', 'success');
                         await loadDataFromDrive();
-                    } else {
-                        updateUIForSignedOut();
-                    }
-                    isGoogleReady = true;
-                } catch (error) {
-                    console.error('❌ GAPI init error:', error);
-                    toastMsg('خطأ في تهيئة Google API', 'error');
+                    },
+                });
+                console.log('✅ Google Auth initialized');
+
+                // التحقق من وجود توكن محفوظ
+                const savedToken = localStorage.getItem('drive_token');
+                if (savedToken) {
+                    accessToken = savedToken;
+                    updateUIForSignedIn();
+                    // تحميل البيانات من Drive
+                    setTimeout(() => loadDataFromDrive(), 500);
+                } else {
+                    updateUIForSignedOut();
                 }
-            });
+            } catch (error) {
+                console.error('❌ Auth init error:', error);
+                toastMsg('خطأ في تهيئة المصادقة', 'error');
+                updateUIForSignedOut();
+            }
         }
 
-        // =============================================================
-        // 4.  AUTHENTICATION - FIXED
-        // =============================================================
         function signIn() {
-            const tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: async (resp) => {
-                    if (resp.error) {
-                        console.error('❌ Auth error:', resp.error);
-                        toastMsg('فشل تسجيل الدخول: ' + resp.error, 'error');
-                        return;
-                    }
-                    accessToken = resp.access_token;
-                    localStorage.setItem('drive_token', accessToken);
-                    gapi.client.setToken({ access_token: accessToken });
-                    updateUIForSignedIn();
-                    toastMsg('✅ تم تسجيل الدخول بنجاح', 'success');
-
-                    // تحميل البيانات من Drive
-                    await loadDataFromDrive();
-                },
-            });
+            if (!tokenClient) {
+                toastMsg('جاري تهيئة المصادقة...', 'info');
+                initGoogleAuth();
+                setTimeout(() => {
+                    if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
+                }, 500);
+                return;
+            }
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
 
         function signOut() {
             accessToken = null;
             localStorage.removeItem('drive_token');
-            gapi.client.setToken(null);
             updateUIForSignedOut();
             toastMsg('تم تسجيل الخروج', 'info');
         }
@@ -1401,121 +1389,152 @@
         }
 
         // =============================================================
-        // 5.  DRIVE OPERATIONS - REAL SYNC
+        // 4.  DRIVE OPERATIONS - USING FETCH
         // =============================================================
+        async function getFileId() {
+            if (!accessToken) return null;
+
+            try {
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and 'appDataFolder' in parents&fields=files(id)&spaces=appDataFolder`, {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        // التوكن منتهي، نطلب توكن جديد
+                        localStorage.removeItem('drive_token');
+                        accessToken = null;
+                        updateUIForSignedOut();
+                        toastMsg('انتهت صلاحية الجلسة، سجل الدخول مرة أخرى', 'error');
+                        return null;
+                    }
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const files = data.files || [];
+                return files.length > 0 ? files[0].id : null;
+            } catch (error) {
+                console.error('❌ Error getting file ID:', error);
+                return null;
+            }
+        }
+
         async function saveDataToDrive(data) {
             if (!accessToken) {
-                console.log('⚠️ No access token, cannot save to Drive');
+                toastMsg('الرجاء تسجيل الدخول أولاً', 'error');
                 return false;
             }
 
             try {
-                // البحث عن الملف الموجود
-                let fileId = null;
-                try {
-                    const searchResponse = await gapi.client.drive.files.list({
-                        q: `name='${FILE_NAME}' and 'appDataFolder' in parents`,
-                        fields: 'files(id)',
-                        spaces: 'appDataFolder'
-                    });
-                    const files = searchResponse.result.files || [];
-                    if (files.length > 0) {
-                        fileId = files[0].id;
-                    }
-                } catch (searchError) {
-                    console.log('Search error (might be first time):', searchError);
-                }
-
-                // تحويل البيانات إلى JSON
+                const fileId = await getFileId();
                 const jsonData = JSON.stringify(data, null, 2);
-                const blob = new Blob([jsonData], { type: 'application/json' });
 
                 if (fileId) {
                     // تحديث الملف الموجود
-                    const response = await gapi.client.drive.files.update({
-                        fileId: fileId,
-                        media: {
-                            mimeType: 'application/json',
-                            body: blob
-                        },
-                        fields: 'id'
-                    });
+                    const response = await fetch(
+                        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Authorization': `Bearer ${accessToken}`,
+                                'Content-Type': 'multipart/related; boundary=boundary'
+                            },
+                            body: `--boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{"name":"${FILE_NAME}"}\r\n--boundary\r\nContent-Type: application/json\r\n\r\n${jsonData}\r\n--boundary--`
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(`Update failed: ${response.status}`);
+                    }
+
                     console.log('✅ File updated on Drive');
+                    toastMsg('✅ تم حفظ البيانات في Drive', 'success');
+                    return true;
                 } else {
                     // إنشاء ملف جديد
-                    const response = await gapi.client.drive.files.create({
-                        resource: {
-                            name: FILE_NAME,
-                            parents: ['appDataFolder'],
-                            mimeType: 'application/json'
-                        },
-                        media: {
-                            mimeType: 'application/json',
-                            body: blob
-                        },
-                        fields: 'id'
-                    });
+                    const response = await fetch(
+                        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${accessToken}`,
+                                'Content-Type': 'multipart/related; boundary=boundary'
+                            },
+                            body: `--boundary\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n{"name":"${FILE_NAME}","parents":["appDataFolder"]}\r\n--boundary\r\nContent-Type: application/json\r\n\r\n${jsonData}\r\n--boundary--`
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(`Create failed: ${response.status}`);
+                    }
+
                     console.log('✅ File created on Drive');
+                    toastMsg('✅ تم حفظ البيانات في Drive', 'success');
+                    return true;
                 }
-
-                toastMsg('✅ تم حفظ البيانات في Drive', 'success');
-                return true;
-
             } catch (error) {
                 console.error('❌ Error saving to Drive:', error);
-                toastMsg('❌ فشل الحفظ في Drive: ' + error.message, 'error');
+                if (error.message.includes('401')) {
+                    localStorage.removeItem('drive_token');
+                    accessToken = null;
+                    updateUIForSignedOut();
+                    toastMsg('انتهت صلاحية الجلسة، سجل الدخول مرة أخرى', 'error');
+                } else {
+                    toastMsg('❌ فشل الحفظ في Drive: ' + error.message, 'error');
+                }
                 return false;
             }
         }
 
         async function loadDataFromDrive() {
             if (!accessToken) {
-                console.log('⚠️ No access token, cannot load from Drive');
+                console.log('⚠️ No access token');
                 return false;
             }
 
             try {
-                // البحث عن الملف
-                const searchResponse = await gapi.client.drive.files.list({
-                    q: `name='${FILE_NAME}' and 'appDataFolder' in parents`,
-                    fields: 'files(id)',
-                    spaces: 'appDataFolder'
-                });
-
-                const files = searchResponse.result.files || [];
-                if (files.length === 0) {
+                const fileId = await getFileId();
+                if (!fileId) {
                     console.log('ℹ️ No file found on Drive');
                     // رفع البيانات المحلية لأول مرة
                     await uploadLocalData();
                     return false;
                 }
 
-                const fileId = files[0].id;
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Accept': 'application/json'
+                        }
+                    }
+                );
 
-                // تحميل الملف
-                const response = await gapi.client.drive.files.get({
-                    fileId: fileId,
-                    alt: 'media'
-                });
+                if (!response.ok) {
+                    throw new Error(`Download failed: ${response.status}`);
+                }
 
-                const cloudData = response.result;
+                const cloudData = await response.json();
 
                 if (cloudData) {
-                    // دمج البيانات من السحابة مع المحلية
                     await mergeCloudData(cloudData);
                     toastMsg('✅ تم تحميل البيانات من Drive', 'success');
                     return true;
                 }
 
                 return false;
-
             } catch (error) {
                 console.error('❌ Error loading from Drive:', error);
-                // إذا كان الخطأ 404، الملف غير موجود
-                if (error.status === 404) {
-                    console.log('ℹ️ File not found on Drive, uploading local data...');
-                    await uploadLocalData();
-                } else {
+                if (error.message.includes('401')) {
+                    localStorage.removeItem('drive_token');
+                    accessToken = null;
+                    updateUIForSignedOut();
+                    toastMsg('انتهت صلاحية الجلسة، سجل الدخول مرة أخرى', 'error');
+                } else if (!error.message.includes('404')) {
                     toastMsg('❌ فشل تحميل البيانات من Drive', 'error');
                 }
                 return false;
@@ -1535,7 +1554,7 @@
         }
 
         // =============================================================
-        // 6.  MERGE DATA - SMART
+        // 5.  MERGE DATA
         // =============================================================
         async function mergeCloudData(cloudData) {
             if (!cloudData) return;
@@ -1601,7 +1620,7 @@
             if (cloudData.bal) {
                 const cloudTime = new Date(cloudData.bal._updated || 0);
                 const localTime = new Date(db.bal._updated || 0);
-                if (cloudTime > localTime) {
+                if (cloudTime > localTime || db.bal.amount === 0) {
                     db.bal = cloudData.bal;
                     currentBalance = db.bal.amount || 0;
                 } else {
@@ -1614,7 +1633,8 @@
                     });
                     db.bal.changes.sort((a, b) => new Date(b.التاريخ) - new Date(a.التاريخ));
                     if (db.bal.changes.length > 0) {
-                        db.bal.amount = db.bal.changes[0].الرصيد_بعد_العملية || db.bal.amount;
+                        const latest = db.bal.changes[0];
+                        db.bal.amount = latest.الرصيد_بعد_العملية || db.bal.amount;
                         currentBalance = db.bal.amount;
                     }
                 }
@@ -1633,7 +1653,7 @@
         }
 
         // =============================================================
-        // 7.  FORCE SYNC
+        // 6.  FORCE SYNC
         // =============================================================
         async function forceSyncNow() {
             const btn = document.getElementById('syncBtn');
@@ -1649,18 +1669,39 @@
                     bal: db.bal,
                     _updated: new Date().toISOString()
                 };
-                await saveDataToDrive(data);
 
-                // ثانياً: تحميل البيانات من Drive (دمج)
-                await loadDataFromDrive();
-
-                toastMsg('✅ تمت المزامنة بنجاح', 'success');
+                const saved = await saveDataToDrive(data);
+                if (saved) {
+                    // ثانياً: تحميل البيانات من Drive (دمج)
+                    await loadDataFromDrive();
+                    toastMsg('✅ تمت المزامنة بنجاح', 'success');
+                }
             } catch (error) {
                 console.error('❌ Sync error:', error);
                 toastMsg('❌ فشلت المزامنة: ' + error.message, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> مزامنة مع Drive';
+            }
+        }
+
+        // =============================================================
+        // 7.  AUTO SYNC AFTER CHANGE
+        // =============================================================
+        async function autoSyncAfterChange() {
+            if (accessToken) {
+                try {
+                    const data = {
+                        exp: db.exp,
+                        rig: db.rig,
+                        deb: db.deb,
+                        bal: db.bal,
+                        _updated: new Date().toISOString()
+                    };
+                    await saveDataToDrive(data);
+                } catch (error) {
+                    console.error('Auto-sync after change failed:', error);
+                }
             }
         }
 
@@ -1827,7 +1868,6 @@
             try {
                 await saveData('bal', db.bal);
                 updateBalanceDisplay();
-                // مزامنة تلقائية بعد التغيير
                 await autoSyncAfterChange();
                 return true;
             } catch (e) {
@@ -1835,23 +1875,6 @@
                 currentBalance -= effectiveChange;
                 toastMsg('فشل تحديث الرصيد.', "error");
                 return false;
-            }
-        }
-
-        async function autoSyncAfterChange() {
-            if (accessToken) {
-                try {
-                    const data = {
-                        exp: db.exp,
-                        rig: db.rig,
-                        deb: db.deb,
-                        bal: db.bal,
-                        _updated: new Date().toISOString()
-                    };
-                    await saveDataToDrive(data);
-                } catch (error) {
-                    console.error('Auto-sync after change failed:', error);
-                }
             }
         }
 
