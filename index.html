@@ -11,9 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
 
     <style>
-        /* ============================================================
-           ROOT VARIABLES
-           ============================================================ */
         :root {
             --p: #0077b6;
             --s: #48cae4;
@@ -129,9 +126,6 @@
             border-bottom: 3px solid var(--p);
             background: color-mix(in srgb, var(--bg) 90%, var(--p));
         }
-        body.dark-mode .tabs button.active {
-            background: color-mix(in srgb, var(--bg) 85%, var(--p));
-        }
 
         .section {
             display: none;
@@ -147,7 +141,6 @@
             box-shadow: var(--shadow-light);
             margin-bottom: 15px;
             border-top: 5px solid var(--s);
-            transition: background var(--transition), border-color var(--transition);
         }
 
         #overview .balance-display {
@@ -185,10 +178,6 @@
             color: var(--p);
             font-size: 22px;
             cursor: pointer;
-            transition: color 0.2s;
-        }
-        #overview .balance-display #balanceVisibilityToggle:hover {
-            color: var(--s);
         }
 
         .balance-actions {
@@ -344,12 +333,11 @@
             text-align: center;
             font-weight: 500;
             letter-spacing: 0.3px;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .toast.show {
             display: block;
             animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
-                toastOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 2.5s forwards;
+                toastOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 3.5s forwards;
         }
         .toast.success {
             border-right: 5px solid var(--success);
@@ -441,9 +429,6 @@
             padding: 15px;
         }
 
-        /* ============================================================
-           SIDEBAR
-           ============================================================ */
         .sidebar {
             position: fixed;
             top: 0;
@@ -514,15 +499,6 @@
             width: 28px;
             text-align: center;
             color: var(--p);
-        }
-        .sidebar-menu-item .badge {
-            margin-right: auto;
-            font-size: 0.75em;
-            padding: 2px 10px;
-            border-radius: 12px;
-            background: var(--input-bg);
-            color: #888;
-            border: 1px solid var(--border-color);
         }
 
         .sidebar-menu-item.drive-item {
@@ -651,9 +627,6 @@
             color: #888;
         }
 
-        /* ============================================================
-           DRIVE BACKUP LIST
-           ============================================================ */
         .backup-table {
             width: 100%;
             border-collapse: collapse;
@@ -780,9 +753,6 @@
             color: var(--text-dark);
             border: 1px solid var(--border-color);
         }
-        #confirmBackupModal .modal-content .btn-group .cancel-btn:hover {
-            background: color-mix(in srgb, var(--input-bg) 80%, #999);
-        }
 
         #driveBackupModal .modal-content {
             padding: 15px;
@@ -861,6 +831,48 @@
             font-size: 16px;
             border-radius: 10px;
             width: 100%;
+        }
+
+        #exportNameModal .modal-content {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        #exportNameModal .modal-content label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--text-dark);
+        }
+        #exportNameModal .modal-content input {
+            margin-bottom: 15px;
+        }
+        #exportNameModal .modal-content .btn-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+        #exportNameModal .modal-content .btn-group button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        #exportNameModal .modal-content .btn-group .confirm-btn {
+            background: var(--p);
+            color: #fff;
+        }
+        #exportNameModal .modal-content .btn-group .confirm-btn:hover {
+            background: color-mix(in srgb, var(--p) 85%, black);
+        }
+        #exportNameModal .modal-content .btn-group .cancel-btn {
+            background: var(--input-bg);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
         }
 
         @media (max-width: 450px) {
@@ -964,11 +976,7 @@
             display: block;
             text-align: left;
         }
-        body.dark-mode .log-item-hint {
-            color: #90e0ef;
-        }
 
-        /* Loading overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -1342,6 +1350,24 @@
     </div>
 
     <!-- ==========================================================
+    EXPORT NAME MODAL
+    ========================================================== -->
+    <div class="modal" id="exportNameModal">
+        <header>
+            <span class="title">تصدير البيانات</span>
+            <button onclick="closeLayer('exportName')"><i class="fas fa-times"></i></button>
+        </header>
+        <div class="modal-content">
+            <label for="exportFileName">أدخل اسم الملف:</label>
+            <input id="exportFileName" type="text" placeholder="اسم الملف" value="بيانات_ميزانيتي" />
+            <div class="btn-group">
+                <button class="confirm-btn" onclick="performExport()">تصدير</button>
+                <button class="cancel-btn" onclick="closeLayer('exportName')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================
     SIDEBAR
     ========================================================== -->
     <div class="sidebar-overlay" onclick="closeLayer('sidebar')"></div>
@@ -1383,20 +1409,18 @@
 
             <div class="sidebar-divider"></div>
 
-            <!-- Export DB -->
-            <div class="sidebar-menu-item" onclick="exportDB()">
+            <!-- Export -->
+            <div class="sidebar-menu-item" onclick="openExportNameModal()">
                 <i class="fas fa-file-export"></i>
-                <span>تصدير البيانات (.db)</span>
-                <span class="badge">.db</span>
+                <span>تصدير البيانات</span>
             </div>
 
-            <!-- Import DB -->
-            <div class="sidebar-menu-item" onclick="document.getElementById('importDBFile').click()">
+            <!-- Import -->
+            <div class="sidebar-menu-item" onclick="document.getElementById('importFile').click()">
                 <i class="fas fa-file-import"></i>
-                <span>استيراد البيانات (.db)</span>
-                <span class="badge">.db</span>
+                <span>استيراد البيانات</span>
             </div>
-            <input type="file" id="importDBFile" accept=".db" style="display:none;" onchange="importDB(event)" />
+            <input type="file" id="importFile" accept=".db" style="display:none;" onchange="importDB(event)" />
 
             <div class="sidebar-divider"></div>
 
@@ -1466,8 +1490,6 @@
         const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         const APP_FOLDER_NAME = 'ميزانيتك الذكية';
-        const FILE_PREFIX = 'backup_';
-        const FILE_EXTENSION = '.db';
 
         let tokenClient;
         let accessToken = null;
@@ -1506,7 +1528,8 @@
             'balanceLog': { elementId: 'balanceLogModal', type: 'modal' },
             'imageSource': { elementId: 'imageSourceModal', type: 'menu' },
             'confirmBackup': { elementId: 'confirmBackupModal', type: 'modal' },
-            'driveBackup': { elementId: 'driveBackupModal', type: 'modal' }
+            'driveBackup': { elementId: 'driveBackupModal', type: 'modal' },
+            'exportName': { elementId: 'exportNameModal', type: 'modal' }
         };
         let historyStack = [];
 
@@ -1539,6 +1562,10 @@
                     renderBalanceLog();
                 } else if (layerName === 'driveBackup') {
                     renderDriveBackupList();
+                } else if (layerName === 'exportName') {
+                    document.getElementById('exportFileName').value = 'بيانات_ميزانيتي';
+                    document.getElementById('exportFileName').focus();
+                    document.getElementById('exportFileName').select();
                 }
             } else if (layer.type === 'menu') {
                 el.classList.add('open');
@@ -1597,7 +1624,6 @@
             }
             initGapi();
             initGis();
-            // استعادة حالة Drive من localStorage
             restoreDriveState();
         };
 
@@ -1614,7 +1640,6 @@
                 appFolderId = savedFolderId || null;
                 isDriveConnected = true;
                 updateDriveUI();
-                // تحميل قائمة النسخ في الخلفية
                 setTimeout(() => loadBackupList(), 500);
             }
         }
@@ -1654,7 +1679,6 @@
                         userEmail = userData.email || '';
                         localStorage.setItem('drive_email', userEmail);
 
-                        // إنشاء مجلد التطبيق
                         await createAppFolder();
 
                         isDriveConnected = true;
@@ -1676,7 +1700,6 @@
             if (!accessToken) return;
 
             try {
-                // البحث عن المجلد
                 const searchResponse = await fetch(
                     `https://www.googleapis.com/drive/v3/files?q=name='${APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id)`, {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -1691,7 +1714,6 @@
                     return;
                 }
 
-                // إنشاء المجلد
                 const metadata = {
                     name: APP_FOLDER_NAME,
                     mimeType: 'application/vnd.google-apps.folder'
@@ -1789,7 +1811,7 @@
 
             try {
                 const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and name contains '${FILE_PREFIX}' and trashed=false&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
+                    `https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and trashed=false&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
                     }
                 );
@@ -1854,7 +1876,7 @@
                     minute: '2-digit'
                 });
                 const size = file.size ? (parseInt(file.size) / 1024).toFixed(1) + 'KB' : 'غير معروف';
-                const name = file.name.replace(FILE_PREFIX, '').replace(FILE_EXTENSION, '');
+                const name = file.name.replace(/\.[^/.]+$/, "");
 
                 tableHtml += `
                         <tr>
@@ -1915,9 +1937,11 @@
                 };
 
                 const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-                const fileName = `${FILE_PREFIX}${timestamp}${FILE_EXTENSION}`;
+                const fileName = `backup_${timestamp}.db`;
 
-                const fileData = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const jsonData = JSON.stringify(data, null, 2);
+                const fileData = new Blob([jsonData], { type: 'application/octet-stream' });
+
                 const metadata = {
                     name: fileName,
                     parents: [appFolderId]
@@ -1965,9 +1989,9 @@
                     throw new Error(`Failed to download file: ${response.status}`);
                 }
 
-                const data = await response.json();
+                const text = await response.text();
+                const data = JSON.parse(text);
 
-                // استعادة البيانات
                 if (data.exp) db.exp = data.exp;
                 if (data.rig) db.rig = data.rig;
                 if (data.deb) db.deb = data.deb;
@@ -1983,7 +2007,6 @@
                         `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
                 }
 
-                // حفظ في IndexedDB
                 await saveData('exp', db.exp);
                 await saveData('rig', db.rig);
                 await saveData('deb', db.deb);
@@ -2027,9 +2050,21 @@
         }
 
         // =============================================================
-        // 4.  EXPORT / IMPORT DB
+        // 4.  EXPORT / IMPORT
         // =============================================================
-        function exportDB() {
+        function openExportNameModal() {
+            openLayer('exportName');
+        }
+
+        function performExport() {
+            const fileName = document.getElementById('exportFileName').value.trim();
+            if (!fileName) {
+                toastMsg('الرجاء إدخال اسم الملف', "error");
+                return;
+            }
+
+            closeLayer('exportName');
+
             if (!IDB_connection) return toastMsg('لا يمكن الاتصال بقاعدة البيانات.', "error");
 
             const data = {
@@ -2047,7 +2082,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `data_${new Date().toISOString().slice(0,10)}${FILE_EXTENSION}`;
+            a.download = `${fileName}.db`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -2069,13 +2104,13 @@
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    const imported = JSON.parse(e.target.result);
+                    const text = e.target.result;
+                    const imported = JSON.parse(text);
 
                     if (!imported.exp || !imported.rig || !imported.deb || !imported.bal) {
                         throw new Error('ملف غير صالح - البيانات غير مكتملة');
                     }
 
-                    // استيراد البيانات
                     db.exp = imported.exp;
                     db.rig = imported.rig;
                     db.deb = imported.deb;
@@ -2090,7 +2125,6 @@
                             `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
                     }
 
-                    // حفظ في IndexedDB
                     await saveData('exp', db.exp);
                     await saveData('rig', db.rig);
                     await saveData('deb', db.deb);
@@ -2335,7 +2369,7 @@
         }
 
         // =============================================================
-        // 9.  CRUD — EXPENSES, RIGHTS, DEBTS (مختصرة)
+        // 9.  CRUD — EXPENSES, RIGHTS, DEBTS
         // =============================================================
         async function addExpense() {
             const eAmount = document.getElementById('eAmount');
