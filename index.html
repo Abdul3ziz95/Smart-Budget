@@ -814,6 +814,117 @@
         body.dark-mode .log-item-hint {
             color: #90e0ef;
         }
+
+        /* ============================================================
+           DRIVE BACKUP LIST
+           ============================================================ */
+        .backup-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--input-bg);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+        .backup-item:hover {
+            border-color: var(--p);
+            box-shadow: var(--shadow-light);
+        }
+        .backup-item .info {
+            flex: 1;
+        }
+        .backup-item .name {
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        .backup-item .meta {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 2px;
+        }
+        body.dark-mode .backup-item .meta {
+            color: #aaa;
+        }
+        .backup-item .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .backup-item .actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .backup-item .actions .restore-btn {
+            color: var(--success);
+        }
+        .backup-item .actions .restore-btn:hover {
+            background: var(--success);
+            color: #fff;
+        }
+        .backup-item .actions .delete-btn {
+            color: var(--danger);
+        }
+        .backup-item .actions .delete-btn:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+        .backup-count {
+            text-align: center;
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 10px;
+        }
+        body.dark-mode .backup-count {
+            color: #aaa;
+        }
+        .drive-connect-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #4285F4;
+            color: #fff;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .drive-connect-btn:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+        }
+        .drive-connect-btn.connected {
+            background: var(--success);
+        }
+        .drive-status {
+            text-align: center;
+            font-size: 0.9em;
+            margin: 8px 0;
+            color: var(--text-dark);
+        }
+        .drive-empty {
+            text-align: center;
+            color: #999;
+            padding: 20px 0;
+        }
+        .drive-empty i {
+            font-size: 2.5em;
+            display: block;
+            margin-bottom: 10px;
+            color: var(--border-color);
+        }
     </style>
 </head>
 
@@ -1109,20 +1220,27 @@
         <div class="sidebar-content">
             <!-- قسم Google Drive الجديد -->
             <div class="card" style="margin:0 15px 15px; border-top:5px solid var(--s);">
-                <p style="font-weight:bold; margin-top:0; color:var(--p);">حساب Google Drive</p>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <button id="googleLoginBtn" class="action" onclick="signIn()" style="background:#4285F4;">
-                        <i class="fab fa-google" style="margin-left:10px;"></i> تسجيل الدخول بحساب Google
-                    </button>
-                    <button id="googleLogoutBtn" class="secondary" onclick="signOut()" style="display:none;">
-                        <i class="fas fa-sign-out-alt" style="margin-left:10px;"></i> تسجيل الخروج
-                    </button>
-                    <p id="userStatus" style="text-align:center; margin:5px 0 0; font-size:0.9em; color:var(--text-dark);">غير مسجل</p>
-                    <button id="syncBtn" class="secondary" onclick="syncNow()" style="display:none;">
-                        <i class="fas fa-sync" style="margin-left:10px;"></i> مزامنة مع Drive الآن
-                    </button>
+                <p style="font-weight:bold; margin-top:0; color:var(--p);">النسخ الاحتياطي مع Google Drive</p>
+
+                <!-- زر الاتصال -->
+                <button id="driveConnectBtn" class="drive-connect-btn" onclick="toggleDriveConnection()">
+                    <i class="fab fa-google-drive"></i>
+                    <span id="driveBtnText">ربط حساب Google Drive</span>
+                </button>
+                <div class="drive-status" id="driveStatus">⚠️ غير متصل</div>
+
+                <!-- قائمة النسخ المحفوظة -->
+                <div id="backupListContainer" style="margin-top:15px;">
+                    <div id="backupList"></div>
+                    <div class="backup-count" id="backupCount">عدد النسخ المرفوعة : 0</div>
                 </div>
+
+                <!-- زر حفظ نسخة جديدة -->
+                <button class="action" onclick="uploadNewBackup()" style="margin-top:10px; background:var(--success);">
+                    <i class="fas fa-cloud-upload-alt" style="margin-left:10px;"></i> حفظ نسخة احتياطية جديدة
+                </button>
             </div>
+
             <!-- بقية عناصر القائمة -->
             <div class="card" style="margin:0 15px 15px; border-top:5px solid var(--s);">
                 <p style="font-weight:bold; margin-top:0; color:var(--p);">الإعدادات العامة</p>
@@ -1207,12 +1325,14 @@
         // 0.  GOOGLE DRIVE CONFIGURATION
         // =============================================================
         const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
-        const API_KEY = ''; // ليس ضرورياً
         const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
-        const FILE_NAME = 'smart_budget_data.json';
+        const FOLDER_NAME = 'SmartBudgetBackups';
+        const FILE_PREFIX = 'smart_budget_backup_';
 
         let tokenClient;
         let accessToken = null;
+        let isDriveConnected = false;
+        let backupFiles = [];
 
         // =============================================================
         // 1.  INDEXED DB SETUP
@@ -1331,7 +1451,6 @@
             } else {
                 historyStack.push(history.state);
             }
-            // تهيئة Google APIs
             initGapi();
             initGis();
         };
@@ -1343,19 +1462,16 @@
             gapi.load('client', async () => {
                 try {
                     await gapi.client.init({
-                        apiKey: API_KEY,
+                        apiKey: '',
                         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
                     });
                     console.log('Google API loaded');
                     const savedToken = localStorage.getItem('drive_token');
                     if (savedToken) {
                         accessToken = savedToken;
-                        updateUIForSignedIn();
-                        loadDataFromDrive().then(data => {
-                            if (data) {
-                                applyCloudData(data);
-                            }
-                        });
+                        isDriveConnected = true;
+                        updateDriveUI();
+                        await loadBackupList();
                     }
                 } catch (error) {
                     console.error('Error loading GAPI:', error);
@@ -1367,7 +1483,7 @@
             tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
                 scope: SCOPES,
-                callback: (resp) => {
+                callback: async (resp) => {
                     if (resp.error) {
                         console.error('Auth error:', resp.error);
                         toastMsg('فشل تسجيل الدخول: ' + resp.error, "error");
@@ -1375,16 +1491,21 @@
                     }
                     accessToken = resp.access_token;
                     localStorage.setItem('drive_token', accessToken);
-                    updateUIForSignedIn();
-                    toastMsg('تم تسجيل الدخول بنجاح ✅', "success");
-                    loadDataFromDrive().then(data => {
-                        if (data) {
-                            applyCloudData(data);
-                        }
-                    });
+                    isDriveConnected = true;
+                    updateDriveUI();
+                    toastMsg('تم ربط حساب Google Drive ✅', "success");
+                    await loadBackupList();
                 },
             });
             console.log('GIS loaded');
+        }
+
+        function toggleDriveConnection() {
+            if (isDriveConnected) {
+                signOut();
+            } else {
+                signIn();
+            }
         }
 
         function signIn() {
@@ -1398,62 +1519,146 @@
         function signOut() {
             accessToken = null;
             localStorage.removeItem('drive_token');
-            updateUIForSignedOut();
-            toastMsg('تم تسجيل الخروج', "info");
-            loadAllData().then(() => {
-                updateStats();
-                updateBalanceDisplay();
-            });
+            isDriveConnected = false;
+            backupFiles = [];
+            updateDriveUI();
+            toastMsg('تم فصل حساب Google Drive', "info");
         }
 
-        function updateUIForSignedIn() {
-            document.getElementById('googleLoginBtn').style.display = 'none';
-            document.getElementById('googleLogoutBtn').style.display = 'inline-block';
-            document.getElementById('syncBtn').style.display = 'inline-block';
-            document.getElementById('userStatus').textContent = '✅ متصل بـ Drive';
+        function updateDriveUI() {
+            const btn = document.getElementById('driveConnectBtn');
+            const status = document.getElementById('driveStatus');
+            const btnText = document.getElementById('driveBtnText');
+
+            if (isDriveConnected) {
+                btn.className = 'drive-connect-btn connected';
+                btnText.textContent = '🔗 متصل بحساب Google Drive';
+                status.innerHTML = '✅ متصل';
+                status.style.color = 'var(--success)';
+                loadBackupList();
+            } else {
+                btn.className = 'drive-connect-btn';
+                btnText.textContent = 'ربط حساب Google Drive';
+                status.innerHTML = '⚠️ غير متصل';
+                status.style.color = 'var(--danger)';
+                document.getElementById('backupList').innerHTML = '';
+                document.getElementById('backupCount').textContent = 'عدد النسخ المرفوعة : 0';
+            }
         }
 
-        function updateUIForSignedOut() {
-            document.getElementById('googleLoginBtn').style.display = 'inline-block';
-            document.getElementById('googleLogoutBtn').style.display = 'none';
-            document.getElementById('syncBtn').style.display = 'none';
-            document.getElementById('userStatus').textContent = '❌ غير مسجل';
-        }
-
-        async function saveDataToDrive(data) {
+        async function loadBackupList() {
             if (!accessToken) {
-                toastMsg('الرجاء تسجيل الدخول أولاً', "error");
-                return false;
+                backupFiles = [];
+                renderBackupList();
+                return;
             }
 
             try {
-                // البحث عن الملف القديم
                 const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and 'appDataFolder' in parents&fields=files(id)`, {
+                    `https://www.googleapis.com/drive/v3/files?q=name contains '${FILE_PREFIX}' and 'appDataFolder' in parents&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
                     }
                 );
-                const searchResult = await searchResponse.json();
-                const existingFile = searchResult.files && searchResult.files[0];
+                const result = await searchResponse.json();
+                backupFiles = result.files || [];
+                renderBackupList();
+            } catch (error) {
+                console.error('Error loading backup list:', error);
+                toastMsg('فشل تحميل قائمة النسخ الاحتياطية', "error");
+            }
+        }
 
+        function renderBackupList() {
+            const container = document.getElementById('backupList');
+            const countEl = document.getElementById('backupCount');
+
+            if (!isDriveConnected) {
+                container.innerHTML = `
+                    <div class="drive-empty">
+                        <i class="fab fa-google-drive"></i>
+                        <p>قم بربط حساب Google Drive لعرض النسخ الاحتياطية</p>
+                    </div>
+                `;
+                countEl.textContent = 'عدد النسخ المرفوعة : 0';
+                return;
+            }
+
+            if (backupFiles.length === 0) {
+                container.innerHTML = `
+                    <div class="drive-empty">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>لا توجد نسخ احتياطية محفوظة</p>
+                        <p style="font-size:0.85em;color:#888;">قم بحفظ نسخة جديدة باستخدام الزر أدناه</p>
+                    </div>
+                `;
+                countEl.textContent = 'عدد النسخ المرفوعة : 0';
+                return;
+            }
+
+            container.innerHTML = backupFiles.map(file => {
+                const date = new Date(file.createdTime);
+                const formattedDate = date.toLocaleString('ar-EG', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const size = file.size ? (parseInt(file.size) / 1024).toFixed(1) + 'KB' : 'غير معروف';
+                const name = file.name.replace(FILE_PREFIX, '').replace('.json', '');
+
+                return `
+                    <div class="backup-item">
+                        <div class="info">
+                            <div class="name">${name}</div>
+                            <div class="meta">📅 ${formattedDate} · 💾 ${size}</div>
+                        </div>
+                        <div class="actions">
+                            <button class="restore-btn" onclick="restoreBackup('${file.id}')" title="استعادة النسخة">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="delete-btn" onclick="deleteBackup('${file.id}')" title="حذف النسخة">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            countEl.textContent = `عدد النسخ المرفوعة : ${backupFiles.length}`;
+        }
+
+        async function uploadNewBackup() {
+            if (!accessToken) {
+                toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
+                return;
+            }
+
+            const data = {
+                exp: db.exp,
+                rig: db.rig,
+                deb: db.deb,
+                bal: db.bal,
+                currency: currentCurrency,
+                backupDate: new Date().toISOString()
+            };
+
+            const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+            const fileName = `${FILE_PREFIX}${timestamp}.json`;
+
+            try {
                 const fileData = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 const metadata = {
-                    name: FILE_NAME,
+                    name: fileName,
                     parents: ['appDataFolder']
                 };
-
-                let uploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-                if (existingFile) {
-                    uploadUrl = `https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=multipart`;
-                }
 
                 const form = new FormData();
                 form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                 form.append('file', fileData);
 
-                const method = existingFile ? 'PATCH' : 'POST';
-                const response = await fetch(uploadUrl, {
-                    method: method,
+                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
                     headers: { 'Authorization': `Bearer ${accessToken}` },
                     body: form
                 });
@@ -1463,108 +1668,81 @@
                     throw new Error(`Upload failed: ${response.status} - ${errorText}`);
                 }
 
-                console.log('File saved to Drive');
-                toastMsg('تم حفظ البيانات في Google Drive 💾', "success");
-                return true;
+                toastMsg('تم حفظ النسخة الاحتياطية بنجاح 💾', "success");
+                await loadBackupList();
             } catch (error) {
-                console.error('Error saving to Drive:', error);
-                toastMsg('فشل الحفظ في Drive: ' + error.message, "error");
-                return false;
+                console.error('Error uploading backup:', error);
+                toastMsg('فشل حفظ النسخة الاحتياطية: ' + error.message, "error");
             }
         }
 
-        async function loadDataFromDrive() {
-            if (!accessToken) {
-                console.log('No access token, cannot load from Drive');
-                return null;
-            }
+        async function restoreBackup(fileId) {
+            if (!confirm('هل أنت متأكد من استعادة هذه النسخة؟ سيتم استبدال جميع البيانات الحالية.')) return;
 
             try {
-                const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and 'appDataFolder' in parents&fields=files(id)`, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    }
-                );
-                const searchResult = await searchResponse.json();
-
-                if (!searchResult.files || searchResult.files.length === 0) {
-                    console.log('No file found on Drive');
-                    return null;
-                }
-
-                const fileId = searchResult.files[0].id;
-                const fileResponse = await fetch(
+                const response = await fetch(
                     `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
                     }
                 );
 
-                if (!fileResponse.ok) {
-                    throw new Error(`Failed to download file: ${fileResponse.status}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to download file: ${response.status}`);
                 }
 
-                const data = await fileResponse.json();
-                console.log('Data loaded from Drive successfully');
-                return data;
+                const data = await response.json();
+
+                // استعادة البيانات
+                if (data.exp) db.exp = data.exp;
+                if (data.rig) db.rig = data.rig;
+                if (data.deb) db.deb = data.deb;
+                if (data.bal) {
+                    db.bal = data.bal;
+                    currentBalance = db.bal.amount || 0;
+                }
+                if (data.currency) {
+                    currentCurrency = data.currency;
+                    localStorage.setItem('currencyCode', currentCurrency.code);
+                    document.getElementById('currentCurrencyDisplay').innerHTML =
+                        `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+                }
+
+                // حفظ في IndexedDB
+                await saveData('exp', db.exp);
+                await saveData('rig', db.rig);
+                await saveData('deb', db.deb);
+                await saveData('bal', db.bal);
+
+                updateStats();
+                updateBalanceDisplay();
+                toastMsg('تم استعادة البيانات بنجاح 🔄', "success");
             } catch (error) {
-                console.error('Error loading from Drive:', error);
-                toastMsg('فشل تحميل البيانات من Drive', "error");
-                return null;
+                console.error('Error restoring backup:', error);
+                toastMsg('فشل استعادة النسخة: ' + error.message, "error");
             }
         }
 
-        function applyCloudData(cloudData) {
-            if (!cloudData) return;
+        async function deleteBackup(fileId) {
+            if (!confirm('هل أنت متأكد من حذف هذه النسخة الاحتياطية؟')) return;
 
-            if (cloudData.exp) db.exp = cloudData.exp;
-            if (cloudData.rig) db.rig = cloudData.rig;
-            if (cloudData.deb) db.deb = cloudData.deb;
-            if (cloudData.bal) {
-                db.bal = cloudData.bal;
-                currentBalance = db.bal.amount || 0;
+            try {
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${fileId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Delete failed: ${response.status}`);
+                }
+
+                toastMsg('تم حذف النسخة الاحتياطية 🗑️', "success");
+                await loadBackupList();
+            } catch (error) {
+                console.error('Error deleting backup:', error);
+                toastMsg('فشل حذف النسخة: ' + error.message, "error");
             }
-
-            saveData('exp', db.exp);
-            saveData('rig', db.rig);
-            saveData('deb', db.deb);
-            saveData('bal', db.bal);
-
-            updateStats();
-            updateBalanceDisplay();
-            toastMsg('تم مزامنة البيانات من Drive 🔄', "success");
-        }
-
-        async function syncNow() {
-            if (!accessToken) {
-                toastMsg('الرجاء تسجيل الدخول أولاً', "error");
-                return;
-            }
-
-            toastMsg('جاري المزامنة...', "info");
-            const cloudData = await loadDataFromDrive();
-            if (cloudData) {
-                applyCloudData(cloudData);
-            } else {
-                const localData = {
-                    exp: db.exp,
-                    rig: db.rig,
-                    deb: db.deb,
-                    bal: db.bal
-                };
-                await saveDataToDrive(localData);
-            }
-        }
-
-        async function autoSyncToDrive() {
-            if (!accessToken) return;
-            const data = {
-                exp: db.exp,
-                rig: db.rig,
-                deb: db.deb,
-                bal: db.bal,
-                lastUpdated: new Date().toISOString()
-            };
-            await saveDataToDrive(data);
         }
 
         // =============================================================
@@ -1729,7 +1907,6 @@
             try {
                 await saveData('bal', db.bal);
                 updateBalanceDisplay();
-                await autoSyncToDrive();
                 return true;
             } catch (e) {
                 console.error('Balance save failed', e);
@@ -1755,7 +1932,7 @@
             const changes = db.bal.changes || [];
             if (!changes.length) {
                 el.innerHTML =
-                '<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>لا توجد حركات رصيد.</p>';
+                    '<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>لا توجد حركات رصيد.</p>';
                 return;
             }
             el.innerHTML = changes.map(i => {
@@ -1763,17 +1940,17 @@
                 const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
                 const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
                 return `
-              <div class="list-item" style="border-right-color:${color};">
-                <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
-                  <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
-                  <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
-                </div>
-                <div class="details">
-                  <span>الرصيد بعد: ${formatCurrency(i.الرصيد_بعد_العملية)}</span>
-                  <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span>
-                </div>
-              </div>
-            `;
+                  <div class="list-item" style="border-right-color:${color};">
+                    <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
+                      <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
+                      <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
+                    </div>
+                    <div class="details">
+                      <span>الرصيد بعد: ${formatCurrency(i.الرصيد_بعد_العملية)}</span>
+                      <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span>
+                    </div>
+                  </div>
+                `;
             }).join('');
         }
 
@@ -1816,7 +1993,6 @@
                 await processBalanceChange(amount, 'expense', `مصروف: ${data.الفئة} (${data.الوصف})`, data.clientId,
                     isEditing, oldAmount);
                 toastMsg(isEditing ? 'تم تعديل المصروف ✏️' : 'تم حفظ المصروف ✅', "success");
-                await autoSyncToDrive();
                 postSaveCleanup(isEditing, 'exp');
             } catch (err) { toastMsg('فشل الحفظ.', "error");
                 console.error(err); }
@@ -1830,9 +2006,9 @@
             container.innerHTML = '';
 
             let paidHtml = `
-            <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل / المدفوع" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
-            <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن</span>
-          `;
+                <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل / المدفوع" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
+                <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن</span>
+              `;
             container.innerHTML = paidHtml;
 
             const statusEl = document.getElementById('rStatus');
@@ -1889,7 +2065,6 @@
                 await processBalanceChange(paid, 'right_collection', `تحصيل: ${data.النوع} (${data.الجهة})`, data.clientId,
                     isEditing, oldPaid);
                 toastMsg(isEditing ? 'تم تعديل الحق ✏️' : 'تم حفظ الحق ✅', "success");
-                await autoSyncToDrive();
                 postSaveCleanup(isEditing, 'rig');
             } catch (err) { toastMsg('فشل الحفظ.', "error");
                 console.error(err); }
@@ -1911,18 +2086,18 @@
                 statusSelect.value = '';
 
                 let html = `
-              <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
-              <span class="field-hint">المبلغ الكلي للالتزام</span>
-            `;
+                    <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
+                    <span class="field-hint">المبلغ الكلي للالتزام</span>
+                  `;
                 if (type === 'قرض') {
                     html += `
-                <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
-                <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
-              `;
+                        <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
+                        <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
+                      `;
                 } else {
                     html += `
-                <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
-              `;
+                        <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
+                      `;
                 }
                 container.innerHTML = html;
             } else {
@@ -2007,7 +2182,6 @@
                 await processBalanceChange(paidAmount, 'debt_payment', `دفعة: ${data.النوع} (${data.الجهة})`, data.clientId,
                     isEditing, oldPaid);
                 toastMsg(isEditing ? 'تم تعديل الالتزام ✏️' : 'تم حفظ الالتزام ✅', "success");
-                await autoSyncToDrive();
                 postSaveCleanup(isEditing, 'deb');
             } catch (err) { toastMsg('فشل الحفظ.', "error");
                 console.error(err); }
@@ -2045,14 +2219,14 @@
             html += `</div>`;
             if (o.صورة && type === 'exp') {
                 html += `<div class="card" style="border-top-color:var(--s);">
-              <h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> صورة الفاتورة</h3>
-              <img src="${o.صورة}" alt="الفاتورة" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" />
-            </div>`;
+                  <h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> صورة الفاتورة</h3>
+                  <img src="${o.صورة}" alt="الفاتورة" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" />
+                </div>`;
             }
             html += `<div style="display:flex;gap:10px;margin-top:20px;">
-              <button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> تعديل</button>
-              <button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> حذف</button>
-            </div>`;
+                  <button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> تعديل</button>
+                  <button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> حذف</button>
+                </div>`;
             el.innerHTML = html;
         }
 
@@ -2123,18 +2297,18 @@
                 const itemId = i.clientId || i.id || `temp-${Date.now()}`;
 
                 return `
-              <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
-                <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
-                  <span>${imgIcon} ${desc} ${entityDisplay}</span>
-                  <span style="color:${amountColor};">${amountDisplay}</span>
-                </div>
-                <div class="details">
-                  <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
-                  <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
-                </div>
-                <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
-              </div>
-            `;
+                      <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
+                        <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+                          <span>${imgIcon} ${desc} ${entityDisplay}</span>
+                          <span style="color:${amountColor};">${amountDisplay}</span>
+                        </div>
+                        <div class="details">
+                          <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
+                          <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
+                        </div>
+                        <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
+                      </div>
+                    `;
             }).join('');
         }
 
@@ -2223,7 +2397,6 @@
                 }
                 editMode = null;
                 await loadAllData();
-                await autoSyncToDrive();
                 toastMsg('تم الحذف بنجاح 🗑️', "success");
                 updateStats();
                 updateBalanceDisplay();
@@ -2265,11 +2438,11 @@
                 c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
             );
             list.innerHTML = filtered.map(c => `
-            <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
-              <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
-              ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
-            </button>
-          `).join('');
+                <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
+                  <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
+                  ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
+                </button>
+              `).join('');
         }
 
         function setCurrency(code) {
@@ -2324,7 +2497,6 @@
                     await loadAllData();
                     updateStats();
                     updateBalanceDisplay();
-                    await autoSyncToDrive();
                     toastMsg('تم استيراد البيانات وتحديثها! 📥', "success");
                 } catch (err) { toastMsg('فشل الاستيراد. تأكد من صيغة الملف.', "error");
                     console.error(err); } finally { event.target.value = null; }
@@ -2485,7 +2657,7 @@
                     IDB_connection = e.target.result;
                     STORE_NAMES.forEach(sn => {
                         if (IDB_connection.objectStoreNames.contains(sn)) IDB_connection.deleteObjectStore(
-                        sn);
+                            sn);
                         const kp = (sn === 'bal') ? 'clientId' : 'id';
                         const auto = (sn !== 'bal');
                         const store = IDB_connection.createObjectStore(sn, { keyPath: kp, autoIncrement: auto });
@@ -2585,6 +2757,8 @@
                 `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
             updateBalanceDisplay();
             updateStats();
+            // تحديث حالة Drive
+            updateDriveUI();
         });
     </script>
 </body>
