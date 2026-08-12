@@ -503,46 +503,113 @@
             padding: 15px 0;
             overflow-y: auto;
         }
+
+        /* ===== SIDEBAR MENU ITEMS - بدون بطاقات ===== */
         .sidebar-menu-item {
-            padding: 15px 20px;
-            margin: 5px 0;
+            padding: 14px 20px;
+            margin: 2px 0;
             display: flex;
             align-items: center;
             gap: 15px;
             font-size: 17px;
             color: var(--text-dark);
             cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+            transition: all 0.2s;
+            border-right: 3px solid transparent;
+            background: var(--card-bg);
         }
         .sidebar-menu-item:hover {
-            background: var(--s);
-            color: var(--text-dark);
+            background: color-mix(in srgb, var(--bg) 85%, var(--p));
+            border-right-color: var(--p);
         }
         .sidebar-menu-item i {
             font-size: 1.2em;
             width: 28px;
+            text-align: center;
+            color: var(--p);
+        }
+        .sidebar-menu-item .badge {
+            margin-right: auto;
+            font-size: 0.75em;
+            padding: 2px 10px;
+            border-radius: 12px;
+            background: var(--input-bg);
+            color: #888;
+            border: 1px solid var(--border-color);
+        }
+        body.dark-mode .sidebar-menu-item .badge {
+            color: #aaa;
         }
 
-        .switch-container {
+        /* ===== Drive specific ===== */
+        .sidebar-menu-item.drive-item {
+            border-right-color: #4285F4;
+        }
+        .sidebar-menu-item.drive-item i {
+            color: #4285F4;
+        }
+        .sidebar-menu-item.drive-item.connected {
+            border-right-color: var(--success);
+        }
+        .sidebar-menu-item.drive-item.connected i {
+            color: var(--success);
+        }
+        .sidebar-menu-item.drive-item .drive-status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background: #999;
+        }
+        .sidebar-menu-item.drive-item.connected .drive-status-dot {
+            background: var(--success);
+        }
+        .sidebar-menu-item.drive-item .drive-email {
+            font-size: 0.75em;
+            color: #888;
+            margin-right: auto;
+        }
+        body.dark-mode .sidebar-menu-item.drive-item .drive-email {
+            color: #aaa;
+        }
+
+        /* ===== Divider ===== */
+        .sidebar-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 6px 20px;
+        }
+
+        /* ===== Switch (Dark Mode) in sidebar ===== */
+        .sidebar-switch-item {
+            padding: 12px 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 15px 20px;
+            gap: 15px;
             font-size: 17px;
             color: var(--text-dark);
+            background: var(--card-bg);
         }
-        .switch {
+        .sidebar-switch-item i {
+            font-size: 1.2em;
+            width: 28px;
+            text-align: center;
+            color: var(--p);
+        }
+        .sidebar-switch-item .switch {
+            margin-right: auto;
             position: relative;
             display: inline-block;
             width: 45px;
             height: 25px;
         }
-        .switch input {
+        .sidebar-switch-item .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-        .slider {
+        .sidebar-switch-item .slider {
             position: absolute;
             cursor: pointer;
             top: 0;
@@ -553,7 +620,7 @@
             transition: .4s;
             border-radius: 25px;
         }
-        .slider:before {
+        .sidebar-switch-item .slider:before {
             position: absolute;
             content: "";
             height: 19px;
@@ -564,11 +631,206 @@
             transition: .4s;
             border-radius: 50%;
         }
-        input:checked+.slider {
+        .sidebar-switch-item input:checked+.slider {
             background-color: var(--p);
         }
-        input:checked+.slider:before {
+        .sidebar-switch-item input:checked+.slider:before {
             transform: translateX(20px);
+        }
+
+        /* ===== Currency item ===== */
+        .sidebar-currency-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 17px;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--card-bg);
+            border: none;
+            width: 100%;
+            text-align: right;
+            font-family: inherit;
+        }
+        .sidebar-currency-item:hover {
+            background: color-mix(in srgb, var(--bg) 85%, var(--p));
+        }
+        .sidebar-currency-item i {
+            font-size: 1.2em;
+            width: 28px;
+            text-align: center;
+            color: var(--p);
+        }
+        .sidebar-currency-item .currency-label {
+            margin-right: auto;
+            font-size: 0.85em;
+            color: #888;
+        }
+        body.dark-mode .sidebar-currency-item .currency-label {
+            color: #aaa;
+        }
+
+        /* ===== DRIVE BACKUP LIST in modal ===== */
+        .backup-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.9em;
+        }
+        .backup-table th {
+            text-align: right;
+            padding: 10px 8px;
+            border-bottom: 2px solid var(--border-color);
+            color: #888;
+            font-weight: 700;
+            font-size: 0.85em;
+        }
+        .backup-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .backup-table tr:hover td {
+            background: color-mix(in srgb, var(--input-bg) 90%, var(--p));
+        }
+        .backup-table .file-name {
+            font-weight: 600;
+            color: var(--p);
+        }
+        .backup-table .file-size {
+            color: #888;
+            font-size: 0.85em;
+        }
+        body.dark-mode .backup-table .file-size {
+            color: #aaa;
+        }
+        .backup-table .file-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+        .backup-table .file-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: all 0.2s;
+        }
+        .backup-table .file-actions .restore-btn {
+            color: var(--success);
+        }
+        .backup-table .file-actions .restore-btn:hover {
+            background: var(--success);
+            color: #fff;
+        }
+        .backup-table .file-actions .delete-btn {
+            color: var(--danger);
+        }
+        .backup-table .file-actions .delete-btn:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .backup-count {
+            text-align: center;
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 12px;
+            padding: 8px;
+            background: var(--input-bg);
+            border-radius: 8px;
+        }
+        body.dark-mode .backup-count {
+            color: #aaa;
+        }
+
+        .drive-empty {
+            text-align: center;
+            color: #999;
+            padding: 25px 0;
+        }
+        .drive-empty i {
+            font-size: 2.5em;
+            display: block;
+            margin-bottom: 10px;
+            color: var(--border-color);
+        }
+
+        /* ===== Confirm backup modal ===== */
+        #confirmBackupModal .modal-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        #confirmBackupModal .modal-content i {
+            font-size: 3em;
+            color: #4285F4;
+            margin-bottom: 15px;
+        }
+        #confirmBackupModal .modal-content p {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        #confirmBackupModal .modal-content .btn-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+        #confirmBackupModal .modal-content .btn-group button {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        #confirmBackupModal .modal-content .btn-group .confirm-btn {
+            background: #4285F4;
+            color: #fff;
+        }
+        #confirmBackupModal .modal-content .btn-group .confirm-btn:hover {
+            background: #3367d6;
+        }
+        #confirmBackupModal .modal-content .btn-group .cancel-btn {
+            background: var(--input-bg);
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+        }
+        #confirmBackupModal .modal-content .btn-group .cancel-btn:hover {
+            background: color-mix(in srgb, var(--input-bg) 80%, #999);
+        }
+
+        /* ===== DRIVE BACKUP MODAL ===== */
+        #driveBackupModal .modal-content {
+            padding: 15px;
+        }
+        #driveBackupModal .drive-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+        #driveBackupModal .drive-modal-header .status {
+            font-size: 0.9em;
+            color: #888;
+        }
+        #driveBackupModal .drive-modal-header .status.connected {
+            color: var(--success);
+        }
+        #driveBackupModal .drive-modal-header .status.disconnected {
+            color: var(--danger);
         }
 
         .list-item {
@@ -741,205 +1003,6 @@
         }
         body.dark-mode .log-item-hint {
             color: #90e0ef;
-        }
-
-        /* ===== DRIVE BACKUP STYLES ===== */
-        .drive-backup-card {
-            border-top: 5px solid #4285F4 !important;
-        }
-
-        .drive-main-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: #4285F4;
-            color: #fff;
-            border: none;
-            padding: 18px;
-            width: 100%;
-            border-radius: 12px;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: inherit;
-            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
-        }
-        .drive-main-btn:hover {
-            background: #3367d6;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
-        }
-        .drive-main-btn i {
-            font-size: 26px;
-        }
-        .drive-main-btn.connected {
-            background: var(--success);
-            box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
-        }
-        .drive-main-btn.connected:hover {
-            background: #21867a;
-        }
-
-        .drive-status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            margin-top: 10px;
-            background: var(--input-bg);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 0.9em;
-        }
-        .drive-status-bar .status-text {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .drive-status-bar .status-text.connected {
-            color: var(--success);
-        }
-        .drive-status-bar .status-text.disconnected {
-            color: var(--danger);
-        }
-
-        .backup-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
-            font-size: 0.9em;
-        }
-        .backup-table th {
-            text-align: right;
-            padding: 10px 8px;
-            border-bottom: 2px solid var(--border-color);
-            color: #888;
-            font-weight: 700;
-            font-size: 0.85em;
-        }
-        .backup-table td {
-            padding: 12px 8px;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-        }
-        .backup-table tr:hover td {
-            background: color-mix(in srgb, var(--input-bg) 90%, var(--p));
-        }
-        .backup-table .file-name {
-            font-weight: 600;
-            color: var(--p);
-        }
-        .backup-table .file-size {
-            color: #888;
-            font-size: 0.85em;
-        }
-        body.dark-mode .backup-table .file-size {
-            color: #aaa;
-        }
-        .backup-table .file-actions {
-            display: flex;
-            gap: 6px;
-            justify-content: flex-end;
-        }
-        .backup-table .file-actions button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 6px 8px;
-            border-radius: 6px;
-            font-size: 1em;
-            transition: all 0.2s;
-        }
-        .backup-table .file-actions .restore-btn {
-            color: var(--success);
-        }
-        .backup-table .file-actions .restore-btn:hover {
-            background: var(--success);
-            color: #fff;
-        }
-        .backup-table .file-actions .delete-btn {
-            color: var(--danger);
-        }
-        .backup-table .file-actions .delete-btn:hover {
-            background: var(--danger);
-            color: #fff;
-        }
-
-        .backup-count {
-            text-align: center;
-            font-size: 0.85em;
-            color: #888;
-            margin-top: 12px;
-            padding: 8px;
-            background: var(--input-bg);
-            border-radius: 8px;
-        }
-        body.dark-mode .backup-count {
-            color: #aaa;
-        }
-
-        .drive-empty {
-            text-align: center;
-            color: #999;
-            padding: 25px 0;
-        }
-        .drive-empty i {
-            font-size: 2.5em;
-            display: block;
-            margin-bottom: 10px;
-            color: var(--border-color);
-        }
-
-        /* Confirm backup modal */
-        #confirmBackupModal .modal-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 30px 20px;
-            text-align: center;
-        }
-        #confirmBackupModal .modal-content i {
-            font-size: 3em;
-            color: #4285F4;
-            margin-bottom: 15px;
-        }
-        #confirmBackupModal .modal-content p {
-            font-size: 1.1em;
-            margin-bottom: 20px;
-        }
-        #confirmBackupModal .modal-content .btn-group {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-        }
-        #confirmBackupModal .modal-content .btn-group button {
-            flex: 1;
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 17px;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-        #confirmBackupModal .modal-content .btn-group .confirm-btn {
-            background: #4285F4;
-            color: #fff;
-        }
-        #confirmBackupModal .modal-content .btn-group .confirm-btn:hover {
-            background: #3367d6;
-        }
-        #confirmBackupModal .modal-content .btn-group .cancel-btn {
-            background: var(--input-bg);
-            color: var(--text-dark);
-            border: 1px solid var(--border-color);
-        }
-        #confirmBackupModal .modal-content .btn-group .cancel-btn:hover {
-            background: color-mix(in srgb, var(--input-bg) 80%, #999);
         }
     </style>
 </head>
@@ -1243,75 +1306,99 @@
     </div>
 
     <!-- ==========================================================
+    DRIVE BACKUP MODAL (لعرض النسخ المحفوظة)
+    ========================================================== -->
+    <div class="modal" id="driveBackupModal">
+        <header>
+            <span class="title"><i class="fab fa-google-drive"></i> النسخ الاحتياطية</span>
+            <button onclick="closeLayer('driveBackup')"><i class="fas fa-times"></i></button>
+        </header>
+        <div class="modal-content">
+            <div class="drive-modal-header">
+                <span class="status" id="driveModalStatus">⚠️ غير متصل</span>
+                <button class="secondary" onclick="refreshBackupList()" style="width:auto;padding:6px 16px;margin:0;">
+                    <i class="fas fa-sync"></i> تحديث
+                </button>
+            </div>
+            <div id="driveBackupList"></div>
+            <div class="backup-count" id="driveBackupCount">عدد النسخ المرفوعة : 0</div>
+            <button class="action" onclick="openBackupConfirm()" style="margin-top:15px;background:#4285F4;">
+                <i class="fas fa-cloud-upload-alt" style="margin-left:10px;"></i> حفظ نسخة احتياطية جديدة
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================================
     SIDEBAR
     ========================================================== -->
     <div class="sidebar-overlay" onclick="closeLayer('sidebar')"></div>
     <div class="sidebar" id="appSidebar">
         <div class="sidebar-header">
-            <span>الإعدادات والبيانات</span>
+            <span>القائمة</span>
             <button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button>
         </div>
         <div class="sidebar-content">
-            <!-- قسم Google Drive الجديد - زر واحد فقط -->
-            <div class="card drive-backup-card" style="margin:0 15px 15px;">
-                <p style="font-weight:bold; margin-top:0; color:#4285F4;">
-                    <i class="fab fa-google-drive"></i> النسخ الاحتياطي مع Google Drive
-                </p>
 
-                <!-- الزر الرئيسي -->
-                <button id="driveMainBtn" class="drive-main-btn" onclick="handleDriveClick()">
-                    <i class="fab fa-google-drive"></i>
-                    <span id="driveBtnText">Google Drive</span>
-                </button>
-
-                <!-- حالة الاتصال -->
-                <div class="drive-status-bar">
-                    <span class="status-text" id="driveStatusText">
-                        <i class="fas fa-circle" style="font-size:0.7em;"></i>
-                        <span id="driveStatusLabel">غير متصل</span>
-                    </span>
-                    <span id="driveAccountEmail" style="font-size:0.85em;color:#888;"></span>
-                </div>
-
-                <!-- قائمة النسخ المحفوظة -->
-                <div id="backupListContainer" style="margin-top:12px;">
-                    <div id="backupList"></div>
-                    <div class="backup-count" id="backupCount">عدد النسخ المرفوعة : 0</div>
-                </div>
+            <!-- زر Google Drive -->
+            <div class="sidebar-menu-item drive-item" id="driveMenuItem" onclick="handleDriveClick()">
+                <i class="fab fa-google-drive"></i>
+                <span id="driveMenuText">Google Drive</span>
+                <span class="drive-status-dot" id="driveStatusDot"></span>
+                <span class="drive-email" id="driveMenuEmail"></span>
             </div>
 
-            <!-- بقية عناصر القائمة -->
-            <div class="card" style="margin:0 15px 15px; border-top:5px solid var(--s);">
-                <p style="font-weight:bold; margin-top:0; color:var(--p);">الإعدادات العامة</p>
+            <div class="sidebar-divider"></div>
 
-                <div class="switch-container">
-                    <i class="fas fa-moon" style="margin-left:10px;"></i> <span>الوضع الليلي</span>
-                    <label class="switch">
-                        <input type="checkbox" id="darkModeToggle" onclick="toggleDarkMode()" />
-                        <span class="slider"></span>
-                    </label>
-                </div>
-
-                <button class="secondary" onclick="openCurrencyModal()" style="display:flex; justify-content:space-between; align-items:center; border:none; background:var(--card-bg); margin-top:15px;">
-                    <span id="currentCurrencyDisplay" style="font-weight:bold;">العملة: جنيه سوداني (ج.س)</span>
-                    <span style="color:var(--p);"><i class="fas fa-exchange-alt"></i> تغيير</span>
-                </button>
+            <!-- تبديل الوضع الليلي -->
+            <div class="sidebar-switch-item">
+                <i class="fas fa-moon"></i>
+                <span>الوضع الليلي</span>
+                <label class="switch">
+                    <input type="checkbox" id="darkModeToggle" onclick="toggleDarkMode()" />
+                    <span class="slider"></span>
+                </label>
             </div>
 
+            <div class="sidebar-divider"></div>
+
+            <!-- تغيير العملة -->
+            <button class="sidebar-currency-item" onclick="openCurrencyModal()">
+                <i class="fas fa-exchange-alt"></i>
+                <span>تغيير العملة</span>
+                <span class="currency-label" id="sidebarCurrencyLabel">ج.س</span>
+            </button>
+
+            <div class="sidebar-divider"></div>
+
+            <!-- تصدير JSON -->
             <div class="sidebar-menu-item" onclick="exportData()">
-                <i class="fas fa-file-export"></i> <span>تصدير البيانات (JSON)</span>
+                <i class="fas fa-file-export"></i>
+                <span>تصدير البيانات (JSON)</span>
+                <span class="badge">.json</span>
             </div>
+
+            <!-- استيراد JSON -->
             <div class="sidebar-menu-item" onclick="document.getElementById('importFile').click()">
-                <i class="fas fa-file-import"></i> <span>استيراد البيانات (JSON)</span>
+                <i class="fas fa-file-import"></i>
+                <span>استيراد البيانات (JSON)</span>
+                <span class="badge">.json</span>
             </div>
             <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)" />
 
+            <div class="sidebar-divider"></div>
+
+            <!-- حول التطبيق -->
             <div class="sidebar-menu-item" onclick="openAboutModal()">
-                <i class="fas fa-info-circle"></i> <span>حول التطبيق</span>
+                <i class="fas fa-info-circle"></i>
+                <span>حول التطبيق</span>
             </div>
+
+            <!-- إعادة تعيين -->
             <div class="sidebar-menu-item" onclick="confirmResetData()" style="color:var(--danger);">
-                <i class="fas fa-exclamation-triangle"></i> <span>إعادة تعيين البيانات</span>
+                <i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i>
+                <span>إعادة تعيين البيانات</span>
             </div>
+
         </div>
     </div>
 
@@ -1403,7 +1490,8 @@
             'balanceAction': { elementId: 'balanceActionModal', type: 'modal' },
             'balanceLog': { elementId: 'balanceLogModal', type: 'modal' },
             'imageSource': { elementId: 'imageSourceModal', type: 'menu' },
-            'confirmBackup': { elementId: 'confirmBackupModal', type: 'modal' }
+            'confirmBackup': { elementId: 'confirmBackupModal', type: 'modal' },
+            'driveBackup': { elementId: 'driveBackupModal', type: 'modal' }
         };
         let historyStack = [];
 
@@ -1434,6 +1522,8 @@
                     renderCurrencyList();
                 } else if (layerName === 'balanceLog') {
                     renderBalanceLog();
+                } else if (layerName === 'driveBackup') {
+                    renderDriveBackupList();
                 }
             } else if (layer.type === 'menu') {
                 el.classList.add('open');
@@ -1535,7 +1625,6 @@
                     accessToken = resp.access_token;
                     localStorage.setItem('drive_token', accessToken);
 
-                    // Get user email
                     try {
                         const userInfo = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
                             headers: { 'Authorization': `Bearer ${accessToken}` }
@@ -1552,6 +1641,8 @@
                     updateDriveUI();
                     toastMsg('تم ربط حساب Google Drive ✅', "success");
                     await loadBackupList();
+                    // فتح نافذة النسخ الاحتياطي بعد الاتصال
+                    openLayer('driveBackup');
                 },
             });
             console.log('GIS loaded');
@@ -1561,8 +1652,7 @@
             if (!isDriveConnected) {
                 signIn();
             } else {
-                // إذا كان متصلاً، نفتح نافذة تأكيد النسخ الاحتياطي
-                openLayer('confirmBackup');
+                openLayer('driveBackup');
             }
         }
 
@@ -1586,34 +1676,40 @@
         }
 
         function updateDriveUI() {
-            const btn = document.getElementById('driveMainBtn');
-            const btnText = document.getElementById('driveBtnText');
-            const statusText = document.getElementById('driveStatusText');
-            const statusLabel = document.getElementById('driveStatusLabel');
-            const emailEl = document.getElementById('driveAccountEmail');
+            const menuItem = document.getElementById('driveMenuItem');
+            const menuText = document.getElementById('driveMenuText');
+            const dot = document.getElementById('driveStatusDot');
+            const email = document.getElementById('driveMenuEmail');
 
             if (isDriveConnected) {
-                btn.className = 'drive-main-btn connected';
-                btnText.textContent = '📁 Google Drive';
-                statusText.className = 'status-text connected';
-                statusLabel.textContent = '✅ متصل';
-                emailEl.textContent = userEmail || '';
-                loadBackupList();
+                menuItem.classList.add('connected');
+                menuText.textContent = 'Google Drive';
+                dot.style.display = 'inline-block';
+                email.textContent = userEmail || '';
             } else {
-                btn.className = 'drive-main-btn';
-                btnText.textContent = 'Google Drive';
-                statusText.className = 'status-text disconnected';
-                statusLabel.textContent = '❌ غير متصل';
-                emailEl.textContent = '';
-                document.getElementById('backupList').innerHTML = '';
-                document.getElementById('backupCount').textContent = 'عدد النسخ المرفوعة : 0';
+                menuItem.classList.remove('connected');
+                menuText.textContent = 'Google Drive';
+                dot.style.display = 'inline-block';
+                email.textContent = '';
+            }
+
+            // تحديث حالة نافذة Drive إذا كانت مفتوحة
+            const modalStatus = document.getElementById('driveModalStatus');
+            if (modalStatus) {
+                if (isDriveConnected) {
+                    modalStatus.className = 'status connected';
+                    modalStatus.textContent = '✅ متصل';
+                } else {
+                    modalStatus.className = 'status disconnected';
+                    modalStatus.textContent = '❌ غير متصل';
+                }
             }
         }
 
         async function loadBackupList() {
             if (!accessToken) {
                 backupFiles = [];
-                renderBackupList();
+                renderDriveBackupList();
                 return;
             }
 
@@ -1625,25 +1721,27 @@
                 );
                 const result = await searchResponse.json();
                 backupFiles = result.files || [];
-                renderBackupList();
+                renderDriveBackupList();
             } catch (error) {
                 console.error('Error loading backup list:', error);
                 toastMsg('فشل تحميل قائمة النسخ الاحتياطية', "error");
             }
         }
 
-        function renderBackupList() {
-            const container = document.getElementById('backupList');
-            const countEl = document.getElementById('backupCount');
+        function renderDriveBackupList() {
+            const container = document.getElementById('driveBackupList');
+            const countEl = document.getElementById('driveBackupCount');
+
+            if (!container) return;
 
             if (!isDriveConnected) {
                 container.innerHTML = `
                     <div class="drive-empty">
                         <i class="fab fa-google-drive"></i>
-                        <p>اضغط على زر Google Drive لربط حسابك</p>
+                        <p>اضغط على زر Google Drive في القائمة لربط حسابك</p>
                     </div>
                 `;
-                countEl.textContent = 'عدد النسخ المرفوعة : 0';
+                if (countEl) countEl.textContent = 'عدد النسخ المرفوعة : 0';
                 return;
             }
 
@@ -1652,10 +1750,10 @@
                     <div class="drive-empty">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p>لا توجد نسخ احتياطية محفوظة</p>
-                        <p style="font-size:0.85em;color:#888;">اضغط على زر Google Drive لإنشاء نسخة جديدة</p>
+                        <p style="font-size:0.85em;color:#888;">اضغط على زر "حفظ نسخة احتياطية جديدة"</p>
                     </div>
                 `;
-                countEl.textContent = 'عدد النسخ المرفوعة : 0';
+                if (countEl) countEl.textContent = 'عدد النسخ المرفوعة : 0';
                 return;
             }
 
@@ -1705,7 +1803,20 @@
 
             tableHtml += `</tbody></table>`;
             container.innerHTML = tableHtml;
-            countEl.textContent = `عدد النسخ المرفوعة : ${backupFiles.length}`;
+            if (countEl) countEl.textContent = `عدد النسخ المرفوعة : ${backupFiles.length}`;
+        }
+
+        function refreshBackupList() {
+            loadBackupList();
+            toastMsg('جاري تحديث القائمة...', "info");
+        }
+
+        function openBackupConfirm() {
+            if (!isDriveConnected) {
+                toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
+                return;
+            }
+            openLayer('confirmBackup');
         }
 
         async function performBackup() {
@@ -1753,6 +1864,7 @@
 
                 toastMsg('تم حفظ النسخة الاحتياطية بنجاح 💾', "success");
                 await loadBackupList();
+                renderDriveBackupList();
             } catch (error) {
                 console.error('Error uploading backup:', error);
                 toastMsg('فشل حفظ النسخة الاحتياطية: ' + error.message, "error");
@@ -1786,6 +1898,7 @@
                 if (data.currency) {
                     currentCurrency = data.currency;
                     localStorage.setItem('currencyCode', currentCurrency.code);
+                    document.getElementById('sidebarCurrencyLabel').textContent = currentCurrency.symbol;
                     document.getElementById('currentCurrencyDisplay').innerHTML =
                         `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
                 }
@@ -1800,6 +1913,7 @@
                 updateBalanceDisplay();
                 toastMsg('تم استعادة البيانات بنجاح 🔄', "success");
                 await loadBackupList();
+                renderDriveBackupList();
             } catch (error) {
                 console.error('Error restoring backup:', error);
                 toastMsg('فشل استعادة النسخة: ' + error.message, "error");
@@ -1823,6 +1937,7 @@
 
                 toastMsg('تم حذف النسخة الاحتياطية 🗑️', "success");
                 await loadBackupList();
+                renderDriveBackupList();
             } catch (error) {
                 console.error('Error deleting backup:', error);
                 toastMsg('فشل حذف النسخة: ' + error.message, "error");
@@ -2024,17 +2139,17 @@
                 const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
                 const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
                 return `
-                      <div class="list-item" style="border-right-color:${color};">
-                        <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
-                          <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
-                          <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
-                        </div>
-                        <div class="details">
-                          <span>الرصيد بعد: ${formatCurrency(i.الرصيد_بعد_العملية)}</span>
-                          <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span>
-                        </div>
-                      </div>
-                    `;
+                          <div class="list-item" style="border-right-color:${color};">
+                            <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
+                              <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
+                              <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
+                            </div>
+                            <div class="details">
+                              <span>الرصيد بعد: ${formatCurrency(i.الرصيد_بعد_العملية)}</span>
+                              <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span>
+                            </div>
+                          </div>
+                        `;
             }).join('');
         }
 
@@ -2090,9 +2205,9 @@
             container.innerHTML = '';
 
             let paidHtml = `
-                    <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل / المدفوع" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
-                    <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن</span>
-                  `;
+                        <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل / المدفوع" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
+                        <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن</span>
+                      `;
             container.innerHTML = paidHtml;
 
             const statusEl = document.getElementById('rStatus');
@@ -2170,18 +2285,18 @@
                 statusSelect.value = '';
 
                 let html = `
-                        <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
-                        <span class="field-hint">المبلغ الكلي للالتزام</span>
-                      `;
+                            <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
+                            <span class="field-hint">المبلغ الكلي للالتزام</span>
+                          `;
                 if (type === 'قرض') {
                     html += `
-                            <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
-                            <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
-                          `;
+                                <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
+                                <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
+                              `;
                 } else {
                     html += `
-                            <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
-                          `;
+                                <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
+                              `;
                 }
                 container.innerHTML = html;
             } else {
@@ -2303,14 +2418,14 @@
             html += `</div>`;
             if (o.صورة && type === 'exp') {
                 html += `<div class="card" style="border-top-color:var(--s);">
-                      <h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> صورة الفاتورة</h3>
-                      <img src="${o.صورة}" alt="الفاتورة" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" />
-                    </div>`;
+                          <h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> صورة الفاتورة</h3>
+                          <img src="${o.صورة}" alt="الفاتورة" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" />
+                        </div>`;
             }
             html += `<div style="display:flex;gap:10px;margin-top:20px;">
-                      <button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> تعديل</button>
-                      <button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> حذف</button>
-                    </div>`;
+                          <button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> تعديل</button>
+                          <button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> حذف</button>
+                        </div>`;
             el.innerHTML = html;
         }
 
@@ -2381,18 +2496,18 @@
                 const itemId = i.clientId || i.id || `temp-${Date.now()}`;
 
                 return `
-                          <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
-                            <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
-                              <span>${imgIcon} ${desc} ${entityDisplay}</span>
-                              <span style="color:${amountColor};">${amountDisplay}</span>
-                            </div>
-                            <div class="details">
-                              <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
-                              <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
-                            </div>
-                            <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
-                          </div>
-                        `;
+                              <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
+                                <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+                                  <span>${imgIcon} ${desc} ${entityDisplay}</span>
+                                  <span style="color:${amountColor};">${amountDisplay}</span>
+                                </div>
+                                <div class="details">
+                                  <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
+                                  <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
+                                </div>
+                                <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
+                              </div>
+                            `;
             }).join('');
         }
 
@@ -2522,11 +2637,11 @@
                 c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
             );
             list.innerHTML = filtered.map(c => `
-                    <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
-                      <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
-                      ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
-                    </button>
-                  `).join('');
+                        <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
+                          <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
+                          ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
+                        </button>
+                      `).join('');
         }
 
         function setCurrency(code) {
@@ -2534,6 +2649,7 @@
             if (sel) {
                 currentCurrency = sel;
                 localStorage.setItem('currencyCode', code);
+                document.getElementById('sidebarCurrencyLabel').textContent = sel.symbol;
                 document.getElementById('currentCurrencyDisplay').innerHTML = `العملة: ${sel.name} (${sel.symbol})`;
                 updateBalanceDisplay();
                 updateStats();
@@ -2837,6 +2953,7 @@
                 const el = document.getElementById(id);
                 if (el) el.value = now;
             });
+            document.getElementById('sidebarCurrencyLabel').textContent = currentCurrency.symbol;
             document.getElementById('currentCurrencyDisplay').innerHTML =
                 `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
             updateBalanceDisplay();
