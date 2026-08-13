@@ -1304,7 +1304,7 @@
     </div>
 
     <!-- ==========================================================
-    EXPENSES
+    EXPENSES - مع رموز تعبيرية للفئات (تم إضافة ⛽ وقود و ☕ مقاهي)
     ========================================================== -->
     <div id="expenses" class="section">
         <div class="card">
@@ -1319,10 +1319,18 @@
 
             <select id="eType">
                 <option value="">🛒 الفئة (نفقات متغيرة)</option>
-                <option>طعام</option><option>مواصلات</option>
-                <option>رعاية شخصية</option><option>أجهزة إلكترونية</option>
-                <option>صحة</option><option>ترفيه</option><option>تسوق</option>
-                <option>تعليم</option><option>صيانة وإصلاح</option><option>أخرى</option>
+                <option value="🍽️ طعام">🍽️ طعام</option>
+                <option value="🚗 مواصلات">🚗 مواصلات</option>
+                <option value="⛽ وقود">⛽ وقود</option>
+                <option value="☕ مقاهي">☕ مقاهي</option>
+                <option value="🧴 رعاية شخصية">🧴 رعاية شخصية</option>
+                <option value="📱 أجهزة إلكترونية">📱 أجهزة إلكترونية</option>
+                <option value="🏥 صحة">🏥 صحة</option>
+                <option value="🎮 ترفيه">🎮 ترفيه</option>
+                <option value="🛍️ تسوق">🛍️ تسوق</option>
+                <option value="📚 تعليم">📚 تعليم</option>
+                <option value="🔧 صيانة وإصلاح">🔧 صيانة وإصلاح</option>
+                <option value="📦 أخرى">📦 أخرى</option>
             </select>
 
             <input id="eDesc" placeholder="📝 وصف / ملاحظة" />
@@ -1349,7 +1357,7 @@
     </div>
 
     <!-- ==========================================================
-    RIGHTS (حقوق) – ENHANCED
+    RIGHTS (حقوق) - مع رموز تعبيرية (تم حذف دين وإضافة 📈 عائد الاستثمار و 🤝 شراكة)
     ========================================================== -->
     <div id="rights" class="section">
         <div class="card">
@@ -1362,19 +1370,23 @@
 
             <select id="rType" onchange="updateRightFields(this.value)">
                 <option value="">🤝 نوع الحق</option>
-                <option>دين</option>
-                <option>بيع بالآجل</option>
-                <option>سلفة</option>
-                <option>عمولة</option>
-                <option>إيجار مستحق</option>
-                <option>أخرى</option>
+                <option value="🛒 بيع بالآجل">🛒 بيع بالآجل</option>
+                <option value="🏦 سلفة">🏦 سلفة</option>
+                <option value="💼 عمولة">💼 عمولة</option>
+                <option value="🏠 إيجار مستحق">🏠 إيجار مستحق</option>
+                <option value="📈 عائد الاستثمار">📈 عائد الاستثمار</option>
+                <option value="🤝 شراكة">🤝 شراكة</option>
+                <option value="📦 أخرى">📦 أخرى</option>
             </select>
 
             <input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
 
             <input id="rEntity" placeholder="👤 الجهة / المدين (اسم الشخص أو المؤسسة)" />
 
-            <div id="rDynamicFields"></div>
+            <div id="rDynamicFields">
+                <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
+                <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن (لا يمكن أن يتجاوز المبلغ الكلي)</span>
+            </div>
 
             <div class="datetime-container">
                 <input id="rDueDate" type="date" />
@@ -1383,14 +1395,6 @@
             <span class="field-hint">تاريخ الاستحقاق المتوقع</span>
 
             <input id="rDesc" placeholder="📝 ملاحظات إضافية" />
-
-            <select id="rStatus">
-                <option value="">✅ الحالة</option>
-                <option value="مدفوع بالكامل">مدفوع بالكامل</option>
-                <option value="مدفوع جزئياً">مدفوع جزئياً</option>
-                <option value="غير مدفوع">غير مدفوع</option>
-                <option value="متأخر">متأخر</option>
-            </select>
 
             <button class="action" onclick="addRight()">
                 <i class="fas fa-save" style="margin-left:5px;"></i> حفظ الحق
@@ -1402,7 +1406,7 @@
     </div>
 
     <!-- ==========================================================
-    DEBTS (التزامات) – ENHANCED
+    DEBTS (التزامات) - مع رموز تعبيرية (تم تغيير قسط/فاتورة أخرى → تقسيط فواتيري)
     ========================================================== -->
     <div id="debts" class="section">
         <div class="card">
@@ -1415,9 +1419,14 @@
 
             <select id="dType" onchange="updateDebtFields(this.value)">
                 <option value="">🧾 نوع الالتزام</option>
-                <option>إيجار</option><option>كهرباء</option><option>ماء</option>
-                <option>إنترنت</option><option>قرض</option><option>دين شخصي</option>
-                <option>قسط/فاتورة أخرى</option><option>أخرى</option>
+                <option value="🏠 إيجار">🏠 إيجار</option>
+                <option value="💡 كهرباء">💡 كهرباء</option>
+                <option value="💧 ماء">💧 ماء</option>
+                <option value="🌐 إنترنت">🌐 إنترنت</option>
+                <option value="🏦 قرض">🏦 قرض</option>
+                <option value="👤 دين شخصي">👤 دين شخصي</option>
+                <option value="📊 تقسيط فواتيري">📊 تقسيط فواتيري</option>
+                <option value="📦 أخرى">📦 أخرى</option>
             </select>
 
             <input id="dAmount" type="text" placeholder="💵 قيمة الفاتورة / القسط الحالي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
@@ -2298,9 +2307,6 @@
             }
         }
 
-        // =============================================================
-        // 3.4.1  RENDER BACKUP LIST - مع ترقيم تسلسلي صحيح
-        // =============================================================
         function renderDriveBackupList() {
             const container = document.getElementById('driveBackupList');
             const countEl = document.getElementById('driveBackupCount');
@@ -2330,18 +2336,18 @@
                 return;
             }
 
-            // خطوة 1: ترتيب الملفات من الأقدم إلى الأحدث للحصول على الترقيم الصحيح
+            // ترتيب الملفات من الأقدم إلى الأحدث للحصول على الترقيم الصحيح
             const sortedByDate = [...backupFiles].sort((a, b) => {
                 return new Date(a.createdTime) - new Date(b.createdTime);
             });
 
-            // خطوة 2: إنشاء خريطة لكل ملف مع رقمه التسلسلي
+            // إنشاء خريطة لكل ملف مع رقمه التسلسلي
             const filesWithNumbers = sortedByDate.map((file, index) => ({
                 ...file,
                 number: index + 1
             }));
 
-            // خطوة 3: ترتيب للعرض من الأحدث إلى الأقدم
+            // ترتيب للعرض من الأحدث إلى الأقدم
             const displayFiles = [...filesWithNumbers].reverse();
 
             let tableHtml = `
@@ -2874,6 +2880,10 @@
         // =============================================================
         // 9.  CRUD — EXPENSES, RIGHTS, DEBTS
         // =============================================================
+
+        // =============================================================
+        // 9.1  EXPENSES
+        // =============================================================
         async function addExpense() {
             const eAmount = document.getElementById('eAmount');
             const eType = document.getElementById('eType');
@@ -2915,19 +2925,22 @@
                 console.error(err); }
         }
 
+        // =============================================================
+        // 9.2  RIGHTS - مع حساب تلقائي للحالة
+        // =============================================================
         function updateRightFields(type, currentData = null) {
             const container = document.getElementById('rDynamicFields');
             container.innerHTML = '';
 
             let paidHtml = `
-                <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل / المدفوع" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
-                <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن</span>
+                <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
+                <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن (لا يمكن أن يتجاوز المبلغ الكلي)</span>
             `;
             container.innerHTML = paidHtml;
 
+            // إخفاء حقل الحالة لأنه سيتم حسابه تلقائياً
             const statusEl = document.getElementById('rStatus');
-            if (type === 'دين') { statusEl.style.display = 'none';
-                statusEl.value = ''; } else { statusEl.style.display = 'block'; }
+            if (statusEl) statusEl.style.display = 'none';
         }
 
         async function addRight() {
@@ -2936,7 +2949,6 @@
             const rEntity = document.getElementById('rEntity');
             const rDueDate = document.getElementById('rDueDate');
             const rDesc = document.getElementById('rDesc');
-            const rStatus = document.getElementById('rStatus');
             const rPaidAmount = document.getElementById('rPaidAmount');
 
             if (!rAmount.value || !rType.value || !rDueDate.value) return toastMsg('أكمل البيانات المطلوبة', "error");
@@ -2944,6 +2956,13 @@
             const oldData = isEditing ? db.rig[editMode.index] : {};
             const total = parseAmount(rAmount.value);
             if (total === 0) return toastMsg('المبلغ يجب أن يكون أكبر من صفر.', "error");
+
+            // التحقق من عدم تجاوز المبلغ المدفوع للمبلغ الكلي
+            const paid = parseAmount(rPaidAmount ? rPaidAmount.value : 0);
+            if (paid > total) {
+                toastMsg('⚠️ المبلغ المحصل لا يمكن أن يتجاوز المبلغ الكلي!', "error");
+                return;
+            }
 
             const data = isEditing ? { ...oldData } : {};
             data.clientId = isEditing ? oldData.clientId : `rig-${Date.now()}`;
@@ -2953,22 +2972,15 @@
             data.تاريخ_الاستحقاق = rDueDate.value;
             data.الوصف = rDesc.value || '—';
 
-            const paid = parseAmount(rPaidAmount ? rPaidAmount.value : 0);
             data.المبلغ_المدفوع = getFormattedAmount(paid);
             const remaining = total - paid;
             data.المتبقي = getFormattedAmount(remaining);
 
+            // حساب الحالة تلقائياً
             let status = 'غير مدفوع';
             if (remaining <= 0) status = 'مدفوع بالكامل';
             else if (paid > 0) status = 'مدفوع جزئياً';
             else status = 'غير مدفوع';
-            if (rType.value !== 'دين' && rStatus.value) {
-                const manual = rStatus.value;
-                if (manual === 'مدفوع بالكامل') status = 'مدفوع بالكامل';
-                else if (manual === 'مدفوع جزئياً') status = 'مدفوع جزئياً';
-                else if (manual === 'غير مدفوع') status = 'غير مدفوع';
-                else if (manual === 'متأخر') status = 'متأخر';
-            }
             data.الحالة = status;
             data.المبلغ_المضاف_للرصيد = paid;
 
@@ -2984,13 +2996,19 @@
                 console.error(err); }
         }
 
+        // =============================================================
+        // 9.3  DEBTS - مع دعم تقسيط فواتيري مثل القرض
+        // =============================================================
         function updateDebtFields(type, currentData = null) {
             const container = document.getElementById('dDynamicFields');
             const amountInput = document.getElementById('dAmount');
             const statusSelect = document.getElementById('dStatus');
             container.innerHTML = '';
 
-            if (type === 'قرض' || type === 'دين شخصي') {
+            // الأنواع التي تحتاج إلى حقول إضافية (مثل القرض وتقسيط فواتيري ودين شخصي)
+            const masterTypes = ['🏦 قرض', '👤 دين شخصي', '📊 تقسيط فواتيري'];
+
+            if (masterTypes.includes(type)) {
                 amountInput.style.display = 'none';
                 statusSelect.style.display = 'none';
                 amountInput.value = '';
@@ -3000,12 +3018,15 @@
                     <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
                     <span class="field-hint">المبلغ الكلي للالتزام</span>
                 `;
-                if (type === 'قرض') {
+
+                // إذا كان النوع قرض أو تقسيط فواتيري، نعرض حقول الأقساط
+                if (type === '🏦 قرض' || type === '📊 تقسيط فواتيري') {
                     html += `
                         <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
                         <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
                     `;
                 } else {
+                    // دين شخصي - فقط مبلغ مدفوع
                     html += `
                         <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
                     `;
@@ -3028,7 +3049,8 @@
             if (!dType.value || !dDueDate.value) return toastMsg('أكمل البيانات المطلوبة', "error");
             const isEditing = editMode && editMode.type === 'deb';
             const oldData = isEditing ? db.deb[editMode.index] : {};
-            const isMaster = (dType.value === 'قرض' || dType.value === 'دين شخصي');
+            const masterTypes = ['🏦 قرض', '👤 دين شخصي', '📊 تقسيط فواتيري'];
+            const isMaster = masterTypes.includes(dType.value);
 
             const data = isEditing ? { ...oldData } : {};
             data.clientId = isEditing ? oldData.clientId : `deb-${Date.now()}`;
@@ -3048,7 +3070,9 @@
                 data.المبلغ_الكلي_للالتزام = getFormattedAmount(total);
 
                 let totalPaid = 0;
-                if (dType.value === 'قرض') {
+                const isLoanOrInstallment = (dType.value === '🏦 قرض' || dType.value === '📊 تقسيط فواتيري');
+
+                if (isLoanOrInstallment) {
                     const installmentsInput = document.getElementById('dInstallments');
                     const paidInstallmentsInput = document.getElementById('dPaidInstallments');
                     if (!installmentsInput || !installmentsInput.value) return toastMsg('أدخل عدد الأقساط.', "error");
@@ -3178,7 +3202,8 @@
                     amountColor = 'var(--success)';
                 } else if (isDeb) {
                     const st = i.الحالة || '';
-                    const isMaster = (i.النوع === 'قرض' || i.النوع === 'دين شخصي');
+                    const masterTypes = ['🏦 قرض', '👤 دين شخصي', '📊 تقسيط فواتيري'];
+                    const isMaster = masterTypes.includes(i.النوع);
                     if (isMaster) {
                         borderColor = 'var(--p)';
                         const rem = parseAmount(i.المتبقي_للالتزام || 0);
@@ -3256,17 +3281,14 @@
                     updateRightFields(data.النوع, data);
                     const paidInput = document.getElementById('rPaidAmount');
                     if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع || 0).toLocaleString('ar');
-                    if (data.النوع !== 'دين') {
-                        const st = document.getElementById('rStatus');
-                        if (st) st.value = data.الحالة || '';
-                    }
                 } else if (type === 'deb') {
                     document.getElementById('dType').value = data.النوع;
                     document.getElementById('dEntity').value = data.الجهة || '';
                     document.getElementById('dDueDate').value = data.تاريخ_الاستحقاق || '';
                     document.getElementById('dDesc').value = data.الوصف;
                     updateDebtFields(data.النوع, data);
-                    const isMaster = (data.النوع === 'قرض' || data.النوع === 'دين شخصي');
+                    const masterTypes = ['🏦 قرض', '👤 دين شخصي', '📊 تقسيط فواتيري'];
+                    const isMaster = masterTypes.includes(data.النوع);
                     if (!isMaster) {
                         document.getElementById('dAmount').value = parseAmount(data.المبلغ).toLocaleString('ar');
                         document.getElementById('dStatus').value = data.الحالة || '';
