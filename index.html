@@ -534,6 +534,22 @@
             white-space: nowrap;
             max-width: 100px;
         }
+        .sidebar-menu-item.drive-item .drive-logout {
+            font-size: 0.7em;
+            color: var(--danger);
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: color-mix(in srgb, var(--danger) 15%, transparent);
+            transition: background 0.2s;
+            display: none;
+        }
+        .sidebar-menu-item.drive-item .drive-logout:hover {
+            background: color-mix(in srgb, var(--danger) 30%, transparent);
+        }
+        .sidebar-menu-item.drive-item.connected .drive-logout {
+            display: inline-block;
+        }
 
         .sidebar-divider {
             height: 1px;
@@ -724,6 +740,7 @@
         #confirmBackupModal .modal-content p {
             font-size: 1.1em;
             margin-bottom: 20px;
+            line-height: 1.8;
         }
         #confirmBackupModal .modal-content .btn-group {
             display: flex;
@@ -752,6 +769,9 @@
             background: var(--input-bg);
             color: var(--text-dark);
             border: 1px solid var(--border-color);
+        }
+        #confirmBackupModal .modal-content .btn-group .cancel-btn:hover {
+            background: color-mix(in srgb, var(--input-bg) 80%, #999);
         }
 
         #driveBackupModal .modal-content {
@@ -983,31 +1003,75 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 300;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
         }
         .loading-overlay.show {
             display: flex;
         }
         .loading-spinner {
             background: var(--card-bg);
-            padding: 30px 40px;
-            border-radius: 16px;
+            padding: 40px 50px;
+            border-radius: 20px;
             text-align: center;
-            box-shadow: var(--shadow-hover);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .loading-spinner i {
-            font-size: 3em;
-            color: var(--p);
+        @keyframes modalPop {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .loading-spinner .spinner-icon {
+            font-size: 3.5em;
+            color: #4285F4;
             animation: spin 1s linear infinite;
+            display: block;
+            margin-bottom: 15px;
+        }
+        .loading-spinner .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        .loading-spinner .progress-bar .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4285F4, #34A853, #FBBC04, #EA4335);
+            width: 0%;
+            border-radius: 4px;
+            animation: progressAnim 2s ease-in-out infinite;
+        }
+        @keyframes progressAnim {
+            0% {
+                width: 0%;
+                transform: translateX(0);
+            }
+            50% {
+                width: 70%;
+            }
+            100% {
+                width: 100%;
+            }
         }
         .loading-spinner p {
-            margin-top: 10px;
+            margin-top: 15px;
             font-size: 1.1em;
             color: var(--text-dark);
+            font-weight: 500;
         }
         @keyframes spin {
             0% {
@@ -1017,73 +1081,6 @@
                 transform: rotate(360deg);
             }
         }
-
-        /* زر جوجل درايفر المميز */
-        .drive-main-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: #4285F4;
-            color: #fff;
-            border: none;
-            padding: 18px 24px;
-            width: 100%;
-            border-radius: 12px;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: inherit;
-            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
-            margin-top: 10px;
-        }
-        .drive-main-btn:hover {
-            background: #3367d6;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
-        }
-        .drive-main-btn i {
-            font-size: 28px;
-        }
-        .drive-main-btn.connected {
-            background: var(--success);
-            box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
-        }
-        .drive-main-btn.connected:hover {
-            background: #21867a;
-        }
-
-        .drive-status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 16px;
-            margin-top: 12px;
-            background: var(--input-bg);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            font-size: 0.9em;
-        }
-        .drive-status-bar .status-text {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .drive-status-bar .status-text.connected {
-            color: var(--success);
-        }
-        .drive-status-bar .status-text.disconnected {
-            color: var(--danger);
-        }
-        .drive-status-bar .drive-email-display {
-            font-size: 0.8em;
-            color: #888;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
     </style>
 </head>
 
@@ -1092,8 +1089,11 @@
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner">
-            <i class="fas fa-spinner"></i>
-            <p id="loadingMessage">جاري المعالجة...</p>
+            <i class="fas fa-cloud-upload-alt spinner-icon"></i>
+            <p id="loadingMessage">جاري حفظ النسخة الاحتياطية...</p>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
         </div>
     </div>
 
@@ -1385,9 +1385,9 @@
         </header>
         <div class="modal-content">
             <i class="fas fa-cloud-upload-alt"></i>
-            <p>هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟</p>
+            <p>هل تريد عمل نسخة احتياطية للبيانات على<br /><strong>Google Drive</strong>؟</p>
             <div class="btn-group">
-                <button class="confirm-btn" onclick="performBackup()">نعم، احفظ النسخة</button>
+                <button class="confirm-btn" onclick="handleBackupConfirm()">نعم، احفظ النسخة</button>
                 <button class="cancel-btn" onclick="closeLayer('confirmBackup')">إلغاء</button>
             </div>
         </div>
@@ -1442,18 +1442,13 @@
         </div>
         <div class="sidebar-content">
 
-            <!-- Google Drive - زر واحد -->
-            <button class="drive-main-btn" id="driveMainBtn" onclick="handleDriveClick()">
+            <!-- Google Drive - زر عادي مع نقطة -->
+            <div class="sidebar-menu-item drive-item" id="driveMenuItem" onclick="handleDriveClick()">
                 <i class="fab fa-google-drive"></i>
-                <span id="driveBtnText">Google Drive</span>
-            </button>
-
-            <div class="drive-status-bar">
-                <span class="status-text disconnected" id="driveStatusText">
-                    <i class="fas fa-circle" style="font-size:0.7em;"></i>
-                    <span id="driveStatusLabel">غير متصل</span>
-                </span>
-                <span class="drive-email-display" id="driveEmailDisplay"></span>
+                <span id="driveMenuText">Google Drive</span>
+                <span class="drive-status-dot" id="driveStatusDot"></span>
+                <span class="drive-email" id="driveMenuEmail"></span>
+                <span class="drive-logout" id="driveLogoutBtn" onclick="event.stopPropagation(); signOut();">تسجيل خروج</span>
             </div>
 
             <div class="sidebar-divider"></div>
@@ -1567,8 +1562,6 @@
         let backupFiles = [];
         let userEmail = '';
         let appFolderId = null;
-        let gapiLoaded = false;
-        let gisLoaded = false;
 
         // =============================================================
         // 1.  INDEXED DB SETUP
@@ -1762,7 +1755,6 @@
                         apiKey: '',
                         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
                     });
-                    gapiLoaded = true;
                     console.log('Google API loaded');
                 } catch (error) {
                     console.error('Error loading GAPI:', error);
@@ -1803,8 +1795,12 @@
                             isDriveConnected = true;
                             updateDriveUI();
                             toastMsg('تم ربط حساب Google Drive ✅', "success");
+
+                            // بعد تسجيل الدخول، نقوم بالنسخ الاحتياطي مباشرة
                             await loadBackupList();
-                            openLayer('driveBackup');
+                            // نغلق نافذة التأكيد ونبدأ النسخ
+                            closeLayer('confirmBackup');
+                            await performBackup();
                         } catch (e) {
                             console.error('Error getting user info:', e);
                             userEmail = '';
@@ -1812,7 +1808,6 @@
                         }
                     },
                 });
-                gisLoaded = true;
                 console.log('GIS loaded');
             } catch (error) {
                 console.error('Error initializing GIS:', error);
@@ -1868,18 +1863,30 @@
         }
 
         function handleDriveClick() {
-            if (!isDriveConnected) {
-                if (!tokenClient) {
-                    toastMsg('جاري تحميل خدمة المصادقة...', "info");
-                    return;
-                }
-                tokenClient.requestAccessToken({ prompt: 'consent' });
-            } else {
-                openLayer('driveBackup');
+            // نفتح نافذة التأكيد مباشرة
+            openLayer('confirmBackup');
+        }
+
+        function handleBackupConfirm() {
+            // إذا كان متصلاً بالفعل، نقوم بالنسخ مباشرة
+            if (isDriveConnected) {
+                closeLayer('confirmBackup');
+                performBackup();
+                return;
             }
+
+            // إذا لم يكن متصلاً، نبدأ عملية تسجيل الدخول
+            if (!tokenClient) {
+                toastMsg('جاري تحميل خدمة المصادقة...', "info");
+                return;
+            }
+            // نطلب تسجيل الدخول، وبعدها سيقوم الـ callback بعمل النسخ تلقائياً
+            tokenClient.requestAccessToken({ prompt: 'consent' });
         }
 
         function signOut() {
+            if (!confirm('هل تريد تسجيل الخروج من Google Drive؟')) return;
+
             accessToken = null;
             localStorage.removeItem('drive_token');
             localStorage.removeItem('drive_email');
@@ -1889,39 +1896,31 @@
             appFolderId = null;
             backupFiles = [];
             updateDriveUI();
-            toastMsg('تم فصل حساب Google Drive', "info");
+            toastMsg('تم تسجيل الخروج من Google Drive', "info");
         }
 
         function updateDriveUI() {
-            const btn = document.getElementById('driveMainBtn');
-            const btnText = document.getElementById('driveBtnText');
-            const statusText = document.getElementById('driveStatusText');
-            const statusLabel = document.getElementById('driveStatusLabel');
-            const emailDisplay = document.getElementById('driveEmailDisplay');
+            const menuItem = document.getElementById('driveMenuItem');
+            const menuText = document.getElementById('driveMenuText');
+            const dot = document.getElementById('driveStatusDot');
+            const email = document.getElementById('driveMenuEmail');
+            const logoutBtn = document.getElementById('driveLogoutBtn');
             const modalStatus = document.getElementById('driveModalStatus');
 
-            if (btn) {
+            if (menuItem) {
                 if (isDriveConnected) {
-                    btn.className = 'drive-main-btn connected';
-                    if (btnText) btnText.textContent = 'Google Drive';
+                    menuItem.classList.add('connected');
+                    if (menuText) menuText.textContent = 'Google Drive';
+                    if (dot) dot.style.display = 'inline-block';
+                    if (email) email.textContent = userEmail || '';
+                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
                 } else {
-                    btn.className = 'drive-main-btn';
-                    if (btnText) btnText.textContent = 'Google Drive';
+                    menuItem.classList.remove('connected');
+                    if (menuText) menuText.textContent = 'Google Drive';
+                    if (dot) dot.style.display = 'inline-block';
+                    if (email) email.textContent = '';
+                    if (logoutBtn) logoutBtn.style.display = 'none';
                 }
-            }
-
-            if (statusText) {
-                if (isDriveConnected) {
-                    statusText.className = 'status-text connected';
-                    if (statusLabel) statusLabel.textContent = '✅ متصل';
-                } else {
-                    statusText.className = 'status-text disconnected';
-                    if (statusLabel) statusLabel.textContent = '❌ غير متصل';
-                }
-            }
-
-            if (emailDisplay) {
-                emailDisplay.textContent = isDriveConnected ? userEmail || '' : '';
             }
 
             if (modalStatus) {
@@ -2040,17 +2039,7 @@
             toastMsg('جاري تحديث القائمة...', "info");
         }
 
-        function openBackupConfirm() {
-            if (!isDriveConnected) {
-                toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
-                return;
-            }
-            openLayer('confirmBackup');
-        }
-
         async function performBackup() {
-            closeLayer('confirmBackup');
-
             if (!accessToken || !appFolderId) {
                 toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
                 return;
@@ -2100,6 +2089,8 @@
                 toastMsg('تم حفظ النسخة الاحتياطية بنجاح 💾', "success");
                 await loadBackupList();
                 renderDriveBackupList();
+                // فتح نافذة النسخ بعد الحفظ
+                openLayer('driveBackup');
             } catch (error) {
                 hideLoading();
                 console.error('Error uploading backup:', error);
@@ -3268,10 +3259,6 @@
             toastMsg(isDark ? 'تم التبديل إلى الوضع الليلي 🌙' : 'تم التبديل إلى الوضع النهاري ☀️', "info");
         }
         loadDarkModePreference();
-
-        // =============================================================
-        // 13. INIT - تم نقله إلى DOMContentLoaded أعلاه
-        // =============================================================
     </script>
 </body>
 </html>
