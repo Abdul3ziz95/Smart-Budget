@@ -643,11 +643,12 @@
             color: #888;
         }
 
+        /* ===== DRIVE BACKUP TABLE ===== */
         .backup-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 12px;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
         .backup-table th {
             text-align: right;
@@ -655,7 +656,9 @@
             border-bottom: 2px solid var(--border-color);
             color: #888;
             font-weight: 700;
-            font-size: 0.85em;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .backup-table td {
             padding: 12px 8px;
@@ -668,23 +671,28 @@
         .backup-table .file-name {
             font-weight: 600;
             color: var(--p);
+            font-size: 0.85em;
+        }
+        .backup-table .file-date {
+            color: var(--text-dark);
+            font-size: 0.8em;
         }
         .backup-table .file-size {
             color: #888;
-            font-size: 0.85em;
+            font-size: 0.8em;
         }
         .backup-table .file-actions {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             justify-content: flex-end;
         }
         .backup-table .file-actions button {
             background: none;
             border: none;
             cursor: pointer;
-            padding: 6px 8px;
-            border-radius: 6px;
-            font-size: 1em;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
             transition: all 0.2s;
         }
         .backup-table .file-actions .restore-btn {
@@ -794,6 +802,19 @@
         }
         #driveBackupModal .drive-modal-header .status.disconnected {
             color: var(--danger);
+        }
+        #driveBackupModal .drive-modal-header .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--p);
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        #driveBackupModal .drive-modal-header .refresh-btn:hover {
+            background: color-mix(in srgb, var(--input-bg) 80%, var(--p));
         }
 
         .list-item {
@@ -1394,17 +1415,17 @@
     </div>
 
     <!-- ==========================================================
-    DRIVE BACKUP MODAL
+    DRIVE BACKUP MODAL - تصميم عصري
     ========================================================== -->
     <div class="modal" id="driveBackupModal">
         <header>
-            <span class="title"><i class="fab fa-google-drive"></i> النسخ الاحتياطية</span>
+            <span class="title"><i class="fab fa-google-drive" style="color:#4285F4;"></i> النسخ الاحتياطية</span>
             <button onclick="closeLayer('driveBackup')"><i class="fas fa-times"></i></button>
         </header>
         <div class="modal-content">
             <div class="drive-modal-header">
                 <span class="status" id="driveModalStatus">⚠️ غير متصل</span>
-                <button class="secondary" onclick="refreshBackupList()" style="width:auto;padding:6px 16px;margin:0;">
+                <button class="refresh-btn" onclick="refreshBackupList()">
                     <i class="fas fa-sync"></i> تحديث
                 </button>
             </div>
@@ -1562,6 +1583,9 @@
         let backupFiles = [];
         let userEmail = '';
         let appFolderId = null;
+        let gapiInitAttempts = 0;
+        let gisInitAttempts = 0;
+        const MAX_INIT_ATTEMPTS = 10;
 
         // =============================================================
         // 1.  INDEXED DB SETUP
@@ -1691,41 +1715,6 @@
             }
         };
 
-        // انتظار تحميل الصفحة بالكامل قبل تهيئة الـ APIs
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!history.state || history.state.layer === undefined) {
-                history.replaceState({ layer: 'main' }, null, '#main');
-                historyStack.push({ layer: 'main' });
-            } else {
-                historyStack.push(history.state);
-            }
-
-            const now = new Date().toISOString().slice(0, 10);
-            ['eDate', 'rDueDate', 'dDueDate'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = now;
-            });
-
-            const currencyLabel = document.getElementById('sidebarCurrencyLabel');
-            if (currencyLabel) currencyLabel.textContent = currentCurrency.symbol;
-
-            const currencyDisplay = document.getElementById('currentCurrencyDisplay');
-            if (currencyDisplay) {
-                currencyDisplay.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
-            }
-
-            updateBalanceDisplay();
-            updateStats();
-            updateDriveUI();
-
-            // تهيئة Google APIs بعد تحميل الصفحة
-            setTimeout(() => {
-                initGapi();
-                initGis();
-                restoreDriveState();
-            }, 500);
-        });
-
         // =============================================================
         // 3.  GOOGLE DRIVE API FUNCTIONS
         // =============================================================
@@ -1739,35 +1728,59 @@
                 appFolderId = savedFolderId || null;
                 isDriveConnected = true;
                 updateDriveUI();
-                setTimeout(() => loadBackupList(), 800);
+                // محاولة تحميل قائمة النسخ بعد تأخير
+                setTimeout(() => {
+                    if (accessToken) loadBackupList();
+                }, 1000);
             }
         }
 
         function initGapi() {
+            if (gapiInitAttempts >= MAX_INIT_ATTEMPTS) {
+                console.warn('GAPI init max attempts reached');
+                return;
+            }
+            gapiInitAttempts++;
+
             if (typeof gapi === 'undefined') {
                 console.warn('gapi not loaded yet, retrying...');
                 setTimeout(initGapi, 500);
                 return;
             }
-            gapi.load('client', async () => {
-                try {
-                    await gapi.client.init({
-                        apiKey: '',
-                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
-                    });
-                    console.log('Google API loaded');
-                } catch (error) {
-                    console.error('Error loading GAPI:', error);
-                }
-            });
+
+            try {
+                gapi.load('client', async () => {
+                    try {
+                        await gapi.client.init({
+                            apiKey: '',
+                            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+                        });
+                        console.log('Google API loaded');
+                        // بعد تحميل GAPI، نستعيد حالة Drive
+                        restoreDriveState();
+                    } catch (error) {
+                        console.error('Error loading GAPI client:', error);
+                    }
+                });
+            } catch (error) {
+                console.error('Error in GAPI init:', error);
+                setTimeout(initGapi, 500);
+            }
         }
 
         function initGis() {
+            if (gisInitAttempts >= MAX_INIT_ATTEMPTS) {
+                console.warn('GIS init max attempts reached');
+                return;
+            }
+            gisInitAttempts++;
+
             if (typeof google === 'undefined' || !google.accounts) {
                 console.warn('GIS not loaded yet, retrying...');
                 setTimeout(initGis, 500);
                 return;
             }
+
             try {
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID,
@@ -1796,9 +1809,7 @@
                             updateDriveUI();
                             toastMsg('تم ربط حساب Google Drive ✅', "success");
 
-                            // بعد تسجيل الدخول، نقوم بالنسخ الاحتياطي مباشرة
                             await loadBackupList();
-                            // نغلق نافذة التأكيد ونبدأ النسخ
                             closeLayer('confirmBackup');
                             await performBackup();
                         } catch (e) {
@@ -1863,24 +1874,26 @@
         }
 
         function handleDriveClick() {
-            // نفتح نافذة التأكيد مباشرة
+            // إذا كان الحساب متصلاً، نفتح قائمة النسخ مباشرة
+            if (isDriveConnected) {
+                openLayer('driveBackup');
+                return;
+            }
+            // إذا لم يكن متصلاً، نعرض نافذة التأكيد
             openLayer('confirmBackup');
         }
 
         function handleBackupConfirm() {
-            // إذا كان متصلاً بالفعل، نقوم بالنسخ مباشرة
             if (isDriveConnected) {
                 closeLayer('confirmBackup');
                 performBackup();
                 return;
             }
 
-            // إذا لم يكن متصلاً، نبدأ عملية تسجيل الدخول
             if (!tokenClient) {
                 toastMsg('جاري تحميل خدمة المصادقة...', "info");
                 return;
             }
-            // نطلب تسجيل الدخول، وبعدها سيقوم الـ callback بعمل النسخ تلقائياً
             tokenClient.requestAccessToken({ prompt: 'consent' });
         }
 
@@ -2013,7 +2026,7 @@
                 tableHtml += `
                     <tr>
                         <td class="file-name">${name}</td>
-                        <td>${formattedDate}</td>
+                        <td class="file-date">${formattedDate}</td>
                         <td class="file-size">${size}</td>
                         <td>
                             <div class="file-actions">
@@ -2146,10 +2159,14 @@
                     }
                 }
 
+                // حفظ البيانات في IndexedDB
                 await saveData('exp', db.exp);
                 await saveData('rig', db.rig);
                 await saveData('deb', db.deb);
                 await saveData('bal', db.bal);
+
+                // إعادة تحميل البيانات للتأكد
+                await loadAllData();
 
                 hideLoading();
                 updateStats();
@@ -2279,10 +2296,14 @@
                         }
                     }
 
+                    // حفظ البيانات في IndexedDB
                     await saveData('exp', db.exp);
                     await saveData('rig', db.rig);
                     await saveData('deb', db.deb);
                     await saveData('bal', db.bal);
+
+                    // إعادة تحميل البيانات للتأكد
+                    await loadAllData();
 
                     hideLoading();
                     updateStats();
@@ -3259,6 +3280,51 @@
             toastMsg(isDark ? 'تم التبديل إلى الوضع الليلي 🌙' : 'تم التبديل إلى الوضع النهاري ☀️', "info");
         }
         loadDarkModePreference();
+
+        // =============================================================
+        // 13. INIT - التهيئة النهائية
+        // =============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!history.state || history.state.layer === undefined) {
+                history.replaceState({ layer: 'main' }, null, '#main');
+                historyStack.push({ layer: 'main' });
+            } else {
+                historyStack.push(history.state);
+            }
+
+            const now = new Date().toISOString().slice(0, 10);
+            ['eDate', 'rDueDate', 'dDueDate'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = now;
+            });
+
+            const currencyLabel = document.getElementById('sidebarCurrencyLabel');
+            if (currencyLabel) currencyLabel.textContent = currentCurrency.symbol;
+
+            const currencyDisplay = document.getElementById('currentCurrencyDisplay');
+            if (currencyDisplay) {
+                currencyDisplay.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+            }
+
+            updateBalanceDisplay();
+            updateStats();
+            updateDriveUI();
+
+            // تهيئة Google APIs بعد تحميل الصفحة
+            setTimeout(() => {
+                initGapi();
+                initGis();
+                // محاولة استعادة الحالة حتى لو فشل GAPI
+                restoreDriveState();
+            }, 1000);
+        });
+
+        // محاولة إضافية بعد 5 ثواني
+        setTimeout(() => {
+            if (!isDriveConnected) {
+                restoreDriveState();
+            }
+        }, 5000);
     </script>
 </body>
 </html>
