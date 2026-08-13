@@ -11,6 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
 
     <style>
+        /* ============================================================
+           ROOT VARIABLES
+           ============================================================ */
         :root {
             --p: #0077b6;
             --s: #48cae4;
@@ -1813,7 +1816,7 @@
 
             try {
                 const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and trashed=false and mimeType='application/json'&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
+                    `https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and trashed=false and (mimeType='application/json' or name contains '.json')&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
                     }
                 );
@@ -1995,13 +1998,24 @@
                 const text = await response.text();
                 const data = JSON.parse(text);
 
+                // دعم الصيغ المختلفة (القديمة والجديدة)
                 if (data.exp) db.exp = data.exp;
+                else if (data.expenses) db.exp = data.expenses;
+
                 if (data.rig) db.rig = data.rig;
+                else if (data.rights) db.rig = data.rights;
+
                 if (data.deb) db.deb = data.deb;
+                else if (data.debts) db.deb = data.debts;
+
                 if (data.bal) {
                     db.bal = data.bal;
                     currentBalance = db.bal.amount || 0;
+                } else if (data.balance) {
+                    db.bal = data.balance;
+                    currentBalance = db.bal.amount || 0;
                 }
+
                 if (data.currency) {
                     currentCurrency = data.currency;
                     localStorage.setItem('currencyCode', currentCurrency.code);
@@ -2110,15 +2124,28 @@
                     const text = e.target.result;
                     const imported = JSON.parse(text);
 
-                    if (!imported.exp || !imported.rig || !imported.deb || !imported.bal) {
-                        throw new Error('ملف غير صالح - البيانات غير مكتملة');
-                    }
+                    // دعم الصيغ المختلفة (القديمة والجديدة)
+                    if (imported.exp) db.exp = imported.exp;
+                    else if (imported.expenses) db.exp = imported.expenses;
+                    else throw new Error('الملف لا يحتوي على بيانات المصروفات');
 
-                    db.exp = imported.exp;
-                    db.rig = imported.rig;
-                    db.deb = imported.deb;
-                    db.bal = imported.bal;
-                    currentBalance = db.bal.amount || 0;
+                    if (imported.rig) db.rig = imported.rig;
+                    else if (imported.rights) db.rig = imported.rights;
+                    else throw new Error('الملف لا يحتوي على بيانات الحقوق');
+
+                    if (imported.deb) db.deb = imported.deb;
+                    else if (imported.debts) db.deb = imported.debts;
+                    else throw new Error('الملف لا يحتوي على بيانات الالتزامات');
+
+                    if (imported.bal) {
+                        db.bal = imported.bal;
+                        currentBalance = db.bal.amount || 0;
+                    } else if (imported.balance) {
+                        db.bal = imported.balance;
+                        currentBalance = db.bal.amount || 0;
+                    } else {
+                        throw new Error('الملف لا يحتوي على بيانات الرصيد');
+                    }
 
                     if (imported.currency) {
                         currentCurrency = imported.currency;
