@@ -772,10 +772,17 @@
         #confirmBackupModal .modal-content .btn-group .confirm-btn:hover {
             background: #3367d6;
         }
-        #confirmBackupModal .modal-content .btn-group .cancel-btn {
+        #confirmBackupModal .modal-content .btn-group .view-btn {
             background: var(--input-bg);
             color: var(--text-dark);
             border: 1px solid var(--border-color);
+        }
+        #confirmBackupModal .modal-content .btn-group .view-btn:hover {
+            background: color-mix(in srgb, var(--input-bg) 80%, var(--p));
+            border-color: var(--p);
+        }
+        #confirmBackupModal .modal-content .btn-group .view-btn i {
+            margin-left: 6px;
         }
 
         #driveBackupModal .modal-content {
@@ -1416,7 +1423,7 @@
     <div class="sidebar-overlay" id="imageSourceOverlay" style="z-index:140; display:none;" onclick="closeImageSource()"></div>
 
     <!-- ==========================================================
-    CONFIRM BACKUP MODAL
+    CONFIRM BACKUP MODAL - زر إلغاء تم تغييره إلى "عرض النسخ المحفوظة"
     ========================================================== -->
     <div class="modal" id="confirmBackupModal">
         <header>
@@ -1428,7 +1435,9 @@
             <p>هل تريد عمل نسخة احتياطية للبيانات على<br /><strong>Google Drive</strong>؟</p>
             <div class="btn-group">
                 <button class="confirm-btn" onclick="handleBackupConfirm()">نعم، احفظ النسخة</button>
-                <button class="cancel-btn" onclick="closeLayer('confirmBackup')">إلغاء</button>
+                <button class="view-btn" onclick="handleViewBackups()">
+                    <i class="fas fa-folder-open"></i> عرض النسخ المحفوظة
+                </button>
             </div>
         </div>
     </div>
@@ -1598,6 +1607,7 @@
         const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         const APP_FOLDER_NAME = 'ميزانيتك الذكية';
+        const BACKUP_PREFIX = 'نسخة';
 
         let tokenClient;
         let accessToken = null;
@@ -1830,8 +1840,9 @@
                             toastMsg('تم ربط حساب Google Drive ✅', "success");
 
                             await loadBackupList();
+                            // بعد تسجيل الدخول، نفتح نافذة النسخ
                             closeLayer('confirmBackup');
-                            await performBackup();
+                            openLayer('driveBackup');
                         } catch (e) {
                             console.error('Error getting user info:', e);
                             userEmail = '';
@@ -1893,20 +1904,12 @@
             }
         }
 
+        // =============================================================
+        // 3.1  DRIVE CLICK HANDLERS
+        // =============================================================
         function handleDriveClick() {
-            if (isDriveConnected) {
-                openLayer('driveBackup');
-                return;
-            }
+            // نفتح نافذة التأكيد مباشرة
             openLayer('confirmBackup');
-        }
-
-        function handleDriveBackup() {
-            if (!isDriveConnected) {
-                toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
-                return;
-            }
-            performBackup();
         }
 
         function handleBackupConfirm() {
@@ -1921,6 +1924,35 @@
                 return;
             }
             tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+
+        // =============================================================
+        // 3.2  VIEW BACKUPS - الزر الجديد "عرض النسخ المحفوظة"
+        // =============================================================
+        function handleViewBackups() {
+            closeLayer('confirmBackup');
+
+            if (isDriveConnected) {
+                // إذا كان متصلاً، نفتح نافذة النسخ مباشرة
+                openLayer('driveBackup');
+                return;
+            }
+
+            // إذا لم يكن متصلاً، نطلب تسجيل الدخول ثم نفتح نافذة النسخ
+            if (!tokenClient) {
+                toastMsg('جاري تحميل خدمة المصادقة...', "info");
+                return;
+            }
+            // نطلب تسجيل الدخول، وبعدها سيفتح الـ callback نافذة النسخ
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+
+        function handleDriveBackup() {
+            if (!isDriveConnected) {
+                toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
+                return;
+            }
+            performBackup();
         }
 
         function signOut() {
@@ -1973,6 +2005,9 @@
             }
         }
 
+        // =============================================================
+        // 3.3  BACKUP LIST FUNCTIONS
+        // =============================================================
         async function loadBackupList() {
             if (!accessToken || !appFolderId) {
                 backupFiles = [];
@@ -2037,7 +2072,12 @@
                     <tbody>
             `;
 
-            backupFiles.forEach(file => {
+            // عرض النسخ بترتيب تنازلي (الأحدث أولاً)
+            const sortedFiles = [...backupFiles].sort((a, b) => {
+                return new Date(b.createdTime) - new Date(a.createdTime);
+            });
+
+            sortedFiles.forEach((file, index) => {
                 const date = new Date(file.createdTime);
                 const formattedDate = date.toLocaleString('ar-EG', {
                     year: 'numeric',
@@ -2047,7 +2087,9 @@
                     minute: '2-digit'
                 });
                 const size = file.size ? (parseInt(file.size) / 1024).toFixed(1) + 'KB' : 'غير معروف';
-                const name = file.name.replace(/\.[^/.]+$/, "");
+                // استخراج رقم النسخة من اسم الملف
+                const fileNumber = sortedFiles.length - index;
+                const name = `النسخة رقم ${fileNumber} - ${date.toLocaleDateString('ar-EG')}`;
 
                 tableHtml += `
                     <tr>
@@ -2078,6 +2120,9 @@
             toastMsg('جاري تحديث القائمة...', "info");
         }
 
+        // =============================================================
+        // 3.4  BACKUP OPERATIONS
+        // =============================================================
         async function performBackup() {
             if (!accessToken || !appFolderId) {
                 toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
@@ -2087,19 +2132,20 @@
             showLoading('جاري حفظ النسخة الاحتياطية...');
 
             try {
-                // =============================================================
-                // استخدام نفس طريقة التصدير من الكود القديم
-                // =============================================================
-                const data = { 
-                    exp: db.exp, 
-                    rig: db.rig, 
-                    deb: db.deb, 
+                // جلب جميع البيانات
+                const data = {
+                    exp: db.exp,
+                    rig: db.rig,
+                    deb: db.deb,
                     bal: db.bal,
-                    currency: currentCurrency
+                    currency: currentCurrency,
+                    backupDate: new Date().toISOString()
                 };
 
+                // إنشاء اسم الملف مع التاريخ ورقم النسخة
                 const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-                const fileName = `backup_${timestamp}.json`;
+                const backupNumber = backupFiles.length + 1;
+                const fileName = `${BACKUP_PREFIX} ${backupNumber} - ${new Date().toLocaleDateString('ar-EG').replace(/\//g, '-')}.json`;
 
                 const jsonData = JSON.stringify(data, null, 2);
                 const fileData = new Blob([jsonData], { type: 'application/json' });
@@ -2126,7 +2172,7 @@
                 }
 
                 hideLoading();
-                toastMsg('تم حفظ النسخة الاحتياطية بنجاح 💾', "success");
+                toastMsg(`تم حفظ النسخة الاحتياطية رقم ${backupNumber} بنجاح 💾`, "success");
                 await loadBackupList();
                 renderDriveBackupList();
                 if (document.getElementById('driveBackupModal').style.display !== 'flex') {
@@ -2158,9 +2204,7 @@
                 const text = await response.text();
                 const imported = JSON.parse(text);
 
-                // =============================================================
-                // استخدام نفس طريقة الاستيراد من الكود القديم
-                // =============================================================
+                // استيراد البيانات بنفس طريقة الكود القديم
                 if (imported.bal && Array.isArray(imported.bal.changes)) {
                     imported.bal.clientId = 1;
                     await addDataToStore('bal', [imported.bal]);
@@ -2239,13 +2283,10 @@
 
             if (!IDB_connection) return toastMsg('لا يمكن الاتصال بقاعدة البيانات.', "error");
 
-            // =============================================================
-            // استخدام نفس طريقة التصدير من الكود القديم
-            // =============================================================
-            const data = { 
-                exp: db.exp, 
-                rig: db.rig, 
-                deb: db.deb, 
+            const data = {
+                exp: db.exp,
+                rig: db.rig,
+                deb: db.deb,
                 bal: db.bal,
                 currency: currentCurrency
             };
@@ -2277,9 +2318,6 @@
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    // =============================================================
-                    // استخدام نفس طريقة الاستيراد من الكود القديم
-                    // =============================================================
                     const imported = JSON.parse(e.target.result);
                     if (imported.bal && Array.isArray(imported.bal.changes)) {
                         imported.bal.clientId = 1;
@@ -2291,7 +2329,6 @@
                         }
                     }
 
-                    // تحديث العملة إذا وجدت
                     if (imported.currency) {
                         currentCurrency = imported.currency;
                         localStorage.setItem('currencyCode', currentCurrency.code);
