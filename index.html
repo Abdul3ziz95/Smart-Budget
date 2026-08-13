@@ -1778,16 +1778,18 @@
             const dot = document.getElementById('driveStatusDot');
             const email = document.getElementById('driveMenuEmail');
 
-            if (isDriveConnected) {
-                menuItem.classList.add('connected');
-                menuText.textContent = 'Google Drive';
-                dot.style.display = 'inline-block';
-                email.textContent = userEmail || '';
-            } else {
-                menuItem.classList.remove('connected');
-                menuText.textContent = 'Google Drive';
-                dot.style.display = 'inline-block';
-                email.textContent = '';
+            if (menuItem) {
+                if (isDriveConnected) {
+                    menuItem.classList.add('connected');
+                    menuText.textContent = 'Google Drive';
+                    dot.style.display = 'inline-block';
+                    email.textContent = userEmail || '';
+                } else {
+                    menuItem.classList.remove('connected');
+                    menuText.textContent = 'Google Drive';
+                    dot.style.display = 'inline-block';
+                    email.textContent = '';
+                }
             }
 
             const modalStatus = document.getElementById('driveModalStatus');
@@ -1832,39 +1834,39 @@
 
             if (!isDriveConnected) {
                 container.innerHTML = `
-                        <div class="drive-empty">
-                            <i class="fab fa-google-drive"></i>
-                            <p>اضغط على زر Google Drive في القائمة لربط حسابك</p>
-                        </div>
-                    `;
+                    <div class="drive-empty">
+                        <i class="fab fa-google-drive"></i>
+                        <p>اضغط على زر Google Drive في القائمة لربط حسابك</p>
+                    </div>
+                `;
                 if (countEl) countEl.textContent = 'عدد النسخ المرفوعة : 0';
                 return;
             }
 
             if (backupFiles.length === 0) {
                 container.innerHTML = `
-                        <div class="drive-empty">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <p>لا توجد نسخ احتياطية محفوظة</p>
-                            <p style="font-size:0.85em;color:#888;">اضغط على زر "حفظ نسخة احتياطية جديدة"</p>
-                        </div>
-                    `;
+                    <div class="drive-empty">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>لا توجد نسخ احتياطية محفوظة</p>
+                        <p style="font-size:0.85em;color:#888;">اضغط على زر "حفظ نسخة احتياطية جديدة"</p>
+                    </div>
+                `;
                 if (countEl) countEl.textContent = 'عدد النسخ المرفوعة : 0';
                 return;
             }
 
             let tableHtml = `
-                    <table class="backup-table">
-                        <thead>
-                            <tr>
-                                <th>اسم النسخة</th>
-                                <th>التاريخ</th>
-                                <th>الحجم</th>
-                                <th style="text-align:left;">الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                    `;
+                <table class="backup-table">
+                    <thead>
+                        <tr>
+                            <th>اسم النسخة</th>
+                            <th>التاريخ</th>
+                            <th>الحجم</th>
+                            <th style="text-align:left;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
             backupFiles.forEach(file => {
                 const date = new Date(file.createdTime);
@@ -1879,22 +1881,22 @@
                 const name = file.name.replace(/\.[^/.]+$/, "");
 
                 tableHtml += `
-                        <tr>
-                            <td class="file-name">${name}</td>
-                            <td>${formattedDate}</td>
-                            <td class="file-size">${size}</td>
-                            <td>
-                                <div class="file-actions">
-                                    <button class="restore-btn" onclick="restoreBackup('${file.id}')" title="استعادة النسخة">
-                                        <i class="fas fa-download"></i>
-                                    </button>
-                                    <button class="delete-btn" onclick="deleteBackup('${file.id}')" title="حذف النسخة">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
+                    <tr>
+                        <td class="file-name">${name}</td>
+                        <td>${formattedDate}</td>
+                        <td class="file-size">${size}</td>
+                        <td>
+                            <div class="file-actions">
+                                <button class="restore-btn" onclick="restoreBackup('${file.id}')" title="استعادة النسخة">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="delete-btn" onclick="deleteBackup('${file.id}')" title="حذف النسخة">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
             });
 
             tableHtml += `</tbody></table>`;
@@ -2354,17 +2356,17 @@
                 const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
                 const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
                 return `
-                          <div class="list-item" style="border-right-color:${color};">
-                            <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
-                              <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
-                              <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
-                            </div>
-                            <div class="details">
-                              <span>الرصيد بعد: ${formatCurrency(i.الرصيد_بعد_العملية)}</span>
-                              <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span>
-                            </div>
-                          </div>
-                        `;
+                    <div class="list-item" style="border-right-color:${color};">
+                        <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
+                        <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
+                        <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
+                        </div>
+                        <div class="details">
+                        <span>الرصيد بعد: ${formatCurrency(i.الرصيد_بعد_العملية)}</span>
+                        <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span>
+                        </div>
+                    </div>
+                `;
             }).join('');
         }
 
@@ -2417,9 +2419,9 @@
             container.innerHTML = '';
 
             let paidHtml = `
-                        <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل / المدفوع" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
-                        <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن</span>
-                      `;
+                <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل / المدفوع" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
+                <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن</span>
+            `;
             container.innerHTML = paidHtml;
 
             const statusEl = document.getElementById('rStatus');
@@ -2494,18 +2496,18 @@
                 statusSelect.value = '';
 
                 let html = `
-                            <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
-                            <span class="field-hint">المبلغ الكلي للالتزام</span>
-                          `;
+                    <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
+                    <span class="field-hint">المبلغ الكلي للالتزام</span>
+                `;
                 if (type === 'قرض') {
                     html += `
-                                <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
-                                <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
-                              `;
+                        <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
+                        <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
+                    `;
                 } else {
                     html += `
-                                <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
-                              `;
+                        <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
+                    `;
                 }
                 container.innerHTML = html;
             } else {
@@ -2624,14 +2626,14 @@
             html += `</div>`;
             if (o.صورة && type === 'exp') {
                 html += `<div class="card" style="border-top-color:var(--s);">
-                          <h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> صورة الفاتورة</h3>
-                          <img src="${o.صورة}" alt="الفاتورة" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" />
-                        </div>`;
+                    <h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> صورة الفاتورة</h3>
+                    <img src="${o.صورة}" alt="الفاتورة" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" />
+                    </div>`;
             }
             html += `<div style="display:flex;gap:10px;margin-top:20px;">
-                          <button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> تعديل</button>
-                          <button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> حذف</button>
-                        </div>`;
+                    <button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> تعديل</button>
+                    <button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> حذف</button>
+                    </div>`;
             el.innerHTML = html;
         }
 
@@ -2702,18 +2704,18 @@
                 const itemId = i.clientId || i.id || `temp-${Date.now()}`;
 
                 return `
-                              <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
-                                <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
-                                  <span>${imgIcon} ${desc} ${entityDisplay}</span>
-                                  <span style="color:${amountColor};">${amountDisplay}</span>
-                                </div>
-                                <div class="details">
-                                  <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
-                                  <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
-                                </div>
-                                <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
-                              </div>
-                            `;
+                    <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
+                        <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+                        <span>${imgIcon} ${desc} ${entityDisplay}</span>
+                        <span style="color:${amountColor};">${amountDisplay}</span>
+                        </div>
+                        <div class="details">
+                        <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
+                        <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
+                        </div>
+                        <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
+                    </div>
+                `;
             }).join('');
         }
 
@@ -2831,11 +2833,11 @@
                 c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
             );
             list.innerHTML = filtered.map(c => `
-                        <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
-                          <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
-                          ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
-                        </button>
-                      `).join('');
+                <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
+                    <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
+                    ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
+                </button>
+            `).join('');
         }
 
         function setCurrency(code) {
