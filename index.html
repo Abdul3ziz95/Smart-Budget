@@ -643,7 +643,6 @@
             color: #888;
         }
 
-        /* ===== DRIVE BACKUP TABLE ===== */
         .backup-table {
             width: 100%;
             border-collapse: collapse;
@@ -815,6 +814,29 @@
         }
         #driveBackupModal .drive-modal-header .refresh-btn:hover {
             background: color-mix(in srgb, var(--input-bg) 80%, var(--p));
+        }
+        .drive-backup-btn {
+            background: #4285F4;
+            color: #fff;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+        }
+        .drive-backup-btn:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+        }
+        .drive-backup-btn i {
+            margin-left: 8px;
         }
 
         .list-item {
@@ -1415,7 +1437,7 @@
     </div>
 
     <!-- ==========================================================
-    DRIVE BACKUP MODAL - تصميم عصري
+    DRIVE BACKUP MODAL
     ========================================================== -->
     <div class="modal" id="driveBackupModal">
         <header>
@@ -1431,6 +1453,10 @@
             </div>
             <div id="driveBackupList"></div>
             <div class="backup-count" id="driveBackupCount">عدد النسخ المرفوعة : 0</div>
+            <!-- زر حفظ نسخة احتياطية جديدة داخل القائمة -->
+            <button class="drive-backup-btn" onclick="handleDriveBackup()">
+                <i class="fas fa-plus-circle"></i> حفظ نسخة احتياطية جديدة
+            </button>
         </div>
     </div>
 
@@ -1728,7 +1754,6 @@
                 appFolderId = savedFolderId || null;
                 isDriveConnected = true;
                 updateDriveUI();
-                // محاولة تحميل قائمة النسخ بعد تأخير
                 setTimeout(() => {
                     if (accessToken) loadBackupList();
                 }, 1000);
@@ -1756,7 +1781,6 @@
                             discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
                         });
                         console.log('Google API loaded');
-                        // بعد تحميل GAPI، نستعيد حالة Drive
                         restoreDriveState();
                     } catch (error) {
                         console.error('Error loading GAPI client:', error);
@@ -1874,13 +1898,19 @@
         }
 
         function handleDriveClick() {
-            // إذا كان الحساب متصلاً، نفتح قائمة النسخ مباشرة
             if (isDriveConnected) {
                 openLayer('driveBackup');
                 return;
             }
-            // إذا لم يكن متصلاً، نعرض نافذة التأكيد
             openLayer('confirmBackup');
+        }
+
+        function handleDriveBackup() {
+            if (!isDriveConnected) {
+                toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
+                return;
+            }
+            performBackup();
         }
 
         function handleBackupConfirm() {
@@ -1991,7 +2021,7 @@
                     <div class="drive-empty">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p>لا توجد نسخ احتياطية محفوظة</p>
-                        <p style="font-size:0.85em;color:#888;">اضغط على زر Google Drive واختر "نعم، احفظ النسخة"</p>
+                        <p style="font-size:0.85em;color:#888;">اضغط على زر "حفظ نسخة احتياطية جديدة"</p>
                     </div>
                 `;
                 if (countEl) countEl.textContent = 'عدد النسخ المرفوعة : 0';
@@ -2052,6 +2082,32 @@
             toastMsg('جاري تحديث القائمة...', "info");
         }
 
+        // دالة لجلب جميع البيانات من التطبيق
+        function getAllData() {
+            return {
+                exp: db.exp || [],
+                rig: db.rig || [],
+                deb: db.deb || [],
+                bal: db.bal || { clientId: 1, amount: 0, changes: [] },
+                currency: currentCurrency
+            };
+        }
+
+        // دالة لتطبيق البيانات المستوردة
+        function applyAllData(data) {
+            if (data.exp) db.exp = data.exp;
+            if (data.rig) db.rig = data.rig;
+            if (data.deb) db.deb = data.deb;
+            if (data.bal) {
+                db.bal = data.bal;
+                currentBalance = db.bal.amount || 0;
+            }
+            if (data.currency) {
+                currentCurrency = data.currency;
+                localStorage.setItem('currencyCode', currentCurrency.code);
+            }
+        }
+
         async function performBackup() {
             if (!accessToken || !appFolderId) {
                 toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
@@ -2061,20 +2117,13 @@
             showLoading('جاري حفظ النسخة الاحتياطية...');
 
             try {
-                const data = {
-                    exp: db.exp,
-                    rig: db.rig,
-                    deb: db.deb,
-                    bal: db.bal,
-                    currency: currentCurrency,
-                    backupDate: new Date().toISOString(),
-                    version: '5.0'
-                };
+                // جلب جميع البيانات
+                const allData = getAllData();
 
                 const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
                 const fileName = `backup_${timestamp}.json`;
 
-                const jsonData = JSON.stringify(data, null, 2);
+                const jsonData = JSON.stringify(allData, null, 2);
                 const fileData = new Blob([jsonData], { type: 'application/json' });
 
                 const metadata = {
@@ -2102,8 +2151,9 @@
                 toastMsg('تم حفظ النسخة الاحتياطية بنجاح 💾', "success");
                 await loadBackupList();
                 renderDriveBackupList();
-                // فتح نافذة النسخ بعد الحفظ
-                openLayer('driveBackup');
+                if (document.getElementById('driveBackupModal').style.display !== 'flex') {
+                    openLayer('driveBackup');
+                }
             } catch (error) {
                 hideLoading();
                 console.error('Error uploading backup:', error);
@@ -2128,36 +2178,10 @@
                 }
 
                 const text = await response.text();
-                const data = JSON.parse(text);
+                const importedData = JSON.parse(text);
 
-                // دعم الصيغ المختلفة
-                if (data.exp) db.exp = data.exp;
-                else if (data.expenses) db.exp = data.expenses;
-
-                if (data.rig) db.rig = data.rig;
-                else if (data.rights) db.rig = data.rights;
-
-                if (data.deb) db.deb = data.deb;
-                else if (data.debts) db.deb = data.debts;
-
-                if (data.bal) {
-                    db.bal = data.bal;
-                    currentBalance = db.bal.amount || 0;
-                } else if (data.balance) {
-                    db.bal = data.balance;
-                    currentBalance = db.bal.amount || 0;
-                }
-
-                if (data.currency) {
-                    currentCurrency = data.currency;
-                    localStorage.setItem('currencyCode', currentCurrency.code);
-                    const label = document.getElementById('sidebarCurrencyLabel');
-                    if (label) label.textContent = currentCurrency.symbol;
-                    const display = document.getElementById('currentCurrencyDisplay');
-                    if (display) {
-                        display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
-                    }
-                }
+                // تطبيق جميع البيانات المستوردة
+                applyAllData(importedData);
 
                 // حفظ البيانات في IndexedDB
                 await saveData('exp', db.exp);
@@ -2165,12 +2189,20 @@
                 await saveData('deb', db.deb);
                 await saveData('bal', db.bal);
 
-                // إعادة تحميل البيانات للتأكد
+                // تحديث الواجهة
                 await loadAllData();
-
                 hideLoading();
                 updateStats();
                 updateBalanceDisplay();
+
+                // تحديث العملة
+                const label = document.getElementById('sidebarCurrencyLabel');
+                if (label) label.textContent = currentCurrency.symbol;
+                const display = document.getElementById('currentCurrencyDisplay');
+                if (display) {
+                    display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+                }
+
                 toastMsg('تم استعادة البيانات بنجاح 🔄', "success");
                 await loadBackupList();
                 renderDriveBackupList();
@@ -2223,17 +2255,9 @@
 
             if (!IDB_connection) return toastMsg('لا يمكن الاتصال بقاعدة البيانات.', "error");
 
-            const data = {
-                exp: db.exp,
-                rig: db.rig,
-                deb: db.deb,
-                bal: db.bal,
-                currency: currentCurrency,
-                exportDate: new Date().toISOString(),
-                version: '5.0'
-            };
-
-            const json = JSON.stringify(data, null, 2);
+            // تصدير جميع البيانات
+            const allData = getAllData();
+            const json = JSON.stringify(allData, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -2261,40 +2285,15 @@
             reader.onload = async (e) => {
                 try {
                     const text = e.target.result;
-                    const imported = JSON.parse(text);
+                    const importedData = JSON.parse(text);
 
-                    if (imported.exp) db.exp = imported.exp;
-                    else if (imported.expenses) db.exp = imported.expenses;
-                    else throw new Error('الملف لا يحتوي على بيانات المصروفات');
-
-                    if (imported.rig) db.rig = imported.rig;
-                    else if (imported.rights) db.rig = imported.rights;
-                    else throw new Error('الملف لا يحتوي على بيانات الحقوق');
-
-                    if (imported.deb) db.deb = imported.deb;
-                    else if (imported.debts) db.deb = imported.debts;
-                    else throw new Error('الملف لا يحتوي على بيانات الالتزامات');
-
-                    if (imported.bal) {
-                        db.bal = imported.bal;
-                        currentBalance = db.bal.amount || 0;
-                    } else if (imported.balance) {
-                        db.bal = imported.balance;
-                        currentBalance = db.bal.amount || 0;
-                    } else {
-                        throw new Error('الملف لا يحتوي على بيانات الرصيد');
+                    // التحقق من صحة البيانات
+                    if (!importedData.exp && !importedData.rig && !importedData.deb && !importedData.bal) {
+                        throw new Error('ملف غير صالح - البيانات غير مكتملة');
                     }
 
-                    if (imported.currency) {
-                        currentCurrency = imported.currency;
-                        localStorage.setItem('currencyCode', currentCurrency.code);
-                        const label = document.getElementById('sidebarCurrencyLabel');
-                        if (label) label.textContent = currentCurrency.symbol;
-                        const display = document.getElementById('currentCurrencyDisplay');
-                        if (display) {
-                            display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
-                        }
-                    }
+                    // تطبيق جميع البيانات المستوردة
+                    applyAllData(importedData);
 
                     // حفظ البيانات في IndexedDB
                     await saveData('exp', db.exp);
@@ -2302,12 +2301,20 @@
                     await saveData('deb', db.deb);
                     await saveData('bal', db.bal);
 
-                    // إعادة تحميل البيانات للتأكد
+                    // تحديث الواجهة
                     await loadAllData();
-
                     hideLoading();
                     updateStats();
                     updateBalanceDisplay();
+
+                    // تحديث العملة
+                    const label = document.getElementById('sidebarCurrencyLabel');
+                    if (label) label.textContent = currentCurrency.symbol;
+                    const display = document.getElementById('currentCurrencyDisplay');
+                    if (display) {
+                        display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+                    }
+
                     toastMsg('تم استيراد البيانات بنجاح! 📥', "success");
                 } catch (err) {
                     hideLoading();
@@ -3314,7 +3321,6 @@
             setTimeout(() => {
                 initGapi();
                 initGis();
-                // محاولة استعادة الحالة حتى لو فشل GAPI
                 restoreDriveState();
             }, 1000);
         });
