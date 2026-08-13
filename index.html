@@ -1420,7 +1420,7 @@
                 <i class="fas fa-file-import"></i>
                 <span>استيراد البيانات</span>
             </div>
-            <input type="file" id="importFile" accept=".db" style="display:none;" onchange="importDB(event)" />
+            <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)" />
 
             <div class="sidebar-divider"></div>
 
@@ -1813,7 +1813,7 @@
 
             try {
                 const searchResponse = await fetch(
-                    `https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and trashed=false&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
+                    `https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and trashed=false and mimeType='application/json'&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
                     }
                 );
@@ -1939,14 +1939,15 @@
                 };
 
                 const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
-                const fileName = `backup_${timestamp}.db`;
+                const fileName = `backup_${timestamp}.json`;
 
                 const jsonData = JSON.stringify(data, null, 2);
-                const fileData = new Blob([jsonData], { type: 'application/octet-stream' });
+                const fileData = new Blob([jsonData], { type: 'application/json' });
 
                 const metadata = {
                     name: fileName,
-                    parents: [appFolderId]
+                    parents: [appFolderId],
+                    mimeType: 'application/json'
                 };
 
                 const form = new FormData();
@@ -2080,11 +2081,11 @@
             };
 
             const json = JSON.stringify(data, null, 2);
-            const blob = new Blob([json], { type: 'application/octet-stream' });
+            const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${fileName}.db`;
+            a.download = `${fileName}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -2092,7 +2093,7 @@
             toastMsg('تم تصدير البيانات بنجاح! 📤', "success");
         }
 
-        async function importDB(event) {
+        async function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
 
