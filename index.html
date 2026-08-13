@@ -777,9 +777,6 @@
             color: var(--text-dark);
             border: 1px solid var(--border-color);
         }
-        #confirmBackupModal .modal-content .btn-group .cancel-btn:hover {
-            background: color-mix(in srgb, var(--input-bg) 80%, #999);
-        }
 
         #driveBackupModal .modal-content {
             padding: 15px;
@@ -1453,7 +1450,6 @@
             </div>
             <div id="driveBackupList"></div>
             <div class="backup-count" id="driveBackupCount">عدد النسخ المرفوعة : 0</div>
-            <!-- زر حفظ نسخة احتياطية جديدة داخل القائمة -->
             <button class="drive-backup-btn" onclick="handleDriveBackup()">
                 <i class="fas fa-plus-circle"></i> حفظ نسخة احتياطية جديدة
             </button>
@@ -2082,32 +2078,6 @@
             toastMsg('جاري تحديث القائمة...', "info");
         }
 
-        // دالة لجلب جميع البيانات من التطبيق
-        function getAllData() {
-            return {
-                exp: db.exp || [],
-                rig: db.rig || [],
-                deb: db.deb || [],
-                bal: db.bal || { clientId: 1, amount: 0, changes: [] },
-                currency: currentCurrency
-            };
-        }
-
-        // دالة لتطبيق البيانات المستوردة
-        function applyAllData(data) {
-            if (data.exp) db.exp = data.exp;
-            if (data.rig) db.rig = data.rig;
-            if (data.deb) db.deb = data.deb;
-            if (data.bal) {
-                db.bal = data.bal;
-                currentBalance = db.bal.amount || 0;
-            }
-            if (data.currency) {
-                currentCurrency = data.currency;
-                localStorage.setItem('currencyCode', currentCurrency.code);
-            }
-        }
-
         async function performBackup() {
             if (!accessToken || !appFolderId) {
                 toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
@@ -2117,13 +2087,21 @@
             showLoading('جاري حفظ النسخة الاحتياطية...');
 
             try {
-                // جلب جميع البيانات
-                const allData = getAllData();
+                // =============================================================
+                // استخدام نفس طريقة التصدير من الكود القديم
+                // =============================================================
+                const data = { 
+                    exp: db.exp, 
+                    rig: db.rig, 
+                    deb: db.deb, 
+                    bal: db.bal,
+                    currency: currentCurrency
+                };
 
                 const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
                 const fileName = `backup_${timestamp}.json`;
 
-                const jsonData = JSON.stringify(allData, null, 2);
+                const jsonData = JSON.stringify(data, null, 2);
                 const fileData = new Blob([jsonData], { type: 'application/json' });
 
                 const metadata = {
@@ -2178,31 +2156,37 @@
                 }
 
                 const text = await response.text();
-                const importedData = JSON.parse(text);
+                const imported = JSON.parse(text);
 
-                // تطبيق جميع البيانات المستوردة
-                applyAllData(importedData);
+                // =============================================================
+                // استخدام نفس طريقة الاستيراد من الكود القديم
+                // =============================================================
+                if (imported.bal && Array.isArray(imported.bal.changes)) {
+                    imported.bal.clientId = 1;
+                    await addDataToStore('bal', [imported.bal]);
+                }
+                for (const sn of ['exp', 'rig', 'deb']) {
+                    if (imported[sn] && Array.isArray(imported[sn])) {
+                        await addDataToStore(sn, imported[sn]);
+                    }
+                }
 
-                // حفظ البيانات في IndexedDB
-                await saveData('exp', db.exp);
-                await saveData('rig', db.rig);
-                await saveData('deb', db.deb);
-                await saveData('bal', db.bal);
+                // تحديث العملة إذا وجدت
+                if (imported.currency) {
+                    currentCurrency = imported.currency;
+                    localStorage.setItem('currencyCode', currentCurrency.code);
+                    const label = document.getElementById('sidebarCurrencyLabel');
+                    if (label) label.textContent = currentCurrency.symbol;
+                    const display = document.getElementById('currentCurrencyDisplay');
+                    if (display) {
+                        display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+                    }
+                }
 
-                // تحديث الواجهة
                 await loadAllData();
                 hideLoading();
                 updateStats();
                 updateBalanceDisplay();
-
-                // تحديث العملة
-                const label = document.getElementById('sidebarCurrencyLabel');
-                if (label) label.textContent = currentCurrency.symbol;
-                const display = document.getElementById('currentCurrencyDisplay');
-                if (display) {
-                    display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
-                }
-
                 toastMsg('تم استعادة البيانات بنجاح 🔄', "success");
                 await loadBackupList();
                 renderDriveBackupList();
@@ -2238,7 +2222,7 @@
         }
 
         // =============================================================
-        // 4.  EXPORT / IMPORT
+        // 4.  EXPORT / IMPORT (من الكود القديم)
         // =============================================================
         function openExportNameModal() {
             openLayer('exportName');
@@ -2255,9 +2239,18 @@
 
             if (!IDB_connection) return toastMsg('لا يمكن الاتصال بقاعدة البيانات.', "error");
 
-            // تصدير جميع البيانات
-            const allData = getAllData();
-            const json = JSON.stringify(allData, null, 2);
+            // =============================================================
+            // استخدام نفس طريقة التصدير من الكود القديم
+            // =============================================================
+            const data = { 
+                exp: db.exp, 
+                rig: db.rig, 
+                deb: db.deb, 
+                bal: db.bal,
+                currency: currentCurrency
+            };
+
+            const json = JSON.stringify(data, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -2274,7 +2267,7 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            if (!confirm('⚠️ تحذير: سيتم استبدال جميع البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) {
+            if (!confirm('تحذير: سيتم إضافة المعاملات المستوردة إلى بياناتك الحالية.')) {
                 event.target.value = null;
                 return;
             }
@@ -2284,47 +2277,62 @@
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    const text = e.target.result;
-                    const importedData = JSON.parse(text);
-
-                    // التحقق من صحة البيانات
-                    if (!importedData.exp && !importedData.rig && !importedData.deb && !importedData.bal) {
-                        throw new Error('ملف غير صالح - البيانات غير مكتملة');
+                    // =============================================================
+                    // استخدام نفس طريقة الاستيراد من الكود القديم
+                    // =============================================================
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.bal && Array.isArray(imported.bal.changes)) {
+                        imported.bal.clientId = 1;
+                        await addDataToStore('bal', [imported.bal]);
+                    }
+                    for (const sn of ['exp', 'rig', 'deb']) {
+                        if (imported[sn] && Array.isArray(imported[sn])) {
+                            await addDataToStore(sn, imported[sn]);
+                        }
                     }
 
-                    // تطبيق جميع البيانات المستوردة
-                    applyAllData(importedData);
+                    // تحديث العملة إذا وجدت
+                    if (imported.currency) {
+                        currentCurrency = imported.currency;
+                        localStorage.setItem('currencyCode', currentCurrency.code);
+                        const label = document.getElementById('sidebarCurrencyLabel');
+                        if (label) label.textContent = currentCurrency.symbol;
+                        const display = document.getElementById('currentCurrencyDisplay');
+                        if (display) {
+                            display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+                        }
+                    }
 
-                    // حفظ البيانات في IndexedDB
-                    await saveData('exp', db.exp);
-                    await saveData('rig', db.rig);
-                    await saveData('deb', db.deb);
-                    await saveData('bal', db.bal);
-
-                    // تحديث الواجهة
                     await loadAllData();
                     hideLoading();
                     updateStats();
                     updateBalanceDisplay();
-
-                    // تحديث العملة
-                    const label = document.getElementById('sidebarCurrencyLabel');
-                    if (label) label.textContent = currentCurrency.symbol;
-                    const display = document.getElementById('currentCurrencyDisplay');
-                    if (display) {
-                        display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
-                    }
-
-                    toastMsg('تم استيراد البيانات بنجاح! 📥', "success");
+                    toastMsg('تم استيراد البيانات وتحديثها! 📥', "success");
                 } catch (err) {
                     hideLoading();
-                    toastMsg('فشل الاستيراد: ' + err.message, "error");
+                    toastMsg('فشل الاستيراد. تأكد من صيغة الملف.', "error");
                     console.error(err);
                 } finally {
                     event.target.value = null;
                 }
             };
             reader.readAsText(file);
+        }
+
+        async function addDataToStore(storeName, dataArray) {
+            if (!IDB_connection) return;
+            const tx = IDB_connection.transaction([storeName], 'readwrite');
+            const store = tx.objectStore(storeName);
+            for (const item of dataArray) {
+                await new Promise(resolve => {
+                    if (storeName === 'bal') { store.put(item).onsuccess = resolve; } else {
+                        const toSave = { ...item };
+                        delete toSave.id;
+                        toSave.clientId = item.clientId || `${storeName}-${Date.now()}`;
+                        store.add(toSave).onsuccess = resolve;
+                    }
+                });
+            }
         }
 
         // =============================================================
@@ -3289,7 +3297,7 @@
         loadDarkModePreference();
 
         // =============================================================
-        // 13. INIT - التهيئة النهائية
+        // 13. INIT
         // =============================================================
         document.addEventListener('DOMContentLoaded', () => {
             if (!history.state || history.state.layer === undefined) {
@@ -3317,7 +3325,6 @@
             updateStats();
             updateDriveUI();
 
-            // تهيئة Google APIs بعد تحميل الصفحة
             setTimeout(() => {
                 initGapi();
                 initGis();
@@ -3325,7 +3332,6 @@
             }, 1000);
         });
 
-        // محاولة إضافية بعد 5 ثواني
         setTimeout(() => {
             if (!isDriveConnected) {
                 restoreDriveState();
