@@ -11,9 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
 
     <style>
-        /* ============================================================
-           ROOT VARIABLES
-           ============================================================ */
         :root {
             --p: #0077b6;
             --s: #48cae4;
@@ -1020,6 +1017,73 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* زر جوجل درايفر المميز */
+        .drive-main-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #4285F4;
+            color: #fff;
+            border: none;
+            padding: 18px 24px;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+            margin-top: 10px;
+        }
+        .drive-main-btn:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+        }
+        .drive-main-btn i {
+            font-size: 28px;
+        }
+        .drive-main-btn.connected {
+            background: var(--success);
+            box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
+        }
+        .drive-main-btn.connected:hover {
+            background: #21867a;
+        }
+
+        .drive-status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            margin-top: 12px;
+            background: var(--input-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 0.9em;
+        }
+        .drive-status-bar .status-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .drive-status-bar .status-text.connected {
+            color: var(--success);
+        }
+        .drive-status-bar .status-text.disconnected {
+            color: var(--danger);
+        }
+        .drive-status-bar .drive-email-display {
+            font-size: 0.8em;
+            color: #888;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
     </style>
 </head>
 
@@ -1029,7 +1093,7 @@
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner">
             <i class="fas fa-spinner"></i>
-            <p>جاري المعالجة...</p>
+            <p id="loadingMessage">جاري المعالجة...</p>
         </div>
     </div>
 
@@ -1346,9 +1410,6 @@
             </div>
             <div id="driveBackupList"></div>
             <div class="backup-count" id="driveBackupCount">عدد النسخ المرفوعة : 0</div>
-            <button class="action" onclick="openBackupConfirm()" style="margin-top:15px;background:#4285F4;">
-                <i class="fas fa-cloud-upload-alt" style="margin-left:10px;"></i> حفظ نسخة احتياطية جديدة
-            </button>
         </div>
     </div>
 
@@ -1381,12 +1442,18 @@
         </div>
         <div class="sidebar-content">
 
-            <!-- Google Drive -->
-            <div class="sidebar-menu-item drive-item" id="driveMenuItem" onclick="handleDriveClick()">
+            <!-- Google Drive - زر واحد -->
+            <button class="drive-main-btn" id="driveMainBtn" onclick="handleDriveClick()">
                 <i class="fab fa-google-drive"></i>
-                <span id="driveMenuText">Google Drive</span>
-                <span class="drive-status-dot" id="driveStatusDot"></span>
-                <span class="drive-email" id="driveMenuEmail"></span>
+                <span id="driveBtnText">Google Drive</span>
+            </button>
+
+            <div class="drive-status-bar">
+                <span class="status-text disconnected" id="driveStatusText">
+                    <i class="fas fa-circle" style="font-size:0.7em;"></i>
+                    <span id="driveStatusLabel">غير متصل</span>
+                </span>
+                <span class="drive-email-display" id="driveEmailDisplay"></span>
             </div>
 
             <div class="sidebar-divider"></div>
@@ -1500,6 +1567,8 @@
         let backupFiles = [];
         let userEmail = '';
         let appFolderId = null;
+        let gapiLoaded = false;
+        let gisLoaded = false;
 
         // =============================================================
         // 1.  INDEXED DB SETUP
@@ -1540,35 +1609,45 @@
             const layer = LAYERS[layerName];
             if (!layer) return;
             const el = document.getElementById(layer.elementId);
+            if (!el) return;
 
             if (layer.type === 'modal') {
                 el.style.display = 'flex';
                 if (layerName === 'log') { currentLog = data.logType;
                     renderLog(); } else if (layerName === 'detail') {
-                    const o = db[data.logType].find(item => item.clientId === data.id || item.id === data.id);
+                    const o = db[data.logType]?.find(item => item.clientId === data.id || item.id === data.id);
                     if (!o) { toastMsg("لم يتم العثور على المعاملة.", "error"); return; }
                     const idx = db[data.logType].findIndex(item => item.clientId === data.id || item.id === data.id);
                     editMode = { type: data.logType, index: idx };
                     _renderDetailContent(o, data.logType);
                 } else if (layerName === 'balanceAction') {
                     balanceActionType = data.actionType;
-                    document.getElementById('actionModalTitle').textContent =
-                        balanceActionType === 'deposit' ? 'إيداع رصيد جديد' : 'سحب / تحويل رصيد';
-                    document.getElementById('currentBalanceInAction').innerHTML = formatCurrency(currentBalance);
-                    document.getElementById('bAmount').value = '';
-                    document.getElementById('bDesc').value = '';
-                    document.getElementById('bDate').value = new Date().toISOString().slice(0, 16);
+                    const titleEl = document.getElementById('actionModalTitle');
+                    if (titleEl) titleEl.textContent = balanceActionType === 'deposit' ? 'إيداع رصيد جديد' :
+                        'سحب / تحويل رصيد';
+                    const balanceEl = document.getElementById('currentBalanceInAction');
+                    if (balanceEl) balanceEl.innerHTML = formatCurrency(currentBalance);
+                    const amountEl = document.getElementById('bAmount');
+                    if (amountEl) amountEl.value = '';
+                    const descEl = document.getElementById('bDesc');
+                    if (descEl) descEl.value = '';
+                    const dateEl = document.getElementById('bDate');
+                    if (dateEl) dateEl.value = new Date().toISOString().slice(0, 16);
                 } else if (layerName === 'currency') {
-                    document.getElementById('currencySearch').value = '';
+                    const searchEl = document.getElementById('currencySearch');
+                    if (searchEl) searchEl.value = '';
                     renderCurrencyList();
                 } else if (layerName === 'balanceLog') {
                     renderBalanceLog();
                 } else if (layerName === 'driveBackup') {
                     renderDriveBackupList();
                 } else if (layerName === 'exportName') {
-                    document.getElementById('exportFileName').value = 'بيانات_ميزانيتي';
-                    document.getElementById('exportFileName').focus();
-                    document.getElementById('exportFileName').select();
+                    const fileNameEl = document.getElementById('exportFileName');
+                    if (fileNameEl) {
+                        fileNameEl.value = 'بيانات_ميزانيتي';
+                        fileNameEl.focus();
+                        fileNameEl.select();
+                    }
                 }
             } else if (layer.type === 'menu') {
                 el.classList.add('open');
@@ -1581,6 +1660,7 @@
             const layer = LAYERS[layerName];
             if (!layer) return;
             const el = document.getElementById(layer.elementId);
+            if (!el) return;
             if (layer.type === 'modal') {
                 el.style.display = 'none';
                 if (clearEdit && (layerName === 'detail' || layerName === 'log')) editMode = null;
@@ -1618,17 +1698,40 @@
             }
         };
 
-        window.onload = () => {
+        // انتظار تحميل الصفحة بالكامل قبل تهيئة الـ APIs
+        document.addEventListener('DOMContentLoaded', () => {
             if (!history.state || history.state.layer === undefined) {
                 history.replaceState({ layer: 'main' }, null, '#main');
                 historyStack.push({ layer: 'main' });
             } else {
                 historyStack.push(history.state);
             }
-            initGapi();
-            initGis();
-            restoreDriveState();
-        };
+
+            const now = new Date().toISOString().slice(0, 10);
+            ['eDate', 'rDueDate', 'dDueDate'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = now;
+            });
+
+            const currencyLabel = document.getElementById('sidebarCurrencyLabel');
+            if (currencyLabel) currencyLabel.textContent = currentCurrency.symbol;
+
+            const currencyDisplay = document.getElementById('currentCurrencyDisplay');
+            if (currencyDisplay) {
+                currencyDisplay.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+            }
+
+            updateBalanceDisplay();
+            updateStats();
+            updateDriveUI();
+
+            // تهيئة Google APIs بعد تحميل الصفحة
+            setTimeout(() => {
+                initGapi();
+                initGis();
+                restoreDriveState();
+            }, 500);
+        });
 
         // =============================================================
         // 3.  GOOGLE DRIVE API FUNCTIONS
@@ -1643,17 +1746,23 @@
                 appFolderId = savedFolderId || null;
                 isDriveConnected = true;
                 updateDriveUI();
-                setTimeout(() => loadBackupList(), 500);
+                setTimeout(() => loadBackupList(), 800);
             }
         }
 
         function initGapi() {
+            if (typeof gapi === 'undefined') {
+                console.warn('gapi not loaded yet, retrying...');
+                setTimeout(initGapi, 500);
+                return;
+            }
             gapi.load('client', async () => {
                 try {
                     await gapi.client.init({
                         apiKey: '',
                         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
                     });
+                    gapiLoaded = true;
                     console.log('Google API loaded');
                 } catch (error) {
                     console.error('Error loading GAPI:', error);
@@ -1662,41 +1771,53 @@
         }
 
         function initGis() {
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: async (resp) => {
-                    if (resp.error) {
-                        console.error('Auth error:', resp.error);
-                        toastMsg('فشل تسجيل الدخول: ' + resp.error, "error");
-                        return;
-                    }
-                    accessToken = resp.access_token;
-                    localStorage.setItem('drive_token', accessToken);
+            if (typeof google === 'undefined' || !google.accounts) {
+                console.warn('GIS not loaded yet, retrying...');
+                setTimeout(initGis, 500);
+                return;
+            }
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: async (resp) => {
+                        if (resp.error) {
+                            console.error('Auth error:', resp.error);
+                            toastMsg('فشل تسجيل الدخول: ' + resp.error, "error");
+                            return;
+                        }
+                        accessToken = resp.access_token;
+                        localStorage.setItem('drive_token', accessToken);
 
-                    try {
-                        const userInfo = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
-                            headers: { 'Authorization': `Bearer ${accessToken}` }
-                        });
-                        const userData = await userInfo.json();
-                        userEmail = userData.email || '';
-                        localStorage.setItem('drive_email', userEmail);
+                        try {
+                            const userInfo = await fetch(
+                                'https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+                                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                                });
+                            const userData = await userInfo.json();
+                            userEmail = userData.email || '';
+                            localStorage.setItem('drive_email', userEmail);
 
-                        await createAppFolder();
+                            await createAppFolder();
 
-                        isDriveConnected = true;
-                        updateDriveUI();
-                        toastMsg('تم ربط حساب Google Drive ✅', "success");
-                        await loadBackupList();
-                        openLayer('driveBackup');
-                    } catch (e) {
-                        console.error('Error getting user info:', e);
-                        userEmail = '';
-                        toastMsg('حدث خطأ في تسجيل الدخول', "error");
-                    }
-                },
-            });
-            console.log('GIS loaded');
+                            isDriveConnected = true;
+                            updateDriveUI();
+                            toastMsg('تم ربط حساب Google Drive ✅', "success");
+                            await loadBackupList();
+                            openLayer('driveBackup');
+                        } catch (e) {
+                            console.error('Error getting user info:', e);
+                            userEmail = '';
+                            toastMsg('حدث خطأ في تسجيل الدخول', "error");
+                        }
+                    },
+                });
+                gisLoaded = true;
+                console.log('GIS loaded');
+            } catch (error) {
+                console.error('Error initializing GIS:', error);
+                setTimeout(initGis, 500);
+            }
         }
 
         async function createAppFolder() {
@@ -1748,18 +1869,14 @@
 
         function handleDriveClick() {
             if (!isDriveConnected) {
-                signIn();
+                if (!tokenClient) {
+                    toastMsg('جاري تحميل خدمة المصادقة...', "info");
+                    return;
+                }
+                tokenClient.requestAccessToken({ prompt: 'consent' });
             } else {
                 openLayer('driveBackup');
             }
-        }
-
-        function signIn() {
-            if (!tokenClient) {
-                toastMsg('جاري تحميل خدمة المصادقة...', "info");
-                return;
-            }
-            tokenClient.requestAccessToken({ prompt: 'consent' });
         }
 
         function signOut() {
@@ -1776,26 +1893,37 @@
         }
 
         function updateDriveUI() {
-            const menuItem = document.getElementById('driveMenuItem');
-            const menuText = document.getElementById('driveMenuText');
-            const dot = document.getElementById('driveStatusDot');
-            const email = document.getElementById('driveMenuEmail');
+            const btn = document.getElementById('driveMainBtn');
+            const btnText = document.getElementById('driveBtnText');
+            const statusText = document.getElementById('driveStatusText');
+            const statusLabel = document.getElementById('driveStatusLabel');
+            const emailDisplay = document.getElementById('driveEmailDisplay');
+            const modalStatus = document.getElementById('driveModalStatus');
 
-            if (menuItem) {
+            if (btn) {
                 if (isDriveConnected) {
-                    menuItem.classList.add('connected');
-                    menuText.textContent = 'Google Drive';
-                    dot.style.display = 'inline-block';
-                    email.textContent = userEmail || '';
+                    btn.className = 'drive-main-btn connected';
+                    if (btnText) btnText.textContent = 'Google Drive';
                 } else {
-                    menuItem.classList.remove('connected');
-                    menuText.textContent = 'Google Drive';
-                    dot.style.display = 'inline-block';
-                    email.textContent = '';
+                    btn.className = 'drive-main-btn';
+                    if (btnText) btnText.textContent = 'Google Drive';
                 }
             }
 
-            const modalStatus = document.getElementById('driveModalStatus');
+            if (statusText) {
+                if (isDriveConnected) {
+                    statusText.className = 'status-text connected';
+                    if (statusLabel) statusLabel.textContent = '✅ متصل';
+                } else {
+                    statusText.className = 'status-text disconnected';
+                    if (statusLabel) statusLabel.textContent = '❌ غير متصل';
+                }
+            }
+
+            if (emailDisplay) {
+                emailDisplay.textContent = isDriveConnected ? userEmail || '' : '';
+            }
+
             if (modalStatus) {
                 if (isDriveConnected) {
                     modalStatus.className = 'status connected';
@@ -1851,7 +1979,7 @@
                     <div class="drive-empty">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p>لا توجد نسخ احتياطية محفوظة</p>
-                        <p style="font-size:0.85em;color:#888;">اضغط على زر "حفظ نسخة احتياطية جديدة"</p>
+                        <p style="font-size:0.85em;color:#888;">اضغط على زر Google Drive واختر "نعم، احفظ النسخة"</p>
                     </div>
                 `;
                 if (countEl) countEl.textContent = 'عدد النسخ المرفوعة : 0';
@@ -1998,7 +2126,7 @@
                 const text = await response.text();
                 const data = JSON.parse(text);
 
-                // دعم الصيغ المختلفة (القديمة والجديدة)
+                // دعم الصيغ المختلفة
                 if (data.exp) db.exp = data.exp;
                 else if (data.expenses) db.exp = data.expenses;
 
@@ -2019,9 +2147,12 @@
                 if (data.currency) {
                     currentCurrency = data.currency;
                     localStorage.setItem('currencyCode', currentCurrency.code);
-                    document.getElementById('sidebarCurrencyLabel').textContent = currentCurrency.symbol;
-                    document.getElementById('currentCurrencyDisplay').innerHTML =
-                        `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+                    const label = document.getElementById('sidebarCurrencyLabel');
+                    if (label) label.textContent = currentCurrency.symbol;
+                    const display = document.getElementById('currentCurrencyDisplay');
+                    if (display) {
+                        display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+                    }
                 }
 
                 await saveData('exp', db.exp);
@@ -2124,7 +2255,6 @@
                     const text = e.target.result;
                     const imported = JSON.parse(text);
 
-                    // دعم الصيغ المختلفة (القديمة والجديدة)
                     if (imported.exp) db.exp = imported.exp;
                     else if (imported.expenses) db.exp = imported.expenses;
                     else throw new Error('الملف لا يحتوي على بيانات المصروفات');
@@ -2150,9 +2280,12 @@
                     if (imported.currency) {
                         currentCurrency = imported.currency;
                         localStorage.setItem('currencyCode', currentCurrency.code);
-                        document.getElementById('sidebarCurrencyLabel').textContent = currentCurrency.symbol;
-                        document.getElementById('currentCurrencyDisplay').innerHTML =
-                            `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+                        const label = document.getElementById('sidebarCurrencyLabel');
+                        if (label) label.textContent = currentCurrency.symbol;
+                        const display = document.getElementById('currentCurrencyDisplay');
+                        if (display) {
+                            display.innerHTML = `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
+                        }
                     }
 
                     await saveData('exp', db.exp);
@@ -2180,13 +2313,14 @@
         // =============================================================
         function showLoading(message = 'جاري المعالجة...') {
             const overlay = document.getElementById('loadingOverlay');
-            const p = overlay.querySelector('p');
-            if (p) p.textContent = message;
-            overlay.classList.add('show');
+            const msg = document.getElementById('loadingMessage');
+            if (msg) msg.textContent = message;
+            if (overlay) overlay.classList.add('show');
         }
 
         function hideLoading() {
-            document.getElementById('loadingOverlay').classList.remove('show');
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.remove('show');
         }
 
         // =============================================================
@@ -2194,13 +2328,15 @@
         // =============================================================
         function toastMsg(message, type = "info") {
             const t = document.getElementById('toast');
+            if (!t) return;
             t.className = 'toast ' + type;
             const iconMap = {
                 success: 'fa-check-circle',
                 error: 'fa-exclamation-circle',
                 info: 'fa-info-circle'
             };
-            t.innerHTML = `<span class="toast-icon ${type}"><i class="fas ${iconMap[type] || 'fa-info-circle'}"></i></span> ${message}`;
+            t.innerHTML =
+                `<span class="toast-icon ${type}"><i class="fas ${iconMap[type] || 'fa-info-circle'}"></i></span> ${message}`;
             t.classList.add('show');
             setTimeout(() => {
                 t.classList.remove('show');
@@ -2283,15 +2419,18 @@
                 'dType', 'dAmount', 'dDesc', 'dDate', 'dStatus', 'dEntity', 'dDueDate'
             ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             clearSelectedImage();
-            document.getElementById('rDynamicFields').innerHTML = '';
-            document.getElementById('dDynamicFields').innerHTML = '';
+            const rDynamic = document.getElementById('rDynamicFields');
+            if (rDynamic) rDynamic.innerHTML = '';
+            const dDynamic = document.getElementById('dDynamicFields');
+            if (dDynamic) dDynamic.innerHTML = '';
             document.querySelectorAll('.edit-indicator').forEach(el => el.style.display = 'none');
         }
 
         function openTab(id, keepEdit = false) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+            const tab = document.getElementById(id);
+            if (tab) tab.classList.add('active');
             const btn = document.querySelector(`.tabs button[onclick*="${id}"]`);
             if (btn) btn.classList.add('active');
             if (!keepEdit) { editMode = null;
@@ -2315,12 +2454,13 @@
         }
 
         function updateBalanceDisplay() {
-            document.getElementById('currentBalanceDisplay').innerHTML = formatCurrency(currentBalance);
+            const display = document.getElementById('currentBalanceDisplay');
+            if (display) display.innerHTML = formatCurrency(currentBalance);
             const act = document.getElementById('currentBalanceInAction');
             if (act) act.innerHTML = formatCurrency(currentBalance);
             const icon = document.querySelector('#balanceVisibilityToggle i');
             if (icon) icon.className = balanceHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
-            if (document.getElementById('balanceLogModal').style.display === 'flex') renderBalanceLog();
+            if (document.getElementById('balanceLogModal')?.style.display === 'flex') renderBalanceLog();
         }
 
         async function processBalanceChange(amount, type, description, recordId = null, isEdit = false, oldAmount = 0) {
@@ -2361,8 +2501,11 @@
         }
 
         async function processBalanceAction() {
-            const amt = document.getElementById('bAmount').value;
-            const desc = document.getElementById('bDesc').value || (balanceActionType === 'deposit' ? 'إيداع عام' : 'سحب عام');
+            const amtEl = document.getElementById('bAmount');
+            const descEl = document.getElementById('bDesc');
+            if (!amtEl) return;
+            const amt = amtEl.value;
+            const desc = descEl?.value || (balanceActionType === 'deposit' ? 'إيداع عام' : 'سحب عام');
             if (!amt) return toastMsg('الرجاء إدخال المبلغ.', "error");
             const ok = await processBalanceChange(amt, balanceActionType, desc, `manual-${Date.now()}`);
             if (ok) {
@@ -2373,6 +2516,7 @@
 
         function renderBalanceLog() {
             const el = document.getElementById('balanceLogContent');
+            if (!el) return;
             const changes = db.bal.changes || [];
             if (!changes.length) {
                 el.innerHTML =
@@ -2407,7 +2551,7 @@
             const eDate = document.getElementById('eDate');
             const eDesc = document.getElementById('eDesc');
 
-            if (!eAmount.value || !eType.value || !eDate.value) return toastMsg('أكمل البيانات المطلوبة', "error");
+            if (!eAmount?.value || !eType?.value || !eDate?.value) return toastMsg('أكمل البيانات المطلوبة', "error");
 
             const isEditing = editMode && editMode.type === 'exp';
             const oldData = isEditing ? db.exp[editMode.index] : {};
@@ -2444,6 +2588,7 @@
 
         function updateRightFields(type, currentData = null) {
             const container = document.getElementById('rDynamicFields');
+            if (!container) return;
             container.innerHTML = '';
 
             let paidHtml = `
@@ -2453,8 +2598,10 @@
             container.innerHTML = paidHtml;
 
             const statusEl = document.getElementById('rStatus');
-            if (type === 'دين') { statusEl.style.display = 'none';
-                statusEl.value = ''; } else { statusEl.style.display = 'block'; }
+            if (statusEl) {
+                if (type === 'دين') { statusEl.style.display = 'none';
+                    statusEl.value = ''; } else { statusEl.style.display = 'block'; }
+            }
         }
 
         async function addRight() {
@@ -2466,7 +2613,7 @@
             const rStatus = document.getElementById('rStatus');
             const rPaidAmount = document.getElementById('rPaidAmount');
 
-            if (!rAmount.value || !rType.value || !rDueDate.value) return toastMsg('أكمل البيانات المطلوبة', "error");
+            if (!rAmount?.value || !rType?.value || !rDueDate?.value) return toastMsg('أكمل البيانات المطلوبة', "error");
             const isEditing = editMode && editMode.type === 'rig';
             const oldData = isEditing ? db.rig[editMode.index] : {};
             const total = parseAmount(rAmount.value);
@@ -2489,7 +2636,7 @@
             if (remaining <= 0) status = 'مدفوع بالكامل';
             else if (paid > 0) status = 'مدفوع جزئياً';
             else status = 'غير مدفوع';
-            if (rType.value !== 'دين' && rStatus.value) {
+            if (rType.value !== 'دين' && rStatus?.value) {
                 const manual = rStatus.value;
                 if (manual === 'مدفوع بالكامل') status = 'مدفوع بالكامل';
                 else if (manual === 'مدفوع جزئياً') status = 'مدفوع جزئياً';
@@ -2515,13 +2662,14 @@
             const container = document.getElementById('dDynamicFields');
             const amountInput = document.getElementById('dAmount');
             const statusSelect = document.getElementById('dStatus');
+            if (!container) return;
             container.innerHTML = '';
 
             if (type === 'قرض' || type === 'دين شخصي') {
-                amountInput.style.display = 'none';
-                statusSelect.style.display = 'none';
-                amountInput.value = '';
-                statusSelect.value = '';
+                if (amountInput) { amountInput.style.display = 'none';
+                    amountInput.value = ''; }
+                if (statusSelect) { statusSelect.style.display = 'none';
+                    statusSelect.value = ''; }
 
                 let html = `
                     <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
@@ -2539,8 +2687,8 @@
                 }
                 container.innerHTML = html;
             } else {
-                amountInput.style.display = 'block';
-                statusSelect.style.display = 'block';
+                if (amountInput) amountInput.style.display = 'block';
+                if (statusSelect) statusSelect.style.display = 'block';
             }
         }
 
@@ -2552,7 +2700,7 @@
             const dDesc = document.getElementById('dDesc');
             const dStatus = document.getElementById('dStatus');
 
-            if (!dType.value || !dDueDate.value) return toastMsg('أكمل البيانات المطلوبة', "error");
+            if (!dType?.value || !dDueDate?.value) return toastMsg('أكمل البيانات المطلوبة', "error");
             const isEditing = editMode && editMode.type === 'deb';
             const oldData = isEditing ? db.deb[editMode.index] : {};
             const isMaster = (dType.value === 'قرض' || dType.value === 'دين شخصي');
@@ -2599,7 +2747,7 @@
                 data.الحالة = (total - totalPaid) <= 0 ? 'مدفوع' : 'مدفوع جزئياً';
                 paidAmount = totalPaid;
             } else {
-                if (!dAmount.value || !dStatus.value) return toastMsg('أكمل بيانات الفاتورة.', "error");
+                if (!dAmount?.value || !dStatus?.value) return toastMsg('أكمل بيانات الفاتورة.', "error");
                 const amt = parseAmount(dAmount.value);
                 if (amt === 0) return toastMsg('المبلغ يجب أن يكون أكبر من صفر.', "error");
                 data.المبلغ = getFormattedAmount(amt);
@@ -2627,7 +2775,7 @@
 
         function postSaveCleanup(isEditing, type) {
             _visualClose('detail', false);
-            if (document.getElementById('logModal').style.display === 'flex') {
+            if (document.getElementById('logModal')?.style.display === 'flex') {
                 _visualClose('log', false);
             }
             loadAllData().then(() => { updateStats();
@@ -2641,6 +2789,7 @@
         // =============================================================
         function _renderDetailContent(o, type) {
             const el = document.getElementById('detailContent');
+            if (!el) return;
             let html = `<div class="card" style="border-top-color:var(--p);"><h3 style="color:var(--p);margin-top:0;"><i class="fas fa-info-circle" style="margin-left:5px;"></i> التفاصيل</h3>`;
             for (const [key, val] of Object.entries(o)) {
                 if (['id', 'clientId', 'صورة', 'المبلغ_المضاف_للرصيد', 'المبلغ_المخصوم_للرصيد'].includes(key)) continue;
@@ -2667,9 +2816,11 @@
 
         function renderLog() {
             const el = document.getElementById('logContent');
+            if (!el) return;
             const items = db[currentLog] || [];
-            const search = document.getElementById('search').value.toLowerCase();
-            const filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(search)));
+            const search = document.getElementById('search');
+            const searchVal = search?.value?.toLowerCase() || '';
+            const filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(searchVal)));
 
             if (!filtered.length) {
                 el.innerHTML =
@@ -2755,7 +2906,7 @@
             const tabId = tabMap[type];
 
             _visualClose('detail', false);
-            if (document.getElementById('logModal').style.display === 'flex') {
+            if (document.getElementById('logModal')?.style.display === 'flex') {
                 _visualClose('log', false);
             }
 
@@ -2763,23 +2914,34 @@
 
             setTimeout(() => {
                 if (type === 'exp') {
-                    document.getElementById('eAmount').value = parseAmount(data.المبلغ).toLocaleString('ar');
-                    document.getElementById('eType').value = data.الفئة;
-                    document.getElementById('eDesc').value = data.الوصف;
-                    document.getElementById('eDate').value = data.التاريخ;
+                    const amountEl = document.getElementById('eAmount');
+                    if (amountEl) amountEl.value = parseAmount(data.المبلغ).toLocaleString('ar');
+                    const typeEl = document.getElementById('eType');
+                    if (typeEl) typeEl.value = data.الفئة;
+                    const descEl = document.getElementById('eDesc');
+                    if (descEl) descEl.value = data.الوصف;
+                    const dateEl = document.getElementById('eDate');
+                    if (dateEl) dateEl.value = data.التاريخ;
                     if (data.صورة) {
-                        document.getElementById('eImgName').textContent = '📎 صورة مرفقة';
+                        const imgName = document.getElementById('eImgName');
+                        if (imgName) imgName.textContent = '📎 صورة مرفقة';
                         selectedImageFile = data.صورة;
                     } else {
                         selectedImageFile = null;
-                        document.getElementById('eImgName').textContent = '';
+                        const imgName = document.getElementById('eImgName');
+                        if (imgName) imgName.textContent = '';
                     }
                 } else if (type === 'rig') {
-                    document.getElementById('rType').value = data.النوع;
-                    document.getElementById('rEntity').value = data.الجهة || '';
-                    document.getElementById('rAmount').value = parseAmount(data.المبلغ).toLocaleString('ar');
-                    document.getElementById('rDueDate').value = data.تاريخ_الاستحقاق || '';
-                    document.getElementById('rDesc').value = data.الوصف;
+                    const typeEl = document.getElementById('rType');
+                    if (typeEl) typeEl.value = data.النوع;
+                    const entityEl = document.getElementById('rEntity');
+                    if (entityEl) entityEl.value = data.الجهة || '';
+                    const amountEl = document.getElementById('rAmount');
+                    if (amountEl) amountEl.value = parseAmount(data.المبلغ).toLocaleString('ar');
+                    const dueEl = document.getElementById('rDueDate');
+                    if (dueEl) dueEl.value = data.تاريخ_الاستحقاق || '';
+                    const descEl = document.getElementById('rDesc');
+                    if (descEl) descEl.value = data.الوصف;
                     updateRightFields(data.النوع, data);
                     const paidInput = document.getElementById('rPaidAmount');
                     if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع || 0).toLocaleString('ar');
@@ -2788,15 +2950,21 @@
                         if (st) st.value = data.الحالة || '';
                     }
                 } else if (type === 'deb') {
-                    document.getElementById('dType').value = data.النوع;
-                    document.getElementById('dEntity').value = data.الجهة || '';
-                    document.getElementById('dDueDate').value = data.تاريخ_الاستحقاق || '';
-                    document.getElementById('dDesc').value = data.الوصف;
+                    const typeEl = document.getElementById('dType');
+                    if (typeEl) typeEl.value = data.النوع;
+                    const entityEl = document.getElementById('dEntity');
+                    if (entityEl) entityEl.value = data.الجهة || '';
+                    const dueEl = document.getElementById('dDueDate');
+                    if (dueEl) dueEl.value = data.تاريخ_الاستحقاق || '';
+                    const descEl = document.getElementById('dDesc');
+                    if (descEl) descEl.value = data.الوصف;
                     updateDebtFields(data.النوع, data);
                     const isMaster = (data.النوع === 'قرض' || data.النوع === 'دين شخصي');
                     if (!isMaster) {
-                        document.getElementById('dAmount').value = parseAmount(data.المبلغ).toLocaleString('ar');
-                        document.getElementById('dStatus').value = data.الحالة || '';
+                        const amountEl = document.getElementById('dAmount');
+                        if (amountEl) amountEl.value = parseAmount(data.المبلغ).toLocaleString('ar');
+                        const st = document.getElementById('dStatus');
+                        if (st) st.value = data.الحالة || '';
                     }
                 }
                 const indicatorMap = { exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
@@ -2847,18 +3015,25 @@
             db.deb.forEach(i => { debTotal += parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0);
                 debPaid += parseAmount(i.المبلغ_المخصوم_للرصيد || 0); });
 
-            document.getElementById('sExpTotal').innerHTML = formatCurrency(expTotal, true);
-            document.getElementById('sRigTotal').innerHTML = formatCurrency(rigTotal, rigTotal > 0);
-            document.getElementById('sRigPaid').innerHTML = formatCurrency(rigPaid, true);
-            document.getElementById('sDebTotal').innerHTML = formatCurrency(debTotal, debTotal > 0);
-            document.getElementById('sDebPaid').innerHTML = formatCurrency(debPaid, false);
+            const expEl = document.getElementById('sExpTotal');
+            if (expEl) expEl.innerHTML = formatCurrency(expTotal, true);
+            const rigEl = document.getElementById('sRigTotal');
+            if (rigEl) rigEl.innerHTML = formatCurrency(rigTotal, rigTotal > 0);
+            const rigPaidEl = document.getElementById('sRigPaid');
+            if (rigPaidEl) rigPaidEl.innerHTML = formatCurrency(rigPaid, true);
+            const debEl = document.getElementById('sDebTotal');
+            if (debEl) debEl.innerHTML = formatCurrency(debTotal, debTotal > 0);
+            const debPaidEl = document.getElementById('sDebPaid');
+            if (debPaidEl) debPaidEl.innerHTML = formatCurrency(debPaid, false);
         }
 
         function renderCurrencyList() {
             const list = document.getElementById('currencyList');
-            const q = document.getElementById('currencySearch').value.toLowerCase();
+            if (!list) return;
+            const q = document.getElementById('currencySearch');
+            const searchVal = q?.value?.toLowerCase() || '';
             const filtered = ARABIC_CURRENCIES.filter(c =>
-                c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+                c.name.toLowerCase().includes(searchVal) || c.code.toLowerCase().includes(searchVal)
             );
             list.innerHTML = filtered.map(c => `
                 <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
@@ -2873,8 +3048,10 @@
             if (sel) {
                 currentCurrency = sel;
                 localStorage.setItem('currencyCode', code);
-                document.getElementById('sidebarCurrencyLabel').textContent = sel.symbol;
-                document.getElementById('currentCurrencyDisplay').innerHTML = `العملة: ${sel.name} (${sel.symbol})`;
+                const label = document.getElementById('sidebarCurrencyLabel');
+                if (label) label.textContent = sel.symbol;
+                const display = document.getElementById('currentCurrencyDisplay');
+                if (display) display.innerHTML = `العملة: ${sel.name} (${sel.symbol})`;
                 updateBalanceDisplay();
                 updateStats();
                 closeLayer('currency');
@@ -2943,31 +3120,37 @@
         function openCameraInput() {
             closeImageSource();
             const input = document.getElementById('eImgCamera');
-            input.value = null;
-            input.setAttribute('capture', 'environment');
-            input.click();
+            if (input) {
+                input.value = null;
+                input.setAttribute('capture', 'environment');
+                input.click();
+            }
         }
 
         function openGalleryInput() {
             closeImageSource();
             const input = document.getElementById('eImgGallery');
-            input.value = null;
-            input.removeAttribute('capture');
-            input.click();
+            if (input) {
+                input.value = null;
+                input.removeAttribute('capture');
+                input.click();
+            }
         }
 
         function handleImageSelect(input) {
             if (input.files && input.files.length > 0) {
                 const file = input.files[0];
                 selectedImageFile = file;
-                document.getElementById('eImgName').textContent = `✅ ${file.name}`;
+                const imgName = document.getElementById('eImgName');
+                if (imgName) imgName.textContent = `✅ ${file.name}`;
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     selectedImageFile = e.target.result;
                 };
                 reader.readAsDataURL(file);
             } else {
-                document.getElementById('eImgName').textContent = '';
+                const imgName = document.getElementById('eImgName');
+                if (imgName) imgName.textContent = '';
                 selectedImageFile = null;
             }
         }
@@ -2976,9 +3159,12 @@
 
         function clearSelectedImage() {
             selectedImageFile = null;
-            document.getElementById('eImgName').textContent = '';
-            document.getElementById('eImgCamera').value = null;
-            document.getElementById('eImgGallery').value = null;
+            const imgName = document.getElementById('eImgName');
+            if (imgName) imgName.textContent = '';
+            const cam = document.getElementById('eImgCamera');
+            if (cam) cam.value = null;
+            const gal = document.getElementById('eImgGallery');
+            if (gal) gal.value = null;
         }
 
         // =============================================================
@@ -3071,7 +3257,8 @@
         function loadDarkModePreference() {
             if (localStorage.getItem('darkMode') === 'true') {
                 document.body.classList.add('dark-mode');
-                document.getElementById('darkModeToggle').checked = true;
+                const toggle = document.getElementById('darkModeToggle');
+                if (toggle) toggle.checked = true;
             }
         }
 
@@ -3083,21 +3270,8 @@
         loadDarkModePreference();
 
         // =============================================================
-        // 13. INIT
+        // 13. INIT - تم نقله إلى DOMContentLoaded أعلاه
         // =============================================================
-        document.addEventListener('DOMContentLoaded', () => {
-            const now = new Date().toISOString().slice(0, 10);
-            ['eDate', 'rDueDate', 'dDueDate'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = now;
-            });
-            document.getElementById('sidebarCurrencyLabel').textContent = currentCurrency.symbol;
-            document.getElementById('currentCurrencyDisplay').innerHTML =
-                `العملة: ${currentCurrency.name} (${currentCurrency.symbol})`;
-            updateBalanceDisplay();
-            updateStats();
-            updateDriveUI();
-        });
     </script>
 </body>
 </html>
