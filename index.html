@@ -1332,6 +1332,21 @@
                 font-size: 11px;
             }
         }
+
+        /* إصلاح غطاء نافذة اختيار الصورة */
+        #imageSourceOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 140;
+            display: none;
+        }
+        #imageSourceOverlay.open {
+            display: block;
+        }
     </style>
 </head>
 
@@ -1640,7 +1655,8 @@
         <button class="secondary" onclick="openGalleryInput()"><i class="fas fa-images" style="margin-left:10px;"></i> اختيار من المعرض</button>
         <button class="secondary" style="background:none; border:none; color:var(--danger); margin-top:10px;" onclick="closeImageSource()">إلغاء</button>
     </div>
-    <div class="sidebar-overlay" id="imageSourceOverlay" style="z-index:140; display:none;" onclick="closeImageSource()"></div>
+    <!-- تم إزالة style="display:none;" من overlay وسيتم التحكم عبر CSS -->
+    <div class="sidebar-overlay" id="imageSourceOverlay" style="z-index:140;" onclick="closeImageSource()"></div>
 
     <!-- ==========================================================
     CONFIRM BACKUP MODAL
@@ -1848,6 +1864,7 @@
 
         let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] } };
         let IDB_connection = null;
+        let dbReady = false; // إضافة متغير جاهزية قاعدة البيانات
 
         let currentBalance = 0;
         let balanceHidden = localStorage.getItem('balanceHidden') === 'true';
@@ -1855,6 +1872,16 @@
             editMode = null,
             balanceActionType = null;
         let selectedImageFile = null;
+        let isImageLoading = false; // متغير لحالة تحميل الصورة
+
+        // =============================================================
+        // دالة لترميز النصوص لتجنب XSS
+        // =============================================================
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                              .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
 
         // =============================================================
         // 2.  NAVIGATION / LAYERS
@@ -1895,6 +1922,7 @@
                     if (titleEl) titleEl.textContent = balanceActionType === 'deposit' ? 'إيداع رصيد جديد' :
                         'سحب / تحويل رصيد';
                     const balanceEl = document.getElementById('currentBalanceInAction');
+                    // استخدام formatCurrency العادية بدون إخفاء
                     if (balanceEl) balanceEl.innerHTML = formatCurrency(currentBalance);
                     const amountEl = document.getElementById('bAmount');
                     if (amountEl) amountEl.value = '';
@@ -1960,23 +1988,21 @@
 
         function closeLayer(layerName, clearEdit = true) {
             const top = historyStack[historyStack.length - 1];
-            if (top && top.layer === layerName) { history.back(); } else { _visualClose(layerName, clearEdit); }
+            // لا يمكن إغلاق طبقة ليست في القمة
+            if (!top || top.layer !== layerName) {
+                // إذا كانت الطبقة موجودة في المكدس، نغلقها بصريًا فقط إذا كانت القمة، وإلا نهمل
+                return;
+            }
+            history.back(); // سيتولى popstate الإغلاق
         }
 
-        // دالة لإغلاق جميع الطبقات والعودة إلى الرئيسية (إصلاح 1)
+        // دالة لإغلاق جميع الطبقات والعودة إلى الرئيسية
         function closeAllLayers() {
-            while (historyStack.length > 1) {
-                const top = historyStack.pop();
-                if (top.layer === 'main') {
-                    historyStack.push(top);
-                    break;
-                }
-                _visualClose(top.layer);
-            }
-            // تحديث history API دون إضافة دخول جديدة
-            if (historyStack.length === 1) {
-                history.replaceState({ layer: 'main' }, null, '#main');
-            }
+            if (historyStack.length <= 1) return;
+            // استخدام history.go مع عدد الطبقات للرجوع
+            const steps = historyStack.length - 1;
+            history.go(-steps);
+            // سيتم التعامل مع الإغلاق في popstate
         }
 
         window.onpopstate = (e) => {
@@ -1985,7 +2011,7 @@
             if (historyStack.length === 0) {
                 const st = { layer: 'main' };
                 historyStack.push(st);
-                history.pushState(st, null, '#main');
+                history.replaceState(st, null, '#main');
                 for (const n in LAYERS) _visualClose(n, false);
             } else {
                 const top = historyStack[historyStack.length - 1];
@@ -2189,10 +2215,11 @@
                             startTokenRefresh();
 
                             await loadBackupList();
+                            // لا نفتح driveBackup تلقائيًا
                             if (document.getElementById('confirmBackupModal').style.display === 'flex') {
                                 closeLayer('confirmBackup');
                             }
-                            openLayer('driveBackup');
+                            // openLayer('driveBackup'); // تمت إزالتها
                         } catch (e) {
                             console.error('Error getting user info:', e);
                             userEmail = '';
@@ -2258,22 +2285,30 @@
             const savedToken = localStorage.getItem('drive_token');
             const tokenExpiry = localStorage.getItem('drive_token_expiry');
 
+            // إذا كان متصلاً، افتح قائمة النسخ مباشرة
+            if (isDriveConnected) {
+                openLayer('driveBackup');
+                return;
+            }
+
+            // إذا كان هناك توكن صالح، استعده وافتح النسخ
             if (savedToken && tokenExpiry) {
                 const now = Date.now();
                 const expiry = parseInt(tokenExpiry) || 0;
-
-                if (expiry > now && !isDriveConnected) {
+                if (expiry > now) {
                     accessToken = savedToken;
                     userEmail = localStorage.getItem('drive_email') || '';
                     appFolderId = localStorage.getItem('drive_folder_id') || null;
                     isDriveConnected = true;
                     updateDriveUI();
                     startTokenRefresh();
+                    loadBackupList();
                     openLayer('driveBackup');
                     return;
                 }
             }
 
+            // وإلا فتح نافذة التأكيد
             openLayer('confirmBackup');
         }
 
@@ -2497,9 +2532,9 @@
 
                 tableHtml += `
                     <tr>
-                        <td class="file-name">${name}</td>
-                        <td class="file-date">${formattedDate}</td>
-                        <td class="file-size">${size}</td>
+                        <td class="file-name">${escapeHTML(name)}</td>
+                        <td class="file-date">${escapeHTML(formattedDate)}</td>
+                        <td class="file-size">${escapeHTML(size)}</td>
                         <td>
                             <div class="file-actions">
                                 <button class="restore-btn" onclick="restoreBackup('${file.id}')" title="استعادة النسخة">
@@ -2542,7 +2577,6 @@
                     backupDate: new Date().toISOString()
                 };
 
-                // استخدام اسم فريد بطابع زمني
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                 const fileName = `نسخة_${timestamp}.json`;
 
@@ -2574,9 +2608,10 @@
                 toastMsg('تم حفظ النسخة الاحتياطية بنجاح 💾', "success");
                 await loadBackupList();
                 renderDriveBackupList();
-                if (document.getElementById('driveBackupModal').style.display !== 'flex') {
-                    openLayer('driveBackup');
-                }
+                // لا نفتح driveBackup تلقائيًا
+                // if (document.getElementById('driveBackupModal').style.display !== 'flex') {
+                //     openLayer('driveBackup');
+                // }
             } catch (error) {
                 hideLoading();
                 console.error('Error uploading backup:', error);
@@ -2603,12 +2638,15 @@
                 const text = await response.text();
                 const imported = JSON.parse(text);
 
+                // مسح المتاجر قبل الاستيراد (إصلاح 1)
                 if (imported.bal && Array.isArray(imported.bal.changes)) {
                     imported.bal.clientId = 1;
+                    await clearStore('bal');
                     await addDataToStore('bal', [imported.bal]);
                 }
                 for (const sn of ['exp', 'rig', 'deb']) {
                     if (imported[sn] && Array.isArray(imported[sn])) {
+                        await clearStore(sn);
                         await addDataToStore(sn, imported[sn]);
                     }
                 }
@@ -2701,7 +2739,7 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            if (!confirm('تحذير: سيتم إضافة المعاملات المستوردة إلى بياناتك الحالية.')) {
+            if (!confirm('تحذير: سيتم استبدال البيانات الحالية بالبيانات المستوردة.')) {
                 event.target.value = null;
                 return;
             }
@@ -2712,12 +2750,15 @@
             reader.onload = async (e) => {
                 try {
                     const imported = JSON.parse(e.target.result);
+                    // مسح المتاجر قبل الاستيراد
                     if (imported.bal && Array.isArray(imported.bal.changes)) {
                         imported.bal.clientId = 1;
+                        await clearStore('bal');
                         await addDataToStore('bal', [imported.bal]);
                     }
                     for (const sn of ['exp', 'rig', 'deb']) {
                         if (imported[sn] && Array.isArray(imported[sn])) {
+                            await clearStore(sn);
                             await addDataToStore(sn, imported[sn]);
                         }
                     }
@@ -2745,6 +2786,18 @@
             reader.readAsText(file);
         }
 
+        // دالة لمسح متجر معين
+        function clearStore(storeName) {
+            return new Promise((resolve, reject) => {
+                if (!IDB_connection) return reject(new Error('DB not connected'));
+                const tx = IDB_connection.transaction([storeName], 'readwrite');
+                const store = tx.objectStore(storeName);
+                const req = store.clear();
+                req.onsuccess = () => resolve();
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
         async function addDataToStore(storeName, dataArray) {
             if (!IDB_connection) return;
             const tx = IDB_connection.transaction([storeName], 'readwrite');
@@ -2754,7 +2807,6 @@
                     if (storeName === 'bal') { store.put(item).onsuccess = resolve; } else {
                         const toSave = { ...item };
                         delete toSave.id;
-                        // توليد معرف فريد
                         toSave.clientId = item.clientId || `${storeName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                         store.add(toSave).onsuccess = resolve;
                     }
@@ -2790,7 +2842,7 @@
                 info: 'fa-info-circle'
             };
             t.innerHTML =
-                `<span class="toast-icon ${type}"><i class="fas ${iconMap[type] || 'fa-info-circle'}"></i></span> ${message}`;
+                `<span class="toast-icon ${type}"><i class="fas ${iconMap[type] || 'fa-info-circle'}"></i></span> ${escapeHTML(message)}`;
             t.classList.add('show');
             setTimeout(() => {
                 t.classList.remove('show');
@@ -2800,7 +2852,6 @@
         // =============================================================
         // 7.  FORMATTING HELPERS
         // =============================================================
-        // قائمة العملات المعدّلة
         const ARABIC_CURRENCIES = [
             { code: 'SAR', symbol: '﷼', name: 'الريال السعودي', flag: '🇸🇦' },
             { code: 'SDG', symbol: 'ج.س', name: 'الجنيه السوداني', flag: '🇸🇩' },
@@ -2834,12 +2885,10 @@
             { code: 'CNY', symbol: '¥', name: 'اليوان الصيني', flag: '🇨🇳' }
         ];
 
-        // العملة الافتراضية: الريال السعودي
         let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SAR')) ||
             ARABIC_CURRENCIES[0];
 
         function formatAmount(input) {
-            // دعم تحويل الأرقام العربية إلى إنجليزية (إصلاح 5)
             let val = input.value.replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
             val = val.replace(/[^\d.]/g, '');
             const parts = val.split('.');
@@ -2852,7 +2901,6 @@
             input.value = formatted + decPart;
         }
 
-        // ===== الإصلاح الأساسي: parseAmount تحافظ على الإشارة السالبة وتدعم الفواصل العربية =====
         function parseAmount(amount) {
             if (amount === null || amount === undefined) return 0;
             let str = String(amount).trim();
@@ -2861,17 +2909,11 @@
                 negative = true;
                 str = str.substring(1);
             }
-            // تحويل الأرقام العربية إلى إنجليزية
             str = str.replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
-            // استبدال الفاصلة العشرية العربية "٫" بنقطة
             str = str.replace(/٫/g, '.');
-            // استبدال فاصل الآلاف العربي "٬" بلا شيء
             str = str.replace(/٬/g, '');
-            // إزالة الفواصل والمسافات ورموز العملات
             str = str.replace(/[،,\s]/g, '');
-            // إزالة أي شيء غير الأرقام والنقطة
             str = str.replace(/[^\d.]/g, '');
-            // إبقاء نقطة عشرية واحدة فقط
             const parts = str.split('.');
             if (parts.length > 2) str = parts[0] + '.' + parts.slice(1).join('');
             const val = parseFloat(str);
@@ -2879,14 +2921,12 @@
             return negative ? -val : val;
         }
 
-        // ===== تنسيق الأرقام مع إظهار السالب بشكل واضح =====
         function getFormattedAmount(num) {
             const abs = Math.abs(num);
             const formatted = abs.toLocaleString('en-US', { minimumFractionDigits: abs % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
             return num < 0 ? '-' + formatted : formatted;
         }
 
-        // ===== دوال التاريخ والوقت المحلي =====
         function getLocalDateString(date = new Date()) {
             const pad = n => String(n).padStart(2, '0');
             return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
@@ -2897,7 +2937,6 @@
             return `${getLocalDateString(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
         }
 
-        // تنسيق المبالغ العامة (إصلاح 2: لا تخفي المبالغ عند إخفاء الرصيد)
         function formatCurrency(amount, withColor = false) {
             const num = parseAmount(amount);
             const fmt = getFormattedAmount(num);
@@ -2910,7 +2949,6 @@
             return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
         }
 
-        // دالة خاصة لعرض الرصيد مع اللون المناسب (إخفاء الرصيد فقط هنا)
         function formatBalance(amount) {
             if (balanceHidden) return '<span class="hidden-balance">***</span>';
             const num = parseAmount(amount);
@@ -2924,7 +2962,6 @@
 
         function formatDateTime(dateString) {
             if (!dateString) return '—';
-            // إذا كان التاريخ فقط (YYYY-MM-DD) نفسّره كتاريخ محلي
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
                 const [y, m, d] = dateString.split('-').map(Number);
                 const date = new Date(y, m - 1, d);
@@ -2975,7 +3012,6 @@
 
         function openTabFromNav(tabId) {
             if (document.getElementById(tabId).classList.contains('active')) return;
-            // إغلاق جميع الطبقات المفتوحة
             closeAllLayers();
             openTab(tabId);
         }
@@ -2994,7 +3030,7 @@
             const el = document.getElementById('currentBalanceDisplay');
             el.innerHTML = formatBalance(currentBalance);
             const act = document.getElementById('currentBalanceInAction');
-            if (act) act.innerHTML = formatBalance(currentBalance);
+            if (act) act.innerHTML = formatCurrency(currentBalance); // عرض بدون إخفاء
             const icon = document.querySelector('#balanceVisibilityToggle i');
             if (icon) icon.className = balanceHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
             if (document.getElementById('balanceLogModal').style.display === 'flex') renderBalanceLog();
@@ -3060,12 +3096,11 @@
                 const isDep = i.القيمة_الصافية > 0;
                 const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
                 const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
-                // عرض المبلغ مع الإشارة الصحيحة
                 const displayAmount = (i.القيمة_الصافية < 0 ? '-' : '') + formatCurrency(Math.abs(i.المبلغ));
                 return `
                     <div class="list-item" style="border-right-color:${color};">
                         <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
-                        <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
+                        <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${escapeHTML(i.النوع)}</span>
                         <span style="color:${color};">${displayAmount}</span>
                         </div>
                         <div class="details">
@@ -3085,6 +3120,10 @@
         // 10.1 EXPENSES
         // =============================================================
         async function addExpense() {
+            if (isImageLoading) {
+                toastMsg('جاري تحميل الصورة، انتظر...', "info");
+                return;
+            }
             const eAmount = document.getElementById('eAmount');
             const eType = document.getElementById('eType');
             const eDate = document.getElementById('eDate');
@@ -3200,9 +3239,7 @@
             const entityInput = document.getElementById('dEntity');
             container.innerHTML = '';
 
-            // تحديد الفئات التي تحتاج إلى حقل الجهة
             const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍👧 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
-            // المتغير noEntityTypes حذف (إصلاح 6)
 
             if (entityTypes.includes(type)) {
                 entityInput.style.display = 'block';
@@ -3247,8 +3284,8 @@
                 }
             }
 
-            // إضافة حقل المبلغ المدفوع عند اختيار حالة "مدفوع جزئياً" للفواتير غير الرئيسية (إصلاح 3)
-            if (!masterTypes.includes(type)) {
+            // إضافة حقل المبلغ المدفوع عند اختيار حالة "مدفوع جزئياً" للفواتير غير الرئيسية
+            if (!masterTypes.includes(type) && statusSelect.style.display !== 'none') {
                 statusSelect.onchange = function() {
                     const status = statusSelect.value;
                     const partialPaidContainer = document.getElementById('dPartialPaidContainer');
@@ -3266,7 +3303,6 @@
                         if (partialPaidContainer) partialPaidContainer.remove();
                     }
                 };
-                // استدعاء أولي
                 statusSelect.onchange();
                 if (currentData && currentData.الحالة === 'مدفوع جزئياً' && currentData.المبلغ_المدفوع_جزئياً) {
                     const paidInput = document.getElementById('dPartialPaidAmount');
@@ -3359,7 +3395,6 @@
                     paidAmount = 0;
                 }
 
-                // تنظيف الحقول غير ذات الصلة (إصلاح 7)
                 delete data.المبلغ_الكلي_للالتزام;
                 delete data.إجمالي_المدفوع;
                 delete data.المتبقي_للالتزام;
@@ -3405,8 +3440,8 @@
                     continue;
                 const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes(
                     'القسط') || key.includes('إجمالي');
-                const display = isAmt ? formatCurrency(val, true) : val;
-                html += `<p style="margin:6px 0;"><strong>${key.replace(/_/g,' ')}:</strong> <span>${display}</span></p>`;
+                const display = isAmt ? formatCurrency(val, true) : escapeHTML(val);
+                html += `<p style="margin:6px 0;"><strong>${escapeHTML(key.replace(/_/g,' '))}:</strong> <span>${display}</span></p>`;
             }
             html += `</div>`;
             if (o.صورة && type === 'exp') {
@@ -3486,19 +3521,19 @@
 
                 const imgIcon = i.صورة ? '<i class="fas fa-camera" style="margin-left:5px;color:var(--p);"></i>' : '';
                 const entityDisplay = entity && entity !== '—' ?
-                    `<span style="font-size:0.85em;color:#888;">${entity}</span>` : '';
+                    `<span style="font-size:0.85em;color:#888;">${escapeHTML(entity)}</span>` : '';
 
                 const itemId = i.clientId || i.id || `temp-${Date.now()}`;
 
                 return `
                     <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
                         <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
-                        <span>${imgIcon} ${desc} ${entityDisplay}</span>
+                        <span>${imgIcon} ${escapeHTML(desc)} ${entityDisplay}</span>
                         <span style="color:${amountColor};">${amountDisplay}</span>
                         </div>
                         <div class="details">
-                        <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
-                        <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
+                        <span>${escapeHTML(i.النوع || i.الفئة || '')} ${statusBadge}</span>
+                        <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ || i.تاريخ_الاستحقاق)}</span>
                         </div>
                         <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
                     </div>
@@ -3631,7 +3666,7 @@
             );
             list.innerHTML = filtered.map(c => `
                 <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
-                    <span>${c.flag} <strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
+                    <span>${c.flag} <strong>${escapeHTML(c.symbol)}</strong> ${escapeHTML(c.name)} (${escapeHTML(c.code)})</span>
                     ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
                 </button>
             `).join('');
@@ -3713,16 +3748,25 @@
         function handleImageSelect(input) {
             if (input.files && input.files.length > 0) {
                 const file = input.files[0];
-                selectedImageFile = file;
-                document.getElementById('eImgName').textContent = `✅ ${file.name}`;
+                isImageLoading = true; // بدء تحميل الصورة
+                document.getElementById('eImgName').textContent = `⏳ جاري تحميل ${file.name}...`;
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     selectedImageFile = e.target.result;
+                    isImageLoading = false;
+                    document.getElementById('eImgName').textContent = `✅ ${file.name}`;
+                };
+                reader.onerror = function() {
+                    isImageLoading = false;
+                    document.getElementById('eImgName').textContent = '';
+                    selectedImageFile = null;
+                    toastMsg('فشل تحميل الصورة', 'error');
                 };
                 reader.readAsDataURL(file);
             } else {
                 document.getElementById('eImgName').textContent = '';
                 selectedImageFile = null;
+                isImageLoading = false;
             }
         }
 
@@ -3730,6 +3774,7 @@
 
         function clearSelectedImage() {
             selectedImageFile = null;
+            isImageLoading = false;
             document.getElementById('eImgName').textContent = '';
             document.getElementById('eImgCamera').value = null;
             document.getElementById('eImgGallery').value = null;
@@ -3758,6 +3803,7 @@
                 };
                 req.onsuccess = (e) => {
                     IDB_connection = e.target.result;
+                    dbReady = true;
                     resolve(IDB_connection);
                     loadAllData().then(() => { updateStats();
                         updateBalanceDisplay(); });
@@ -3777,6 +3823,7 @@
             });
         }
 
+        // تعديل deleteFromDB للبحث بواسطة clientId إذا لزم
         function deleteFromDB(storeName, id) {
             return new Promise((resolve, reject) => {
                 if (!IDB_connection) return reject(new Error("DB not connected."));
