@@ -1942,6 +1942,16 @@
 
         function openLayer(layerName, data = {}) {
             if (historyStack.length && historyStack[historyStack.length - 1].layer === layerName) return;
+
+            // تحقق مسبق لطبقة detail
+            if (layerName === 'detail') {
+                const o = db[data.logType]?.find(item => item.clientId === data.id || item.id === data.id);
+                if (!o) {
+                    toastMsg("لم يتم العثور على المعاملة.", "error");
+                    return;
+                }
+            }
+
             const state = { layer: layerName, data: data };
             historyStack.push(state);
             history.pushState(state, null, `#${layerName}`);
@@ -1953,12 +1963,19 @@
             if (top && top.layer === layerName) { history.back(); } else { _visualClose(layerName, clearEdit); }
         }
 
-        // دالة لإغلاق جميع الطبقات والعودة إلى الرئيسية
+        // دالة لإغلاق جميع الطبقات والعودة إلى الرئيسية (إصلاح 1)
         function closeAllLayers() {
             while (historyStack.length > 1) {
-                const top = historyStack[historyStack.length - 1];
-                if (top.layer === 'main') break;
-                closeLayer(top.layer);
+                const top = historyStack.pop();
+                if (top.layer === 'main') {
+                    historyStack.push(top);
+                    break;
+                }
+                _visualClose(top.layer);
+            }
+            // تحديث history API دون إضافة دخول جديدة
+            if (historyStack.length === 1) {
+                history.replaceState({ layer: 'main' }, null, '#main');
             }
         }
 
@@ -2822,7 +2839,9 @@
             ARABIC_CURRENCIES[0];
 
         function formatAmount(input) {
-            let val = input.value.replace(/[^\d.]/g, '');
+            // دعم تحويل الأرقام العربية إلى إنجليزية (إصلاح 5)
+            let val = input.value.replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
+            val = val.replace(/[^\d.]/g, '');
             const parts = val.split('.');
             if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
             const intPart = parts[0];
@@ -2878,8 +2897,8 @@
             return `${getLocalDateString(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
         }
 
+        // تنسيق المبالغ العامة (إصلاح 2: لا تخفي المبالغ عند إخفاء الرصيد)
         function formatCurrency(amount, withColor = false) {
-            if (balanceHidden) return '<span class="hidden-balance">***</span>';
             const num = parseAmount(amount);
             const fmt = getFormattedAmount(num);
             let colorClass = '';
@@ -2891,7 +2910,7 @@
             return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
         }
 
-        // دالة خاصة لعرض الرصيد مع اللون المناسب
+        // دالة خاصة لعرض الرصيد مع اللون المناسب (إخفاء الرصيد فقط هنا)
         function formatBalance(amount) {
             if (balanceHidden) return '<span class="hidden-balance">***</span>';
             const num = parseAmount(amount);
@@ -2920,8 +2939,8 @@
 
         function clearFields() {
             ['eAmount', 'eDesc', 'eType', 'eDate',
-                'rAmount', 'rDesc', 'rDate', 'rType', 'rStatus', 'rEntity', 'rDueDate',
-                'dType', 'dAmount', 'dDesc', 'dDate', 'dStatus', 'dEntity', 'dDueDate'
+                'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate',
+                'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate'
             ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             clearSelectedImage();
             document.getElementById('rDynamicFields').innerHTML = '';
@@ -3118,8 +3137,6 @@
                 <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن (لا يمكن أن يتجاوز المبلغ الكلي)</span>
             `;
             container.innerHTML = paidHtml;
-
-            // لا يوجد عنصر rStatus، تمت إزالته
         }
 
         async function addRight() {
@@ -3185,7 +3202,7 @@
 
             // تحديد الفئات التي تحتاج إلى حقل الجهة
             const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍👧 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
-            const noEntityTypes = ['🏦 قروض وتمويل', '🛒 مشتريات بالتقسيط', '💡 فواتير الخدمات', '📦 أخرى'];
+            // المتغير noEntityTypes حذف (إصلاح 6)
 
             if (entityTypes.includes(type)) {
                 entityInput.style.display = 'block';
@@ -3230,11 +3247,10 @@
                 }
             }
 
-            // إضافة حقل المبلغ المدفوع عند اختيار حالة "مدفوع جزئياً" للفواتير غير الرئيسية
-            // نستخدم مستمع لتغيير الحالة
+            // إضافة حقل المبلغ المدفوع عند اختيار حالة "مدفوع جزئياً" للفواتير غير الرئيسية (إصلاح 3)
             if (!masterTypes.includes(type)) {
-                const statusHandler = () => {
-                    const status = document.getElementById('dStatus').value;
+                statusSelect.onchange = function() {
+                    const status = statusSelect.value;
                     const partialPaidContainer = document.getElementById('dPartialPaidContainer');
                     if (status === 'مدفوع جزئياً') {
                         if (!partialPaidContainer) {
@@ -3250,10 +3266,8 @@
                         if (partialPaidContainer) partialPaidContainer.remove();
                     }
                 };
-                statusSelect.removeEventListener('change', statusHandler);
-                statusSelect.addEventListener('change', statusHandler);
                 // استدعاء أولي
-                statusHandler();
+                statusSelect.onchange();
                 if (currentData && currentData.الحالة === 'مدفوع جزئياً' && currentData.المبلغ_المدفوع_جزئياً) {
                     const paidInput = document.getElementById('dPartialPaidAmount');
                     if (paidInput) paidInput.value = parseAmount(currentData.المبلغ_المدفوع_جزئياً).toLocaleString('en-US');
@@ -3345,19 +3359,20 @@
                     paidAmount = 0;
                 }
 
+                // تنظيف الحقول غير ذات الصلة (إصلاح 7)
                 delete data.المبلغ_الكلي_للالتزام;
                 delete data.إجمالي_المدفوع;
                 delete data.المتبقي_للالتزام;
                 delete data.عدد_الاقساط;
                 delete data.قيمة_القسط;
                 delete data.الأقساط_المدفوعة;
-                delete data.المبلغ_المدفوع_جزئياً;
-                if (paidAmount > 0) data.المبلغ_المدفوع_جزئياً = getFormattedAmount(paidAmount);
+                if (dStatus.value !== 'مدفوع جزئياً') {
+                    delete data.المبلغ_المدفوع_جزئياً;
+                }
             }
 
             data.المبلغ_المخصوم_للرصيد = paidAmount;
 
-            // الإصلاح: تمرير oldPaid بشكل سالب لأن أثر الدين على الرصيد سالب
             const oldNetChange = isEditing ? -oldPaid : 0;
 
             try {
@@ -3371,7 +3386,6 @@
         }
 
         function postSaveCleanup(isEditing, type) {
-            // إغلاق جميع الطبقات المفتوحة والعودة إلى الرئيسية
             closeAllLayers();
             loadAllData().then(() => { updateStats();
                 updateBalanceDisplay(); });
@@ -3492,7 +3506,6 @@
             }).join('');
         }
 
-        // تعديل: showDetailById الآن لا يكرر منطق الفتح، فقط يستدعي openLayer
         function showDetailById(id, type) {
             openLayer('detail', { logType: type, id: id });
         }
@@ -3504,7 +3517,6 @@
             const tabMap = { exp: 'expenses', rig: 'rights', deb: 'debts' };
             const tabId = tabMap[type];
 
-            // إغلاق جميع الطبقات
             closeAllLayers();
             openTab(tabId, true);
 
@@ -3548,7 +3560,6 @@
                     if (!isMaster) {
                         document.getElementById('dAmount').value = parseAmount(data.المبلغ).toLocaleString('en-US');
                         document.getElementById('dStatus').value = data.الحالة || '';
-                        // استدعاء معالج الحالة لإظهار حقل المبلغ الجزئي إذا لزم
                         const event = new Event('change');
                         document.getElementById('dStatus').dispatchEvent(event);
                         if (data.الحالة === 'مدفوع جزئياً' && data.المبلغ_المدفوع_جزئياً) {
