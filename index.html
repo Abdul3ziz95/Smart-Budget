@@ -4,23 +4,1344 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>ميزانيتك الذكية | Smart Budget</title>
-    <link rel="manifest" href="manifest.json" />
     <!-- Google APIs -->
     <script src="https://accounts.google.com/gsi/client"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ============================================================
+           ROOT VARIABLES (LIGHT MODE)
+           ============================================================ */
+        :root {
+            --p: #0077b6;
+            --s: #48cae4;
+            --bg: #f7f9fc;
+            --danger: #ef476f;
+            --success: #2a9d8f;
+            --warning: #fbc02d;
+            --text-dark: #333;
+            --text-light: #f7f9fc;
+            --shadow-light: 0 4px 8px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 6px 15px rgba(0, 0, 0, 0.15);
+            --card-bg: #fff;
+            --input-bg: #fff;
+            --border-color: #ddd;
+            --tab-active-bg: #fff;
+            --radius: 14px;
+            --transition: 0.25s ease;
+            --bottom-nav-height: 68px;
+        }
+
+        /* ============================================================
+           DARK MODE
+           ============================================================ */
+        body.dark-mode {
+            --p: #90e0ef;
+            --s: #48cae4;
+            --bg: #1f1f1f;
+            --danger: #ff8a80;
+            --success: #66bb6a;
+            --warning: #fbc02d;
+            --text-dark: #e0e0e0;
+            --text-light: #1f1f1f;
+            --shadow-light: 0 4px 10px rgba(0, 0, 0, 0.5);
+            --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.8);
+            --card-bg: #2d2d2d;
+            --input-bg: #3c3c3c;
+            --border-color: #555;
+            --tab-active-bg: #2d2d2d;
+        }
+
+        /* ============================================================
+           RESET & BASE
+           ============================================================ */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Tajawal', 'Arial', sans-serif;
+            background: var(--bg);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            line-height: 1.6;
+            transition: background var(--transition), color var(--transition);
+            padding-bottom: calc(var(--bottom-nav-height) + 12px);
+        }
+
+        .card,
+        .sidebar,
+        .modal {
+            background: var(--card-bg);
+        }
+        .modal header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* ============================================================
+           HEADER
+           ============================================================ */
+        header {
+            background: var(--p);
+            color: var(--text-light);
+            padding: 14px 16px;
+            font-size: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-hover);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        header .title {
+            flex-grow: 1;
+            text-align: center;
+            font-weight: 800;
+        }
+        header button {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 10px;
+            transition: transform 0.2s;
+        }
+        header button:hover {
+            transform: scale(1.1);
+        }
+
+        /* ============================================================
+           SECTIONS
+           ============================================================ */
+        .section {
+            display: none;
+            padding: 15px 15px calc(15px + 20px);
+        }
+        .section.active {
+            display: block;
+        }
+
+        .card {
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-light);
+            margin-bottom: 15px;
+            border-top: 5px solid var(--s);
+            transition: background var(--transition), border-color var(--transition);
+        }
+
+        /* ============================================================
+           OVERVIEW
+           ============================================================ */
+        #overview .balance-display {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 20px;
+            border-radius: var(--radius);
+            background: var(--card-bg);
+            box-shadow: var(--shadow-hover);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        #overview .balance-display h2 {
+            margin: 0 0 5px;
+            font-size: 18px;
+            color: #999;
+        }
+        #overview .balance-display p {
+            font-size: 38px;
+            font-weight: 800;
+            margin: 5px 0 0;
+            display: flex;
+            align-items: center;
+            transition: color 0.3s;
+        }
+        #overview .balance-display .balance-positive {
+            color: var(--success);
+        }
+        #overview .balance-display .balance-negative {
+            color: var(--danger);
+        }
+        #overview .balance-display .balance-zero {
+            color: var(--p);
+        }
+        #overview .balance-display #balanceVisibilityToggle {
+            position: absolute;
+            left: 16px;
+            top: 16px;
+            background: none;
+            border: none;
+            color: var(--p);
+            font-size: 22px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        #overview .balance-display #balanceVisibilityToggle:hover {
+            color: var(--s);
+        }
+
+        .balance-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .balance-actions .action {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            color: var(--text-dark);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-light);
+            transition: all 0.2s;
+            background: var(--input-bg);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+        }
+        .balance-actions .action:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+            border-color: var(--p);
+        }
+        .balance-actions .action i {
+            font-size: 26px;
+            margin-bottom: 5px;
+        }
+        .balance-actions .deposit i {
+            color: var(--success);
+        }
+        .balance-actions .withdraw i {
+            color: var(--danger);
+        }
+
+        /* ============================================================
+           FORM ELEMENTS
+           ============================================================ */
+        input,
+        select,
+        .datetime-container input[type="date"],
+        .datetime-container input[type="datetime-local"] {
+            width: 100%;
+            padding: 14px 16px;
+            margin: 8px 0;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+            background: var(--input-bg);
+            color: var(--text-dark);
+            transition: all var(--transition);
+            font-family: inherit;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        input:focus,
+        select:focus,
+        .datetime-container input[type="date"]:focus,
+        .datetime-container input[type="datetime-local"]:focus {
+            border-color: var(--s);
+            box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.2);
+            outline: none;
+        }
+        body.dark-mode input:focus,
+        body.dark-mode select:focus,
+        body.dark-mode .datetime-container input[type="date"]:focus,
+        body.dark-mode .datetime-container input[type="datetime-local"]:focus {
+            box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.3);
+        }
+
+        /* --- date / time container --- */
+        .datetime-container {
+            position: relative;
+            width: 100%;
+            margin: 8px 0;
+        }
+        .datetime-container input[type="date"],
+        .datetime-container input[type="datetime-local"] {
+            margin: 0;
+            padding-left: 44px;
+        }
+        .datetime-container .cal-icon {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            transform: translateY(-50%);
+            font-size: 1.3em;
+            color: var(--p);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            opacity: 0;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        /* ============================================================
+           BUTTONS
+           ============================================================ */
+        button.action {
+            background: var(--p);
+            color: var(--text-light);
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: background var(--transition), transform 0.2s;
+            box-shadow: var(--shadow-light);
+            font-family: inherit;
+        }
+        button.action:hover {
+            background: color-mix(in srgb, var(--p) 85%, black);
+            transform: translateY(-2px);
+        }
+
+        button.secondary {
+            background: var(--input-bg);
+            color: var(--text-dark);
+            padding: 12px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-top: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background var(--transition);
+            font-family: inherit;
+        }
+        button.secondary:hover {
+            background: color-mix(in srgb, var(--input-bg) 80%, #999);
+        }
+
+        /* ============================================================
+           TOAST
+           ============================================================ */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--card-bg);
+            color: var(--text-dark);
+            padding: 16px 32px;
+            border-radius: 16px;
+            display: none;
+            z-index: 200;
+            font-size: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            min-width: 200px;
+            max-width: 90%;
+            text-align: center;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .toast.show {
+            display: block;
+            animation: toastIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+                       toastOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 3.5s forwards;
+        }
+        .toast.success {
+            border-right: 5px solid var(--success);
+        }
+        .toast.error {
+            border-right: 5px solid var(--danger);
+        }
+        .toast.info {
+            border-right: 5px solid var(--s);
+        }
+        .toast .toast-icon {
+            margin-left: 10px;
+            font-size: 1.2em;
+        }
+        .toast .toast-icon.success {
+            color: var(--success);
+        }
+        .toast .toast-icon.error {
+            color: var(--danger);
+        }
+        .toast .toast-icon.info {
+            color: var(--s);
+        }
+
+        @keyframes toastIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+        }
+        @keyframes toastOut {
+            0% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px) scale(0.95);
+            }
+        }
+
+        /* ============================================================
+           CURRENCY & HIDDEN BALANCE
+           ============================================================ */
+        .currency-symbol {
+            color: var(--p);
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-right: 5px;
+        }
+        .hidden-balance {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: 5px;
+            color: var(--p);
+        }
+
+        /* ============================================================
+           MODALS
+           ============================================================ */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            display: none;
+            flex-direction: column;
+            z-index: 30;
+            overflow-y: auto;
+        }
+        .modal header {
+            display: flex;
+            gap: 10px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--card-bg);
+            align-items: center;
+            box-shadow: var(--shadow-light);
+            position: sticky;
+            top: 0;
+            z-index: 35;
+        }
+        .modal header .title {
+            flex-grow: 1;
+            text-align: center;
+            font-weight: 700;
+        }
+        .modal header button {
+            background: none;
+            border: none;
+            color: var(--text-dark);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+        .modal-content {
+            flex-grow: 1;
+            padding: 15px;
+            padding-bottom: calc(15px + 80px);
+        }
+
+        /* ============================================================
+           SIDEBAR
+           ============================================================ */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 300px;
+            max-width: 85%;
+            height: 100%;
+            background: var(--card-bg);
+            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 25;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 24;
+        }
+        .sidebar-overlay.open {
+            display: block;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            background: var(--p);
+            color: var(--text-light);
+            font-size: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+        .sidebar-content {
+            flex-grow: 1;
+            padding: 15px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-menu-item {
+            padding: 14px 20px;
+            margin: 2px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 17px;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-right: 3px solid transparent;
+            background: var(--card-bg);
+        }
+        .sidebar-menu-item:hover {
+            background: color-mix(in srgb, var(--bg) 85%, var(--p));
+            border-right-color: var(--p);
+        }
+        .sidebar-menu-item i {
+            font-size: 1.2em;
+            width: 28px;
+            text-align: center;
+            color: var(--p);
+        }
+
+        .sidebar-menu-item.drive-item {
+            border-right-color: #4285F4;
+        }
+        .sidebar-menu-item.drive-item i {
+            color: #4285F4;
+        }
+        .sidebar-menu-item.drive-item.connected {
+            border-right-color: var(--success);
+        }
+        .sidebar-menu-item.drive-item.connected i {
+            color: var(--success);
+        }
+        .sidebar-menu-item.drive-item .drive-status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background: #999;
+            flex-shrink: 0;
+        }
+        .sidebar-menu-item.drive-item.connected .drive-status-dot {
+            background: var(--success);
+        }
+        .sidebar-menu-item.drive-item .drive-email {
+            font-size: 0.75em;
+            color: #888;
+            margin-right: auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100px;
+        }
+        .sidebar-menu-item.drive-item .drive-logout {
+            font-size: 0.7em;
+            color: var(--danger);
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: color-mix(in srgb, var(--danger) 15%, transparent);
+            transition: background 0.2s;
+            display: none;
+        }
+        .sidebar-menu-item.drive-item .drive-logout:hover {
+            background: color-mix(in srgb, var(--danger) 30%, transparent);
+        }
+        .sidebar-menu-item.drive-item.connected .drive-logout {
+            display: inline-block;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 6px 20px;
+        }
+
+        .sidebar-switch-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 17px;
+            color: var(--text-dark);
+            background: var(--card-bg);
+        }
+        .sidebar-switch-item i {
+            font-size: 1.2em;
+            width: 28px;
+            text-align: center;
+            color: var(--p);
+        }
+        .sidebar-switch-item .switch {
+            margin-right: auto;
+            position: relative;
+            display: inline-block;
+            width: 45px;
+            height: 25px;
+        }
+        .sidebar-switch-item .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .sidebar-switch-item .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+            border-radius: 25px;
+        }
+        .sidebar-switch-item .slider:before {
+            position: absolute;
+            content: "";
+            height: 19px;
+            width: 19px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        .sidebar-switch-item input:checked+.slider {
+            background-color: var(--p);
+        }
+        .sidebar-switch-item input:checked+.slider:before {
+            transform: translateX(20px);
+        }
+
+        .sidebar-currency-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 17px;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--card-bg);
+            border: none;
+            width: 100%;
+            text-align: right;
+            font-family: inherit;
+        }
+        .sidebar-currency-item:hover {
+            background: color-mix(in srgb, var(--bg) 85%, var(--p));
+        }
+        .sidebar-currency-item i {
+            font-size: 1.2em;
+            width: 28px;
+            text-align: center;
+            color: var(--p);
+        }
+        .sidebar-currency-item .currency-label {
+            margin-right: auto;
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        /* ===== DRIVE BACKUP TABLE ===== */
+        .backup-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.85em;
+        }
+        .backup-table th {
+            text-align: right;
+            padding: 10px 8px;
+            border-bottom: 2px solid var(--border-color);
+            color: #888;
+            font-weight: 700;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .backup-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .backup-table tr:hover td {
+            background: color-mix(in srgb, var(--input-bg) 90%, var(--p));
+        }
+        .backup-table .file-name {
+            font-weight: 600;
+            color: var(--p);
+            font-size: 0.85em;
+        }
+        .backup-table .file-date {
+            color: var(--text-dark);
+            font-size: 0.8em;
+        }
+        .backup-table .file-size {
+            color: #888;
+            font-size: 0.8em;
+        }
+        .backup-table .file-actions {
+            display: flex;
+            gap: 4px;
+            justify-content: flex-end;
+        }
+        .backup-table .file-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+        .backup-table .file-actions .restore-btn {
+            color: var(--success);
+        }
+        .backup-table .file-actions .restore-btn:hover {
+            background: var(--success);
+            color: #fff;
+        }
+        .backup-table .file-actions .delete-btn {
+            color: var(--danger);
+        }
+        .backup-table .file-actions .delete-btn:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .backup-count {
+            text-align: center;
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 12px;
+            padding: 8px;
+            background: var(--input-bg);
+            border-radius: 8px;
+        }
+
+        .drive-empty {
+            text-align: center;
+            color: #999;
+            padding: 25px 0;
+        }
+        .drive-empty i {
+            font-size: 2.5em;
+            display: block;
+            margin-bottom: 10px;
+            color: var(--border-color);
+        }
+
+        #confirmBackupModal .modal-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        #confirmBackupModal .modal-content i {
+            font-size: 3em;
+            color: #4285F4;
+            margin-bottom: 15px;
+        }
+        #confirmBackupModal .modal-content p {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+        #confirmBackupModal .modal-content .btn-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+        #confirmBackupModal .modal-content .btn-group .confirm-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: #4285F4;
+            color: #fff;
+        }
+        #confirmBackupModal .modal-content .btn-group .confirm-btn:hover {
+            background: #3367d6;
+        }
+        #confirmBackupModal .modal-content .btn-group .view-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: var(--input-bg);
+            color: var(--text-dark);
+        }
+        #confirmBackupModal .modal-content .btn-group .view-btn:hover {
+            background: color-mix(in srgb, var(--input-bg) 80%, var(--p));
+            border-color: var(--p);
+        }
+        #confirmBackupModal .modal-content .btn-group .view-btn i {
+            margin-left: 6px;
+        }
+
+        #driveBackupModal .modal-content {
+            padding: 15px;
+        }
+        #driveBackupModal .drive-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 12px;
+        }
+        #driveBackupModal .drive-modal-header .status {
+            font-size: 0.9em;
+            color: #888;
+        }
+        #driveBackupModal .drive-modal-header .status.connected {
+            color: var(--success);
+        }
+        #driveBackupModal .drive-modal-header .status.disconnected {
+            color: var(--danger);
+        }
+        #driveBackupModal .drive-modal-header .refresh-btn {
+            background: none;
+            border: none;
+            color: var(--p);
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        #driveBackupModal .drive-modal-header .refresh-btn:hover {
+            background: color-mix(in srgb, var(--input-bg) 80%, var(--p));
+        }
+        .drive-backup-btn {
+            background: #4285F4;
+            color: #fff;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+        }
+        .drive-backup-btn:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(66, 133, 244, 0.4);
+        }
+        .drive-backup-btn i {
+            margin-left: 8px;
+        }
+
+        .list-item {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-right: 5px solid var(--s);
+            color: var(--text-dark);
+        }
+        .list-item:hover {
+            background: color-mix(in srgb, var(--card-bg) 95%, #999);
+            box-shadow: var(--shadow-light);
+        }
+        .list-item .details {
+            font-size: 0.9em;
+            color: #666;
+            text-align: right;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px;
+        }
+        body.dark-mode .list-item .details {
+            color: #aaa;
+        }
+
+        #imageSourceModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 350px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-hover);
+            padding: 24px 20px 16px;
+            z-index: 150;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        #imageSourceModal.open {
+            display: flex !important;
+        }
+        #imageSourceModal h3 {
+            margin: 0 0 16px;
+            color: var(--p);
+            text-align: center;
+        }
+        #imageSourceModal button {
+            margin: 6px 0;
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 10px;
+            width: 100%;
+        }
+
+        #exportNameModal .modal-content {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        #exportNameModal .modal-content label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--text-dark);
+        }
+        #exportNameModal .modal-content input {
+            margin-bottom: 15px;
+        }
+        #exportNameModal .modal-content .btn-group {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+        #exportNameModal .modal-content .btn-group .confirm-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: var(--p);
+            color: #fff;
+        }
+        #exportNameModal .modal-content .btn-group .confirm-btn:hover {
+            background: color-mix(in srgb, var(--p) 85%, black);
+        }
+        #exportNameModal .modal-content .btn-group .cancel-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: var(--input-bg);
+            color: var(--text-dark);
+        }
+        #exportNameModal .modal-content .btn-group .cancel-btn:hover {
+            background: color-mix(in srgb, var(--input-bg) 80%, #999);
+        }
+
+        @media (max-width: 450px) {
+            #overview .balance-display p {
+                font-size: 30px;
+            }
+            .hidden-balance {
+                font-size: 30px;
+            }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 700;
+        }
+        .status-badge.paid {
+            background: var(--success);
+            color: #fff;
+        }
+        .status-badge.partial {
+            background: var(--warning);
+            color: #333;
+        }
+        .status-badge.unpaid {
+            background: var(--danger);
+            color: #fff;
+        }
+        .status-badge.late {
+            background: #e67e22;
+            color: #fff;
+        }
+        .status-badge.other {
+            background: var(--s);
+            color: #fff;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .form-grid .full {
+            grid-column: 1 / -1;
+        }
+        @media (max-width: 500px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .field-hint {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: -4px;
+            margin-bottom: 6px;
+            display: block;
+        }
+        body.dark-mode .field-hint {
+            color: #aaa;
+        }
+
+        #search {
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-dark);
+            font-size: 15px;
+            width: 100%;
+            flex-grow: 1;
+            font-family: inherit;
+        }
+        #search:focus {
+            outline: none;
+            border-color: var(--s);
+            box-shadow: 0 0 0 3px rgba(72, 202, 228, 0.2);
+        }
+
+        #currencyList button {
+            text-align: right;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .edit-indicator {
+            background: var(--warning);
+            color: #333;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .log-item-hint {
+            font-size: 0.75em;
+            color: var(--s);
+            margin-top: 4px;
+            display: block;
+            text-align: left;
+        }
+        body.dark-mode .log-item-hint {
+            color: #90e0ef;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        .loading-overlay.show {
+            display: flex;
+        }
+        .loading-spinner {
+            background: var(--card-bg);
+            padding: 40px 50px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modalPop {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .loading-spinner .spinner-icon {
+            font-size: 3.5em;
+            color: #4285F4;
+            animation: spin 1s linear infinite;
+            display: block;
+            margin-bottom: 15px;
+        }
+        .loading-spinner .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        .loading-spinner .progress-bar .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4285F4, #34A853, #FBBC04, #EA4335);
+            width: 0%;
+            border-radius: 4px;
+            animation: progressAnim 2s ease-in-out infinite;
+        }
+        @keyframes progressAnim {
+            0% {
+                width: 0%;
+                transform: translateX(0);
+            }
+            50% {
+                width: 70%;
+            }
+            100% {
+                width: 100%;
+            }
+        }
+        .loading-spinner p {
+            margin-top: 15px;
+            font-size: 1.1em;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ============================================================
+           BOTTOM NAVIGATION - Modern & Fixed
+           ============================================================ */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            background: var(--card-bg);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: var(--bottom-nav-height);
+            padding: 0 6px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: rgba(var(--card-bg-rgb, 255, 255, 255), 0.92);
+            transition: background 0.3s;
+        }
+        body.dark-mode .bottom-nav {
+            background: rgba(45, 45, 45, 0.92);
+            border-top-color: #444;
+        }
+
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 6px 0;
+            border: none;
+            background: transparent;
+            color: var(--text-dark);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            border-radius: 12px;
+            min-height: 56px;
+            gap: 2px;
+            opacity: 0.6;
+        }
+        .bottom-nav .nav-item i {
+            font-size: 24px;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin-bottom: 1px;
+        }
+        .bottom-nav .nav-item span {
+            font-size: 12px;
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+        .bottom-nav .nav-item.active {
+            color: var(--p);
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+        .bottom-nav .nav-item.active i {
+            transform: scale(1.1);
+            filter: drop-shadow(0 2px 6px rgba(0, 119, 182, 0.25));
+        }
+        .bottom-nav .nav-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) scaleX(0);
+            width: 30px;
+            height: 3px;
+            background: var(--p);
+            border-radius: 0 0 4px 4px;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .bottom-nav .nav-item.active::after {
+            transform: translateX(-50%) scaleX(1);
+        }
+        .bottom-nav .nav-item:active {
+            transform: scale(0.92);
+        }
+        .bottom-nav .nav-item:active i {
+            transform: scale(0.9);
+        }
+
+        /* ============================================================
+           RESPONSIVE TWEAKS
+           ============================================================ */
+        @media (max-width: 400px) {
+            .bottom-nav .nav-item span {
+                font-size: 10px;
+            }
+            .bottom-nav .nav-item i {
+                font-size: 20px;
+            }
+            .bottom-nav .nav-item {
+                min-height: 48px;
+                padding: 4px 0;
+            }
+            :root {
+                --bottom-nav-height: 60px;
+            }
+            body {
+                padding-bottom: calc(var(--bottom-nav-height) + 8px);
+            }
+        }
+
+        @media (min-width: 768px) {
+            .bottom-nav {
+                max-width: 480px;
+                left: 50%;
+                transform: translateX(-50%);
+                border-radius: 20px 20px 0 0;
+            }
+        }
+
+        /* ============================================================
+           CUSTOM: Bigger nav labels
+           ============================================================ */
+        .bottom-nav .nav-item span {
+            font-size: 13px;
+        }
+        @media (max-width: 400px) {
+            .bottom-nav .nav-item span {
+                font-size: 11px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-    <!-- ==========================================================
-    LOADING OVERLAY
-    ========================================================== -->
+    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner">
-            <div class="spinner-icon"></div>
-            <p id="loadingMessage">جاري المعالجة...</p>
+            <i class="fas fa-cloud-upload-alt spinner-icon"></i>
+            <p id="loadingMessage">جاري حفظ النسخة الاحتياطية...</p>
             <div class="progress-bar">
                 <div class="progress-fill"></div>
             </div>
@@ -28,761 +1349,302 @@
     </div>
 
     <!-- ==========================================================
-    TOAST NOTIFICATION
-    ========================================================== -->
-    <div class="toast" id="toast"></div>
-
-    <!-- ==========================================================
     HEADER
     ========================================================== -->
-    <header id="appHeader">
-        <button id="menuBtn" onclick="toggleSidebar()" aria-label="القائمة">
-            <i class="fas fa-bars"></i>
-        </button>
-        <span class="title">ميزانيتك الذكية</span>
-        <button id="searchBtn" onclick="toggleSearch()" aria-label="بحث">
-            <i class="fas fa-search"></i>
-        </button>
+    <header>
+        <button onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <span class="title">ميزانيتك المالية الذكية</span>
+        <button style="visibility:hidden;"><i class="fas fa-search"></i></button>
     </header>
 
     <!-- ==========================================================
-    SEARCH BAR
+    SECTIONS
     ========================================================== -->
-    <div class="search-bar" id="searchBar" style="display:none;">
-        <input type="text" id="globalSearch" placeholder="🔍 بحث في جميع البيانات..." oninput="globalSearch(this.value)" />
-        <button onclick="toggleSearch()"><i class="fas fa-times"></i></button>
+    <!-- OVERVIEW -->
+    <div id="overview" class="section active">
+        <div class="balance-display">
+            <h2>الرصيد النقدي الحالي</h2>
+            <p id="currentBalanceDisplay"><i class="fas fa-spinner fa-spin"></i></p>
+            <button id="balanceVisibilityToggle" onclick="toggleBalanceVisibility()" title="إخفاء/إظهار الرصيد">
+                <i class="fas fa-eye"></i>
+            </button>
+        </div>
+
+        <div class="balance-actions">
+            <button class="action deposit" onclick="openBalanceActionModal('deposit')">
+                <i class="fas fa-plus-circle"></i> إيداع
+            </button>
+            <button class="action withdraw" onclick="openBalanceActionModal('withdraw')">
+                <i class="fas fa-minus-circle"></i> سحب
+            </button>
+        </div>
+
+        <button class="secondary" onclick="openBalanceLogModal()" style="margin-top:15px;">
+            <i class="fas fa-history" style="margin-left:5px;"></i> سجل حركات الرصيد
+        </button>
+
+        <div class="card" style="margin-top:20px; border-top:5px solid var(--p);">
+            <h3 style="color:var(--p); margin-top:0;"><i class="fas fa-calculator" style="margin-left:5px;"></i> ملخص الإحصائيات</h3>
+            <p><span>إجمالي المصروفات:</span> <b id="sExpTotal">0</b></p>
+            <p><span>إجمالي الحقوق المستحقة:</span> <b id="sRigTotal">0</b></p>
+            <p><span>المحصل من الحقوق:</span> <b id="sRigPaid">0</b></p>
+            <p><span>إجمالي الالتزامات الكلية:</span> <b id="sDebTotal">0</b></p>
+            <p><span>المدفوع من الالتزامات:</span> <b id="sDebPaid">0</b></p>
+        </div>
     </div>
 
-    <!-- ==========================================================
-    QUICK ADD BUTTON (Floating)
-    ========================================================== -->
-    <button class="fab" id="fabBtn" onclick="openQuickAdd()" aria-label="إضافة سريعة">
-        <i class="fas fa-plus"></i>
-    </button>
-
-    <!-- ==========================================================
-    QUICK ADD MODAL
-    ========================================================== -->
-    <div class="modal quick-add-modal" id="quickAddModal">
-        <header>
-            <span class="title">إضافة سريعة</span>
-            <button onclick="closeLayer('quickAdd')"><i class="fas fa-times"></i></button>
-        </header>
-        <div class="modal-content">
-            <div class="quick-add-grid">
-                <button class="qa-btn" onclick="quickAdd('income')">
-                    <i class="fas fa-arrow-up" style="color:var(--success);"></i>
-                    <span>دخل</span>
-                </button>
-                <button class="qa-btn" onclick="quickAdd('expense')">
-                    <i class="fas fa-arrow-down" style="color:var(--danger);"></i>
-                    <span>مصروف</span>
-                </button>
-                <button class="qa-btn" onclick="quickAdd('right')">
-                    <i class="fas fa-hand-holding-heart" style="color:var(--warning);"></i>
-                    <span>حق</span>
-                </button>
-                <button class="qa-btn" onclick="quickAdd('debt')">
-                    <i class="fas fa-file-invoice" style="color:#e67e22;"></i>
-                    <span>التزام</span>
-                </button>
+    <!-- EXPENSES -->
+    <div id="expenses" class="section">
+        <div class="card">
+            <div id="expEditIndicator" style="display:none;" class="edit-indicator">
+                <i class="fas fa-edit"></i> وضع التعديل
             </div>
+            <p style="color:var(--danger); font-weight:bold; font-size:0.9em; text-align:right;">
+                * المصروفات تُخصم من رصيدك فوراً
+            </p>
+
+            <input id="eAmount" type="text" placeholder="💵 المبلغ" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
+
+            <select id="eType">
+                <option value="">🛒 الفئة (نفقات متغيرة)</option>
+                <option value="🍽️ طعام">🍽️ طعام</option>
+                <option value="🚗 مواصلات">🚗 مواصلات</option>
+                <option value="⛽ وقود">⛽ وقود</option>
+                <option value="☕ مقاهي">☕ مقاهي</option>
+                <option value="🧴 رعاية شخصية">🧴 رعاية شخصية</option>
+                <option value="📱 أجهزة إلكترونية">📱 أجهزة إلكترونية</option>
+                <option value="🏥 صحة">🏥 صحة</option>
+                <option value="🎮 ترفيه">🎮 ترفيه</option>
+                <option value="🛍️ تسوق">🛍️ تسوق</option>
+                <option value="📚 تعليم">📚 تعليم</option>
+                <option value="🔧 صيانة وإصلاح">🔧 صيانة وإصلاح</option>
+                <option value="📦 أخرى">📦 أخرى</option>
+            </select>
+
+            <input id="eDesc" placeholder="📝 وصف / ملاحظة" />
+
+            <div class="datetime-container">
+                <input id="eDate" type="date" />
+                <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
+            </div>
+
+            <button class="secondary" id="attachImageBtn" onclick="showImageSourceModal()">
+                <i class="fas fa-camera" style="margin-left:5px;"></i> إرفاق صورة الفاتورة (اختياري)
+            </button>
+            <span id="eImgName" style="display:block; font-size:0.8em; color:var(--success); text-align:right; margin-top:5px;"></span>
+            <input type="file" id="eImgCamera" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(this)" />
+            <input type="file" id="eImgGallery" accept="image/*" style="display:none;" onchange="handleImageSelect(this)" />
+
+            <button class="action" onclick="addExpense()">
+                <i class="fas fa-save" style="margin-left:5px;"></i> حفظ المصروف
+            </button>
+            <button class="secondary" onclick="openLog('exp')">
+                <i class="fas fa-history" style="margin-left:5px;"></i> سجل المصروفات
+            </button>
+        </div>
+    </div>
+
+    <!-- RIGHTS -->
+    <div id="rights" class="section">
+        <div class="card">
+            <div id="rigEditIndicator" style="display:none;" class="edit-indicator">
+                <i class="fas fa-edit"></i> وضع التعديل
+            </div>
+            <p style="color:var(--success); font-weight:bold; font-size:0.9em; text-align:right;">
+                * المبالغ المحصلة تُضاف إلى رصيدك الحالي
+            </p>
+
+            <select id="rType" onchange="updateRightFields(this.value)">
+                <option value="">🤝 نوع الحق</option>
+                <option value="🛒 بيع بالآجل">🛒 بيع بالآجل</option>
+                <option value="🏦 سلفة">🏦 سلفة</option>
+                <option value="💼 عمولة">💼 عمولة</option>
+                <option value="🏠 إيجار مستحق">🏠 إيجار مستحق</option>
+                <option value="📈 عائد الاستثمار">📈 عائد الاستثمار</option>
+                <option value="🤝 شراكة">🤝 شراكة</option>
+                <option value="📦 أخرى">📦 أخرى</option>
+            </select>
+
+            <input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
+
+            <input id="rEntity" placeholder="👤 الجهة / المدين (اسم الشخص أو المؤسسة)" />
+
+            <div id="rDynamicFields">
+                <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
+                <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن (لا يمكن أن يتجاوز المبلغ الكلي)</span>
+            </div>
+
+            <div class="datetime-container">
+                <input id="rDueDate" type="date" />
+                <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
+            </div>
+            <span class="field-hint">تاريخ الاستحقاق المتوقع</span>
+
+            <input id="rDesc" placeholder="📝 ملاحظات إضافية" />
+
+            <button class="action" onclick="addRight()">
+                <i class="fas fa-save" style="margin-left:5px;"></i> حفظ الحق
+            </button>
+            <button class="secondary" onclick="openLog('rig')">
+                <i class="fas fa-history" style="margin-left:5px;"></i> سجل الحقوق
+            </button>
+        </div>
+    </div>
+
+    <!-- DEBTS (updated categories with ماء and كهرباء) -->
+    <div id="debts" class="section">
+        <div class="card">
+            <div id="debEditIndicator" style="display:none;" class="edit-indicator">
+                <i class="fas fa-edit"></i> وضع التعديل
+            </div>
+            <p style="color:var(--danger); font-weight:bold; font-size:0.9em; text-align:right;">
+                * دفع الالتزامات يُخصم من رصيدك الحالي
+            </p>
+
+            <select id="dType" onchange="updateDebtFields(this.value)">
+                <option value="">🧾 نوع الالتزام</option>
+                <option value="🏠 إيجار">🏠 إيجار</option>
+                <option value="💡 كهرباء">💡 كهرباء</option>
+                <option value="💧 ماء">💧 ماء</option>
+                <option value="💡 فواتير الخدمات">💡 فواتير الخدمات</option>
+                <option value="📱 الاتصالات والإنترنت">📱 الاتصالات والإنترنت</option>
+                <option value="🏦 قروض وتمويل">🏦 قروض وتمويل</option>
+                <option value="👤 دين شخصي">👤 دين شخصي</option>
+                <option value="🛒 مشتريات بالتقسيط">🛒 مشتريات بالتقسيط</option>
+                <option value="🎓 رسوم تعليمية">🎓 رسوم تعليمية</option>
+                <option value="🏥 مصاريف طبية مستحقة">🏥 مصاريف طبية مستحقة</option>
+                <option value="🚗 تمويل السيارة">🚗 تمويل السيارة</option>
+                <option value="👨‍👩‍👧 التزامات عائلية">👨‍👩‍👧 التزامات عائلية</option>
+                <option value="📅 اشتراكات دورية">📅 اشتراكات دورية</option>
+                <option value="👨‍💼 رواتب">👨‍💼 رواتب</option>
+                <option value="📦 أخرى">📦 أخرى</option>
+            </select>
+
+            <input id="dAmount" type="text" placeholder="💵 قيمة الفاتورة / القسط الحالي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
+
+            <!-- حقل الجهة مخفي افتراضياً، يظهر للفئات التي تحتاجه -->
+            <input id="dEntity" placeholder="🏢 الجهة / الدائن" style="display:none;" />
+
+            <div id="dDynamicFields"></div>
+
+            <div class="datetime-container">
+                <input id="dDueDate" type="date" />
+                <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
+            </div>
+            <span class="field-hint">تاريخ الاستحقاق</span>
+
+            <input id="dDesc" placeholder="📝 ملاحظات إضافية" />
+
+            <select id="dStatus">
+                <option value="">✅ الحالة</option>
+                <option value="مدفوع">مدفوع</option>
+                <option value="مدفوع جزئياً">مدفوع جزئياً</option>
+                <option value="غير مدفوع">غير مدفوع</option>
+                <option value="متأخر">متأخر</option>
+            </select>
+
+            <button class="action" onclick="addDebt()">
+                <i class="fas fa-save" style="margin-left:5px;"></i> حفظ الالتزام
+            </button>
+            <button class="secondary" onclick="openLog('deb')">
+                <i class="fas fa-history" style="margin-left:5px;"></i> سجل الالتزامات
+            </button>
         </div>
     </div>
 
     <!-- ==========================================================
-    BOTTOM NAVIGATION
+    BOTTOM NAVIGATION - Modern Fixed with big labels
     ========================================================== -->
     <nav class="bottom-nav" id="bottomNav">
-        <button class="active" data-tab="dashboard" onclick="switchTab('dashboard')">
-            <i class="fas fa-home"></i>
+        <button class="nav-item active" data-tab="overview" onclick="openTabFromNav('overview')">
+            <i class="fas fa-house"></i>
             <span>الرئيسية</span>
         </button>
-        <button data-tab="money" onclick="switchTab('money')">
+        <button class="nav-item" data-tab="expenses" onclick="openTabFromNav('expenses')">
             <i class="fas fa-wallet"></i>
-            <span>المال</span>
+            <span>مصروفات</span>
         </button>
-        <button data-tab="rights-debts" onclick="switchTab('rights-debts')">
-            <i class="fas fa-handshake"></i>
-            <span>حقوقي</span>
+        <button class="nav-item" data-tab="rights" onclick="openTabFromNav('rights')">
+            <i class="fas fa-hand-holding-heart"></i>
+            <span>حقوق</span>
         </button>
-        <button data-tab="planning" onclick="switchTab('planning')">
-            <i class="fas fa-chart-line"></i>
-            <span>تخطيط</span>
-        </button>
-        <button data-tab="more" onclick="switchTab('more')">
-            <i class="fas fa-ellipsis-h"></i>
-            <span>المزيد</span>
+        <button class="nav-item" data-tab="debts" onclick="openTabFromNav('debts')">
+            <i class="fas fa-file-invoice"></i>
+            <span>التزامات</span>
         </button>
     </nav>
 
     <!-- ==========================================================
-    MAIN CONTENT
+    LOG MODAL
     ========================================================== -->
-    <main class="app-content">
-
-        <!-- ==========================================================
-        TAB: DASHBOARD (الرئيسية)
-        ========================================================== -->
-        <section id="section-dashboard" class="section active">
-            <div class="dashboard-grid">
-
-                <!-- الرصيد -->
-                <div class="card balance-card">
-                    <div class="balance-display">
-                        <h2>الرصيد النقدي</h2>
-                        <p id="currentBalanceDisplay"><i class="fas fa-spinner fa-spin"></i></p>
-                        <button id="balanceVisibilityToggle" onclick="toggleBalanceVisibility()" title="إخفاء/إظهار الرصيد">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <div class="balance-actions">
-                        <button class="action deposit" onclick="openBalanceActionModal('deposit')">
-                            <i class="fas fa-plus-circle"></i> إيداع
-                        </button>
-                        <button class="action withdraw" onclick="openBalanceActionModal('withdraw')">
-                            <i class="fas fa-minus-circle"></i> سحب
-                        </button>
-                    </div>
-                </div>
-
-                <!-- صافي الوضع المالي -->
-                <div class="card net-worth-card">
-                    <h3><i class="fas fa-gem"></i> صافي وضعك المالي</h3>
-                    <div class="net-worth-display" id="netWorthDisplay">
-                        <div class="net-item">
-                            <span class="label">الرصيد</span>
-                            <span class="value" id="netBalance">0</span>
-                        </div>
-                        <div class="net-item">
-                            <span class="label">لي (حقوق)</span>
-                            <span class="value" id="netRights">0</span>
-                        </div>
-                        <div class="net-item">
-                            <span class="label">عليّ (التزامات)</span>
-                            <span class="value" id="netDebts">0</span>
-                        </div>
-                        <div class="net-item total">
-                            <span class="label">الصافي</span>
-                            <span class="value" id="netTotal">0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ملخص الشهر -->
-                <div class="card monthly-summary">
-                    <h3><i class="fas fa-calendar-alt"></i> ملخص هذا الشهر</h3>
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <span class="label">الدخل</span>
-                            <span class="value income" id="monthIncome">0</span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="label">المصروفات</span>
-                            <span class="value expense" id="monthExpense">0</span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="label">المتبقي</span>
-                            <span class="value remaining" id="monthRemaining">0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- آخر العمليات -->
-                <div class="card recent-transactions">
-                    <h3><i class="fas fa-clock"></i> آخر العمليات</h3>
-                    <div id="recentTransactionsList"></div>
-                    <button class="secondary" onclick="switchTab('money')" style="margin-top:10px;">
-                        <i class="fas fa-eye"></i> عرض الكل
-                    </button>
-                </div>
-
-                <!-- التنبيهات السريعة -->
-                <div class="card quick-alerts">
-                    <h3><i class="fas fa-bell"></i> تنبيهات</h3>
-                    <div id="quickAlertsList">
-                        <p class="empty-state">لا توجد تنبيهات</p>
-                    </div>
-                </div>
-
-                <!-- المساعد المالي -->
-                <div class="card financial-assistant">
-                    <h3><i class="fas fa-robot"></i> مساعدك المالي</h3>
-                    <div id="assistantTips">
-                        <p class="empty-state">أضف بعض البيانات للحصول على نصائح</p>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- ==========================================================
-        TAB: MONEY (المال - الدخل والمصروفات)
-        ========================================================== -->
-        <section id="section-money" class="section">
-            <div class="sub-tabs">
-                <button class="active" data-subtab="income" onclick="switchSubTab('money','income')">
-                    <i class="fas fa-arrow-up"></i> الدخل
-                </button>
-                <button data-subtab="expenses" onclick="switchSubTab('money','expenses')">
-                    <i class="fas fa-arrow-down"></i> المصروفات
-                </button>
-            </div>
-
-            <!-- الدخل -->
-            <div id="sub-money-income" class="sub-section active">
-                <div class="card">
-                    <div id="incEditIndicator" style="display:none;" class="edit-indicator">
-                        <i class="fas fa-edit"></i> تعديل
-                    </div>
-                    <p class="hint success">* يُضاف إلى رصيدك فوراً</p>
-
-                    <input id="incAmount" type="text" placeholder="💵 المبلغ" oninput="formatAmount(this)" />
-                    <select id="incCategory">
-                        <option value="">📂 الفئة</option>
-                        <option value="💼 راتب">💼 راتب</option>
-                        <option value="💻 عمل حر">💻 عمل حر</option>
-                        <option value="🏪 تجارة">🏪 تجارة</option>
-                        <option value="📈 استثمار">📈 استثمار</option>
-                        <option value="💵 عمولة">💵 عمولة</option>
-                        <option value="🎁 هدية">🎁 هدية</option>
-                        <option value="🔄 تحويل">🔄 تحويل</option>
-                        <option value="💰 دخل إضافي">💰 دخل إضافي</option>
-                        <option value="📦 بيع">📦 بيع</option>
-                        <option value="📦 أخرى">📦 أخرى</option>
-                    </select>
-                    <input id="incSource" placeholder="🏷️ المصدر" />
-                    <div class="datetime-container">
-                        <input id="incDate" type="date" />
-                        <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
-                    </div>
-                    <input id="incDesc" placeholder="📝 ملاحظات" />
-
-                    <button class="action" onclick="addIncome()"><i class="fas fa-save"></i> حفظ الدخل</button>
-                    <button class="secondary" onclick="openLog('inc')"><i class="fas fa-history"></i> سجل الدخل</button>
-                </div>
-            </div>
-
-            <!-- المصروفات -->
-            <div id="sub-money-expenses" class="sub-section">
-                <div class="card">
-                    <div id="expEditIndicator" style="display:none;" class="edit-indicator">
-                        <i class="fas fa-edit"></i> تعديل
-                    </div>
-                    <p class="hint danger">* تُخصم من رصيدك فوراً</p>
-
-                    <input id="eAmount" type="text" placeholder="💵 المبلغ" oninput="formatAmount(this)" />
-                    <select id="eCategory">
-                        <option value="">📂 الفئة</option>
-                        <option value="🏠 السكن">🏠 السكن</option>
-                        <option value="🍔 طعام">🍔 طعام</option>
-                        <option value="🛒 تسوق">🛒 تسوق</option>
-                        <option value="🚗 مواصلات">🚗 مواصلات</option>
-                        <option value="⛽ وقود">⛽ وقود</option>
-                        <option value="💡 فواتير">💡 فواتير</option>
-                        <option value="📱 اتصالات">📱 اتصالات</option>
-                        <option value="🏥 صحة">🏥 صحة</option>
-                        <option value="💊 أدوية">💊 أدوية</option>
-                        <option value="🎓 تعليم">🎓 تعليم</option>
-                        <option value="👕 ملابس">👕 ملابس</option>
-                        <option value="🎮 ترفيه">🎮 ترفيه</option>
-                        <option value="✈️ سفر">✈️ سفر</option>
-                        <option value="💻 تقنية">💻 تقنية</option>
-                        <option value="👨‍👩‍👧 أسرة">👨‍👩‍👧 أسرة</option>
-                        <option value="🎁 هدايا">🎁 هدايا</option>
-                        <option value="💳 أقساط">💳 أقساط</option>
-                        <option value="🛍️ مشتريات">🛍️ مشتريات</option>
-                        <option value="💰 ادخار">💰 ادخار</option>
-                        <option value="📦 أخرى">📦 أخرى</option>
-                    </select>
-                    <input id="eDesc" placeholder="📝 وصف" />
-                    <div class="datetime-container">
-                        <input id="eDate" type="date" />
-                        <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
-                    </div>
-
-                    <button class="secondary" onclick="showImageSourceModal()">
-                        <i class="fas fa-camera"></i> إرفاق صورة
-                    </button>
-                    <span id="eImgName" style="display:block;font-size:0.8em;color:var(--success);text-align:right;margin-top:5px;"></span>
-                    <input type="file" id="eImgCamera" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(this)" />
-                    <input type="file" id="eImgGallery" accept="image/*" style="display:none;" onchange="handleImageSelect(this)" />
-
-                    <button class="action" onclick="addExpense()"><i class="fas fa-save"></i> حفظ المصروف</button>
-                    <button class="secondary" onclick="openLog('exp')"><i class="fas fa-history"></i> سجل المصروفات</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- ==========================================================
-        TAB: RIGHTS & DEBTS (الحقوق والالتزامات)
-        ========================================================== -->
-        <section id="section-rights-debts" class="section">
-            <div class="sub-tabs">
-                <button class="active" data-subtab="rights" onclick="switchSubTab('rights-debts','rights')">
-                    <i class="fas fa-hand-holding-heart"></i> حقوقي
-                </button>
-                <button data-subtab="debts" onclick="switchSubTab('rights-debts','debts')">
-                    <i class="fas fa-file-invoice"></i> التزاماتي
-                </button>
-            </div>
-
-            <!-- الحقوق -->
-            <div id="sub-rd-rights" class="sub-section active">
-                <div class="card">
-                    <div id="rigEditIndicator" style="display:none;" class="edit-indicator">
-                        <i class="fas fa-edit"></i> تعديل
-                    </div>
-                    <p class="hint success">* المبالغ المحصلة تُضاف للرصيد</p>
-
-                    <select id="rType" onchange="updateRightFields(this.value)">
-                        <option value="">🤝 نوع الحق</option>
-                        <option value="🛒 بيع بالآجل">🛒 بيع بالآجل</option>
-                        <option value="🏦 سلفة">🏦 سلفة</option>
-                        <option value="💼 عمولة">💼 عمولة</option>
-                        <option value="🏠 إيجار مستحق">🏠 إيجار مستحق</option>
-                        <option value="📈 عائد الاستثمار">📈 عائد الاستثمار</option>
-                        <option value="🤝 شراكة">🤝 شراكة</option>
-                        <option value="📦 أخرى">📦 أخرى</option>
-                    </select>
-
-                    <input id="rAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" />
-                    <input id="rEntity" placeholder="👤 الجهة / المدين" />
-
-                    <div id="rDynamicFields">
-                        <input id="rPaidAmount" type="text" placeholder="💰 المحصل" oninput="formatAmount(this)" />
-                        <span class="field-hint">لا يمكن أن يتجاوز المبلغ الكلي</span>
-                    </div>
-
-                    <div class="datetime-container">
-                        <input id="rDueDate" type="date" />
-                        <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
-                    </div>
-                    <span class="field-hint">تاريخ الاستحقاق</span>
-
-                    <input id="rDesc" placeholder="📝 ملاحظات" />
-
-                    <button class="action" onclick="addRight()"><i class="fas fa-save"></i> حفظ الحق</button>
-                    <button class="secondary" onclick="openLog('rig')"><i class="fas fa-history"></i> سجل الحقوق</button>
-                </div>
-            </div>
-
-            <!-- الالتزامات -->
-            <div id="sub-rd-debts" class="sub-section">
-                <div class="card">
-                    <div id="debEditIndicator" style="display:none;" class="edit-indicator">
-                        <i class="fas fa-edit"></i> تعديل
-                    </div>
-                    <p class="hint danger">* الدفع يُخصم من الرصيد</p>
-
-                    <select id="dType" onchange="updateDebtFields(this.value)">
-                        <option value="">🧾 نوع الالتزام</option>
-                        <option value="🏠 إيجار">🏠 إيجار</option>
-                        <option value="💡 كهرباء">💡 كهرباء</option>
-                        <option value="💧 ماء">💧 ماء</option>
-                        <option value="🌐 إنترنت">🌐 إنترنت</option>
-                        <option value="🏦 قرض">🏦 قرض</option>
-                        <option value="👤 دين شخصي">👤 دين شخصي</option>
-                        <option value="📊 تقسيط فواتيري">📊 تقسيط فواتيري</option>
-                        <option value="📦 أخرى">📦 أخرى</option>
-                    </select>
-
-                    <input id="dAmount" type="text" placeholder="💵 قيمة القسط الحالي" oninput="formatAmount(this)" />
-                    <input id="dEntity" placeholder="🏢 الجهة / الدائن" />
-
-                    <div id="dDynamicFields"></div>
-
-                    <div class="datetime-container">
-                        <input id="dDueDate" type="date" />
-                        <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
-                    </div>
-                    <span class="field-hint">تاريخ الاستحقاق</span>
-
-                    <input id="dDesc" placeholder="📝 ملاحظات" />
-
-                    <select id="dStatus">
-                        <option value="">✅ الحالة</option>
-                        <option value="مدفوع">مدفوع</option>
-                        <option value="مدفوع جزئياً">مدفوع جزئياً</option>
-                        <option value="غير مدفوع">غير مدفوع</option>
-                        <option value="متأخر">متأخر</option>
-                    </select>
-
-                    <button class="action" onclick="addDebt()"><i class="fas fa-save"></i> حفظ الالتزام</button>
-                    <button class="secondary" onclick="openLog('deb')"><i class="fas fa-history"></i> سجل الالتزامات</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- ==========================================================
-        TAB: PLANNING (التخطيط المالي)
-        ========================================================== -->
-        <section id="section-planning" class="section">
-            <div class="sub-tabs">
-                <button class="active" data-subtab="budgets" onclick="switchSubTab('planning','budgets')">
-                    <i class="fas fa-chart-pie"></i> الميزانية
-                </button>
-                <button data-subtab="goals" onclick="switchSubTab('planning','goals')">
-                    <i class="fas fa-bullseye"></i> الأهداف
-                </button>
-                <button data-subtab="recurring" onclick="switchSubTab('planning','recurring')">
-                    <i class="fas fa-repeat"></i> المتكرر
-                </button>
-            </div>
-
-            <!-- الميزانية -->
-            <div id="sub-planning-budgets" class="sub-section active">
-                <div class="card">
-                    <div id="budgetEditIndicator" style="display:none;" class="edit-indicator">
-                        <i class="fas fa-edit"></i> تعديل
-                    </div>
-                    <p class="hint">* حدد حداً أقصى للإنفاق في فئة معينة</p>
-
-                    <select id="budgetCategory">
-                        <option value="">📂 اختر الفئة</option>
-                        <option value="🏠 السكن">🏠 السكن</option>
-                        <option value="🍔 طعام">🍔 طعام</option>
-                        <option value="🛒 تسوق">🛒 تسوق</option>
-                        <option value="🚗 مواصلات">🚗 مواصلات</option>
-                        <option value="⛽ وقود">⛽ وقود</option>
-                        <option value="💡 فواتير">💡 فواتير</option>
-                        <option value="📱 اتصالات">📱 اتصالات</option>
-                        <option value="🏥 صحة">🏥 صحة</option>
-                        <option value="💊 أدوية">💊 أدوية</option>
-                        <option value="🎓 تعليم">🎓 تعليم</option>
-                        <option value="👕 ملابس">👕 ملابس</option>
-                        <option value="🎮 ترفيه">🎮 ترفيه</option>
-                        <option value="✈️ سفر">✈️ سفر</option>
-                        <option value="💻 تقنية">💻 تقنية</option>
-                        <option value="👨‍👩‍👧 أسرة">👨‍👩‍👧 أسرة</option>
-                        <option value="🎁 هدايا">🎁 هدايا</option>
-                        <option value="💳 أقساط">💳 أقساط</option>
-                        <option value="🛍️ مشتريات">🛍️ مشتريات</option>
-                        <option value="💰 ادخار">💰 ادخار</option>
-                        <option value="📦 أخرى">📦 أخرى</option>
-                    </select>
-
-                    <input id="budgetAmount" type="text" placeholder="💵 المبلغ المحدد" oninput="formatAmount(this)" />
-
-                    <select id="budgetPeriod">
-                        <option value="monthly">📅 شهري</option>
-                        <option value="yearly">📅 سنوي</option>
-                    </select>
-
-                    <input id="budgetDesc" placeholder="📝 وصف" />
-
-                    <button class="action" onclick="addBudget()"><i class="fas fa-save"></i> حفظ الميزانية</button>
-                    <button class="secondary" onclick="openLog('budget')"><i class="fas fa-history"></i> سجل الميزانيات</button>
-                </div>
-
-                <div class="card" id="budgetListContainer">
-                    <h3 style="margin-top:0;"><i class="fas fa-list"></i> الميزانيات الحالية</h3>
-                    <div id="budgetList"></div>
-                </div>
-            </div>
-
-            <!-- الأهداف -->
-            <div id="sub-planning-goals" class="sub-section">
-                <div class="card">
-                    <div id="goalEditIndicator" style="display:none;" class="edit-indicator">
-                        <i class="fas fa-edit"></i> تعديل
-                    </div>
-
-                    <input id="goalName" type="text" placeholder="🎯 اسم الهدف" />
-                    <input id="goalTarget" type="text" placeholder="🎯 المبلغ المستهدف" oninput="formatAmount(this)" />
-                    <input id="goalCurrent" type="text" placeholder="💰 المبلغ الحالي" oninput="formatAmount(this)" />
-
-                    <div class="datetime-container">
-                        <input id="goalDate" type="date" />
-                        <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
-                    </div>
-                    <span class="field-hint">تاريخ الهدف (اختياري)</span>
-
-                    <input id="goalDesc" placeholder="📝 ملاحظات" />
-
-                    <button class="action" onclick="addGoal()"><i class="fas fa-save"></i> حفظ الهدف</button>
-                    <button class="secondary" onclick="openLog('goal')"><i class="fas fa-history"></i> سجل الأهداف</button>
-                </div>
-
-                <div class="card" id="goalListContainer">
-                    <h3 style="margin-top:0;"><i class="fas fa-list"></i> الأهداف الحالية</h3>
-                    <div id="goalList"></div>
-                </div>
-            </div>
-
-            <!-- العمليات المتكررة -->
-            <div id="sub-planning-recurring" class="sub-section">
-                <div class="card">
-                    <div id="recurringEditIndicator" style="display:none;" class="edit-indicator">
-                        <i class="fas fa-edit"></i> تعديل
-                    </div>
-
-                    <select id="recType">
-                        <option value="">🔄 نوع العملية</option>
-                        <option value="income">💰 دخل</option>
-                        <option value="expense">💸 مصروف</option>
-                        <option value="debt">🧾 التزام</option>
-                    </select>
-
-                    <input id="recAmount" type="text" placeholder="💵 المبلغ" oninput="formatAmount(this)" />
-                    <input id="recDesc" placeholder="📝 الوصف" />
-
-                    <select id="recFrequency">
-                        <option value="daily">📅 يومي</option>
-                        <option value="weekly">📅 أسبوعي</option>
-                        <option value="monthly">📅 شهري</option>
-                        <option value="yearly">📅 سنوي</option>
-                    </select>
-
-                    <div class="datetime-container">
-                        <input id="recStartDate" type="date" />
-                        <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
-                    </div>
-                    <span class="field-hint">تاريخ البداية</span>
-
-                    <div class="datetime-container">
-                        <input id="recEndDate" type="date" />
-                        <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
-                    </div>
-                    <span class="field-hint">تاريخ النهاية (اختياري)</span>
-
-                    <input id="recCategory" placeholder="📂 الفئة (اختياري)" />
-
-                    <button class="action" onclick="addRecurring()"><i class="fas fa-save"></i> حفظ</button>
-                    <button class="secondary" onclick="openLog('recurring')"><i class="fas fa-history"></i> السجل</button>
-                </div>
-
-                <div class="card" id="recurringListContainer">
-                    <h3 style="margin-top:0;"><i class="fas fa-list"></i> العمليات المتكررة</h3>
-                    <div id="recurringList"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ==========================================================
-        TAB: MORE (المزيد)
-        ========================================================== -->
-        <section id="section-more" class="section">
-            <div class="card">
-                <h3 style="margin-top:0;"><i class="fas fa-chart-bar"></i> التحليل المالي</h3>
-                <div id="analyticsSummary">
-                    <div class="analytics-grid">
-                        <div class="analytics-item">
-                            <span class="label">إجمالي الدخل</span>
-                            <span class="value" id="analyticsIncome">0</span>
-                        </div>
-                        <div class="analytics-item">
-                            <span class="label">إجمالي المصروفات</span>
-                            <span class="value" id="analyticsExpenses">0</span>
-                        </div>
-                        <div class="analytics-item">
-                            <span class="label">صافي الدخل</span>
-                            <span class="value" id="analyticsNet">0</span>
-                        </div>
-                        <div class="analytics-item">
-                            <span class="label">متوسط الإنفاق اليومي</span>
-                            <span class="value" id="analyticsDaily">0</span>
-                        </div>
-                        <div class="analytics-item">
-                            <span class="label">أكثر فئة إنفاقاً</span>
-                            <span class="value" id="analyticsTopCategory">—</span>
-                        </div>
-                        <div class="analytics-item">
-                            <span class="label">نسبة الادخار</span>
-                            <span class="value" id="analyticsSavings">0%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-top:0;"><i class="fas fa-calendar-check"></i> التقويم المالي</h3>
-                <div id="calendarContainer">
-                    <div id="calendarHeader">
-                        <button onclick="changeMonth(-1)"><i class="fas fa-chevron-right"></i></button>
-                        <span id="calendarMonthYear"></span>
-                        <button onclick="changeMonth(1)"><i class="fas fa-chevron-left"></i></button>
-                    </div>
-                    <div id="calendarGrid"></div>
-                    <div id="calendarEvents"></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-top:0;"><i class="fas fa-cog"></i> الإعدادات</h3>
-
-                <div class="settings-item" onclick="toggleDarkMode()" style="cursor:pointer;">
-                    <div class="settings-label">
-                        <i class="fas fa-moon"></i>
-                        <span>الوضع الليلي</span>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="darkModeToggle" />
-                        <span class="slider"></span>
-                    </label>
-                </div>
-
-                <div class="settings-divider"></div>
-
-                <div class="settings-item" onclick="openCurrencyModal()" style="cursor:pointer;">
-                    <div class="settings-label">
-                        <i class="fas fa-exchange-alt"></i>
-                        <span>العملة</span>
-                    </div>
-                    <span id="settingsCurrencyDisplay" style="color:var(--p);font-weight:bold;">ج.س</span>
-                </div>
-
-                <div class="settings-divider"></div>
-
-                <div class="settings-item" onclick="openExportNameModal()" style="cursor:pointer;">
-                    <div class="settings-label">
-                        <i class="fas fa-file-export"></i>
-                        <span>تصدير البيانات</span>
-                    </div>
-                    <span style="color:var(--p);"><i class="fas fa-chevron-left"></i></span>
-                </div>
-
-                <div class="settings-divider"></div>
-
-                <div class="settings-item" onclick="document.getElementById('importFile').click()" style="cursor:pointer;">
-                    <div class="settings-label">
-                        <i class="fas fa-file-import"></i>
-                        <span>استيراد البيانات</span>
-                    </div>
-                    <span style="color:var(--p);"><i class="fas fa-chevron-left"></i></span>
-                </div>
-                <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)" />
-
-                <div class="settings-divider"></div>
-
-                <div class="settings-item" onclick="openDriveBackupModal()" style="cursor:pointer;">
-                    <div class="settings-label">
-                        <i class="fab fa-google-drive" style="color:#4285F4;"></i>
-                        <span>النسخ الاحتياطية</span>
-                    </div>
-                    <span style="color:#4285F4;"><i class="fas fa-chevron-left"></i></span>
-                </div>
-
-                <div class="settings-divider"></div>
-
-                <div class="settings-item" onclick="confirmResetData()" style="cursor:pointer;color:var(--danger);">
-                    <div class="settings-label">
-                        <i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i>
-                        <span>إعادة تعيين البيانات</span>
-                    </div>
-                    <span style="color:var(--danger);"><i class="fas fa-chevron-left"></i></span>
-                </div>
-
-                <div class="settings-divider"></div>
-
-                <div class="settings-item" onclick="openAboutModal()" style="cursor:pointer;">
-                    <div class="settings-label">
-                        <i class="fas fa-info-circle"></i>
-                        <span>حول التطبيق</span>
-                    </div>
-                    <span style="color:var(--p);"><i class="fas fa-chevron-left"></i></span>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- ==========================================================
-    SIDEBAR
-    ========================================================== -->
-    <div class="sidebar-overlay" onclick="closeSidebar()"></div>
-    <nav class="sidebar" id="appSidebar">
-        <div class="sidebar-header">
-            <span>ميزانيتك الذكية</span>
-            <button onclick="closeSidebar()"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="sidebar-content">
-            <div class="sidebar-item active" onclick="switchTab('dashboard');closeSidebar();">
-                <i class="fas fa-home"></i><span>الرئيسية</span>
-            </div>
-            <div class="sidebar-item" onclick="switchTab('money');closeSidebar();">
-                <i class="fas fa-wallet"></i><span>المال</span>
-            </div>
-            <div class="sidebar-item" onclick="switchTab('rights-debts');closeSidebar();">
-                <i class="fas fa-handshake"></i><span>حقوقي والتزاماتي</span>
-            </div>
-            <div class="sidebar-item" onclick="switchTab('planning');closeSidebar();">
-                <i class="fas fa-chart-line"></i><span>التخطيط المالي</span>
-            </div>
-            <div class="sidebar-item" onclick="switchTab('more');closeSidebar();">
-                <i class="fas fa-ellipsis-h"></i><span>المزيد</span>
-            </div>
-            <div class="sidebar-divider"></div>
-            <div class="sidebar-item" onclick="openDriveBackupModal();closeSidebar();">
-                <i class="fab fa-google-drive" style="color:#4285F4;"></i><span>النسخ الاحتياطية</span>
-            </div>
-            <div class="sidebar-item" onclick="openAboutModal();closeSidebar();">
-                <i class="fas fa-info-circle"></i><span>حول التطبيق</span>
-            </div>
-        </div>
-    </nav>
-
-    <!-- ==========================================================
-    MODALS
-    ========================================================== -->
-
-    <!-- LOG MODAL -->
     <div class="modal" id="logModal">
         <header>
-            <input id="search" placeholder="🔍 بحث..." oninput="renderLog()" />
+            <input id="search" placeholder="🔍 بحث في السجل..." oninput="renderLog()" />
             <button onclick="closeLayer('log')"><i class="fas fa-times"></i></button>
         </header>
         <div class="modal-content" id="logContent"></div>
     </div>
 
-    <!-- DETAIL MODAL -->
+    <!-- ==========================================================
+    DETAIL MODAL
+    ========================================================== -->
     <div class="modal" id="detailModal">
         <header>
-            <span class="title">التفاصيل</span>
+            <span class="title">تفاصيل المعاملة</span>
             <button onclick="closeLayer('detail')"><i class="fas fa-times"></i></button>
         </header>
-        <div class="modal-content" id="detailContent"></div>
+        <div class="modal-content detail" id="detailContent"></div>
     </div>
 
-    <!-- BALANCE ACTION MODAL -->
+    <!-- ==========================================================
+    BALANCE ACTION MODAL
+    ========================================================== -->
     <div class="modal" id="balanceActionModal">
         <header>
             <span class="title" id="actionModalTitle"></span>
             <button onclick="closeLayer('balanceAction')"><i class="fas fa-times"></i></button>
         </header>
         <div class="modal-content">
-            <p style="text-align:center;font-size:1.1em;">
-                الرصيد: <span id="currentBalanceInAction" style="color:var(--p);font-weight:bold;"></span>
+            <p style="text-align:center; font-size:1.1em;">
+                رصيدك الحالي: <span id="currentBalanceInAction" style="color:var(--p); font-weight:bold;"></span>
             </p>
-            <input id="bAmount" type="text" placeholder="💵 المبلغ" oninput="formatAmount(this)" />
-            <input id="bDesc" placeholder="📝 الوصف" />
+            <input id="bAmount" type="text" placeholder="💵 المبلغ" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
+            <input id="bDesc" placeholder="📝 وصف العملية (مثل: راتب، تحويل شخصي)" />
             <div class="datetime-container">
                 <input id="bDate" type="datetime-local" />
                 <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
             </div>
-            <button class="action" onclick="processBalanceAction()"><i class="fas fa-check"></i> تنفيذ</button>
+            <button class="action" onclick="processBalanceAction()">
+                <i class="fas fa-check" style="margin-left:5px;"></i> تنفيذ
+            </button>
         </div>
     </div>
 
-    <!-- BALANCE LOG MODAL -->
+    <!-- ==========================================================
+    BALANCE LOG MODAL
+    ========================================================== -->
     <div class="modal" id="balanceLogModal">
         <header>
-            <span class="title">سجل الرصيد</span>
+            <span class="title">سجل حركات الرصيد</span>
             <button onclick="closeLayer('balanceLog')"><i class="fas fa-times"></i></button>
         </header>
         <div class="modal-content" id="balanceLogContent"></div>
     </div>
 
-    <!-- IMAGE SOURCE MODAL -->
+    <!-- ==========================================================
+    IMAGE SOURCE MODAL
+    ========================================================== -->
     <div id="imageSourceModal">
         <h3>اختيار مصدر الصورة</h3>
-        <button class="action" onclick="openCameraInput()"><i class="fas fa-camera"></i> الكاميرا</button>
-        <button class="secondary" onclick="openGalleryInput()"><i class="fas fa-images"></i> المعرض</button>
-        <button class="secondary" style="background:none;border:none;color:var(--danger);margin-top:10px;" onclick="closeImageSource()">إلغاء</button>
+        <button class="action" onclick="openCameraInput()"><i class="fas fa-camera" style="margin-left:10px;"></i> التقاط بالكاميرا</button>
+        <button class="secondary" onclick="openGalleryInput()"><i class="fas fa-images" style="margin-left:10px;"></i> اختيار من المعرض</button>
+        <button class="secondary" style="background:none; border:none; color:var(--danger); margin-top:10px;" onclick="closeImageSource()">إلغاء</button>
     </div>
-    <div class="sidebar-overlay" id="imageSourceOverlay" style="z-index:140;display:none;" onclick="closeImageSource()"></div>
+    <div class="sidebar-overlay" id="imageSourceOverlay" style="z-index:140; display:none;" onclick="closeImageSource()"></div>
 
-    <!-- CONFIRM BACKUP MODAL -->
+    <!-- ==========================================================
+    CONFIRM BACKUP MODAL
+    ========================================================== -->
     <div class="modal" id="confirmBackupModal">
         <header>
             <span class="title">نسخ احتياطي</span>
@@ -790,17 +1652,19 @@
         </header>
         <div class="modal-content">
             <i class="fas fa-cloud-upload-alt"></i>
-            <p>هل تريد عمل نسخة احتياطية على<br /><strong>Google Drive</strong>؟</p>
+            <p>هل تريد عمل نسخة احتياطية للبيانات على<br /><strong>Google Drive</strong>؟</p>
             <div class="btn-group">
-                <button class="confirm-btn" onclick="handleBackupConfirm()">نعم، احفظ</button>
+                <button class="confirm-btn" onclick="handleBackupConfirm()">نعم، احفظ النسخة</button>
                 <button class="view-btn" onclick="handleViewBackups()">
-                    <i class="fas fa-folder-open"></i> عرض النسخ
+                    <i class="fas fa-folder-open"></i> عرض النسخ المحفوظة
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- DRIVE BACKUP MODAL -->
+    <!-- ==========================================================
+    DRIVE BACKUP MODAL
+    ========================================================== -->
     <div class="modal" id="driveBackupModal">
         <header>
             <span class="title"><i class="fab fa-google-drive" style="color:#4285F4;"></i> النسخ الاحتياطية</span>
@@ -814,21 +1678,23 @@
                 </button>
             </div>
             <div id="driveBackupList"></div>
-            <div class="backup-count" id="driveBackupCount">عدد النسخ : 0</div>
+            <div class="backup-count" id="driveBackupCount">عدد النسخ المرفوعة : 0</div>
             <button class="drive-backup-btn" onclick="handleDriveBackup()">
-                <i class="fas fa-plus-circle"></i> حفظ نسخة جديدة
+                <i class="fas fa-plus-circle"></i> حفظ نسخة احتياطية جديدة
             </button>
         </div>
     </div>
 
-    <!-- EXPORT NAME MODAL -->
+    <!-- ==========================================================
+    EXPORT NAME MODAL
+    ========================================================== -->
     <div class="modal" id="exportNameModal">
         <header>
             <span class="title">تصدير البيانات</span>
             <button onclick="closeLayer('exportName')"><i class="fas fa-times"></i></button>
         </header>
         <div class="modal-content">
-            <label for="exportFileName">اسم الملف:</label>
+            <label for="exportFileName">أدخل اسم الملف:</label>
             <input id="exportFileName" type="text" placeholder="اسم الملف" value="بيانات_ميزانيتي" />
             <div class="btn-group">
                 <button class="confirm-btn" onclick="performExport()">تصدير</button>
@@ -837,19 +1703,82 @@
         </div>
     </div>
 
-    <!-- CURRENCY MODAL -->
-    <div class="modal" id="currencyModal">
-        <header>
-            <h3 style="color:var(--p);">اختيار العملة</h3>
-            <button onclick="closeLayer('currency')"><i class="fas fa-times"></i></button>
-        </header>
-        <div class="modal-content">
-            <input id="currencySearch" type="text" placeholder="🔍 ابحث..." oninput="renderCurrencyList()" />
-            <div id="currencyList"></div>
+    <!-- ==========================================================
+    SIDEBAR
+    ========================================================== -->
+    <div class="sidebar-overlay" onclick="closeLayer('sidebar')"></div>
+    <div class="sidebar" id="appSidebar">
+        <div class="sidebar-header">
+            <span>القائمة</span>
+            <button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="sidebar-content">
+
+            <!-- Google Drive -->
+            <div class="sidebar-menu-item drive-item" id="driveMenuItem" onclick="handleDriveClick()">
+                <i class="fab fa-google-drive"></i>
+                <span id="driveMenuText">Google Drive</span>
+                <span class="drive-status-dot" id="driveStatusDot"></span>
+                <span class="drive-email" id="driveMenuEmail"></span>
+                <span class="drive-logout" id="driveLogoutBtn" onclick="event.stopPropagation(); signOut();">تسجيل خروج</span>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <!-- Dark Mode -->
+            <div class="sidebar-switch-item">
+                <i class="fas fa-moon"></i>
+                <span>الوضع الليلي</span>
+                <label class="switch">
+                    <input type="checkbox" id="darkModeToggle" onclick="toggleDarkMode()" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <!-- Currency -->
+            <button class="sidebar-currency-item" onclick="openCurrencyModal()">
+                <i class="fas fa-exchange-alt"></i>
+                <span>تغيير العملة</span>
+                <span class="currency-label" id="sidebarCurrencyLabel">ج.س</span>
+            </button>
+
+            <div class="sidebar-divider"></div>
+
+            <!-- Export -->
+            <div class="sidebar-menu-item" onclick="openExportNameModal()">
+                <i class="fas fa-file-export"></i>
+                <span>تصدير البيانات</span>
+            </div>
+
+            <!-- Import -->
+            <div class="sidebar-menu-item" onclick="document.getElementById('importFile').click()">
+                <i class="fas fa-file-import"></i>
+                <span>استيراد البيانات</span>
+            </div>
+            <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)" />
+
+            <div class="sidebar-divider"></div>
+
+            <!-- About -->
+            <div class="sidebar-menu-item" onclick="openAboutModal()">
+                <i class="fas fa-info-circle"></i>
+                <span>حول التطبيق</span>
+            </div>
+
+            <!-- Reset -->
+            <div class="sidebar-menu-item" onclick="confirmResetData()" style="color:var(--danger);">
+                <i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i>
+                <span>إعادة تعيين البيانات</span>
+            </div>
+
         </div>
     </div>
 
-    <!-- ABOUT MODAL -->
+    <!-- ==========================================================
+    ABOUT MODAL
+    ========================================================== -->
     <div class="modal" id="aboutModal">
         <header>
             <h3 style="color:var(--p);">حول ميزانيتك الذكية</h3>
@@ -858,21 +1787,1942 @@
         <div class="modal-content">
             <p>تطبيق ميزانيتك المالية الذكية يساعدك على تتبع:</p>
             <ul>
-                <li><i class="fas fa-wallet" style="color:var(--s);"></i> الدخل والمصروفات</li>
-                <li><i class="fas fa-receipt" style="color:var(--s);"></i> الحقوق المستحقة</li>
-                <li><i class="fas fa-clipboard-list" style="color:var(--s);"></i> الالتزامات</li>
-                <li><i class="fas fa-chart-line" style="color:var(--s);"></i> التخطيط المالي</li>
+                <li><i class="fas fa-wallet" style="color:var(--s);"></i> المصروفات اليومية.</li>
+                <li><i class="fas fa-receipt" style="color:var(--s);"></i> الحقوق المالية المستحقة لك.</li>
+                <li><i class="fas fa-clipboard-list" style="color:var(--s);"></i> الالتزامات المالية المستحقة عليك.</li>
             </ul>
             <p class="card" style="border-top:3px solid var(--danger);">
-                <strong>ملاحظة:</strong> تُحفظ البيانات محلياً في IndexedDB.
+                <strong>ملاحظة:</strong> تُحفظ البيانات محلياً باستخدام IndexedDB.
             </p>
-            <p style="text-align:center;margin-top:20px;color:#999;font-size:0.9em;">الإصدار 6.0</p>
+            <p style="text-align:center; margin-top:20px; color:#999; font-size:0.9em;">الإصدار 5.0</p>
         </div>
     </div>
 
     <!-- ==========================================================
-    SCRIPTS
+    CURRENCY MODAL
     ========================================================== -->
-    <script src="app.js"></script>
+    <div class="modal" id="currencyModal">
+        <header>
+            <h3 style="color:var(--p);">اختيار العملة</h3>
+            <button onclick="closeLayer('currency')"><i class="fas fa-times"></i></button>
+        </header>
+        <div class="modal-content">
+            <input id="currencySearch" type="text" placeholder="🔍 ابحث عن العملة..." oninput="renderCurrencyList()" />
+            <div id="currencyList"></div>
+        </div>
+    </div>
+
+    <!-- ==========================================================
+    TOAST
+    ========================================================== -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ==========================================================
+    JAVASCRIPT
+    ========================================================== -->
+    <script>
+        // =============================================================
+        // 0.  GOOGLE DRIVE CONFIGURATION
+        // =============================================================
+        const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const APP_FOLDER_NAME = 'ميزانيتك الذكية';
+
+        let tokenClient;
+        let accessToken = null;
+        let isDriveConnected = false;
+        let backupFiles = [];
+        let userEmail = '';
+        let appFolderId = null;
+        let gapiInitAttempts = 0;
+        let gisInitAttempts = 0;
+        const MAX_INIT_ATTEMPTS = 10;
+        let tokenRefreshInterval = null;
+
+        // =============================================================
+        // 1.  INDEXED DB SETUP
+        // =============================================================
+        const IDB_NAME = "MySmartBudgetDB";
+        const IDB_VERSION = 5;
+        const STORE_NAMES = ["exp", "rig", "deb", "bal"];
+
+        let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] } };
+        let IDB_connection = null;
+
+        let currentBalance = 0;
+        let balanceHidden = localStorage.getItem('balanceHidden') === 'true';
+        let currentLog = '',
+            editMode = null,
+            balanceActionType = null;
+        let selectedImageFile = null;
+
+        // =============================================================
+        // 2.  NAVIGATION / LAYERS
+        // =============================================================
+        const LAYERS = {
+            'sidebar': { elementId: 'appSidebar', type: 'menu' },
+            'log': { elementId: 'logModal', type: 'modal' },
+            'detail': { elementId: 'detailModal', type: 'modal' },
+            'currency': { elementId: 'currencyModal', type: 'modal' },
+            'about': { elementId: 'aboutModal', type: 'modal' },
+            'balanceAction': { elementId: 'balanceActionModal', type: 'modal' },
+            'balanceLog': { elementId: 'balanceLogModal', type: 'modal' },
+            'imageSource': { elementId: 'imageSourceModal', type: 'menu' },
+            'confirmBackup': { elementId: 'confirmBackupModal', type: 'modal' },
+            'driveBackup': { elementId: 'driveBackupModal', type: 'modal' },
+            'exportName': { elementId: 'exportNameModal', type: 'modal' }
+        };
+        let historyStack = [];
+
+        function _visualOpen(layerName, data = {}) {
+            const layer = LAYERS[layerName];
+            if (!layer) return;
+            const el = document.getElementById(layer.elementId);
+            if (!el) return;
+
+            if (layer.type === 'modal') {
+                el.style.display = 'flex';
+                if (layerName === 'log') { currentLog = data.logType;
+                    renderLog(); } else if (layerName === 'detail') {
+                    const o = db[data.logType]?.find(item => item.clientId === data.id || item.id === data.id);
+                    if (!o) { toastMsg("لم يتم العثور على المعاملة.", "error"); return; }
+                    const idx = db[data.logType].findIndex(item => item.clientId === data.id || item.id === data.id);
+                    editMode = { type: data.logType, index: idx };
+                    _renderDetailContent(o, data.logType);
+                } else if (layerName === 'balanceAction') {
+                    balanceActionType = data.actionType;
+                    const titleEl = document.getElementById('actionModalTitle');
+                    if (titleEl) titleEl.textContent = balanceActionType === 'deposit' ? 'إيداع رصيد جديد' :
+                        'سحب / تحويل رصيد';
+                    const balanceEl = document.getElementById('currentBalanceInAction');
+                    if (balanceEl) balanceEl.innerHTML = formatCurrency(currentBalance);
+                    const amountEl = document.getElementById('bAmount');
+                    if (amountEl) amountEl.value = '';
+                    const descEl = document.getElementById('bDesc');
+                    if (descEl) descEl.value = '';
+                    const dateEl = document.getElementById('bDate');
+                    if (dateEl) dateEl.value = new Date().toISOString().slice(0, 16);
+                } else if (layerName === 'currency') {
+                    const searchEl = document.getElementById('currencySearch');
+                    if (searchEl) searchEl.value = '';
+                    renderCurrencyList();
+                } else if (layerName === 'balanceLog') {
+                    renderBalanceLog();
+                } else if (layerName === 'driveBackup') {
+                    renderDriveBackupList();
+                } else if (layerName === 'exportName') {
+                    const fileNameEl = document.getElementById('exportFileName');
+                    if (fileNameEl) {
+                        fileNameEl.value = 'بيانات_ميزانيتي';
+                        fileNameEl.focus();
+                        fileNameEl.select();
+                    }
+                }
+            } else if (layer.type === 'menu') {
+                el.classList.add('open');
+                const ov = document.querySelector(layerName === 'imageSource' ? '#imageSourceOverlay' : '.sidebar-overlay');
+                if (ov) ov.classList.add('open');
+            }
+        }
+
+        function _visualClose(layerName, clearEdit = true) {
+            const layer = LAYERS[layerName];
+            if (!layer) return;
+            const el = document.getElementById(layer.elementId);
+            if (!el) return;
+            if (layer.type === 'modal') {
+                el.style.display = 'none';
+                if (clearEdit && (layerName === 'detail' || layerName === 'log')) editMode = null;
+            } else if (layer.type === 'menu') {
+                el.classList.remove('open');
+                const ov = document.querySelector(layerName === 'imageSource' ? '#imageSourceOverlay' : '.sidebar-overlay');
+                if (ov) ov.classList.remove('open');
+            }
+        }
+
+        function openLayer(layerName, data = {}) {
+            if (historyStack.length && historyStack[historyStack.length - 1].layer === layerName) return;
+            const state = { layer: layerName, data: data };
+            historyStack.push(state);
+            history.pushState(state, null, `#${layerName}`);
+            _visualOpen(layerName, data);
+        }
+
+        function closeLayer(layerName, clearEdit = true) {
+            const top = historyStack[historyStack.length - 1];
+            if (top && top.layer === layerName) { history.back(); } else { _visualClose(layerName, clearEdit); }
+        }
+
+        window.onpopstate = (e) => {
+            const closed = historyStack.pop();
+            if (closed) _visualClose(closed.layer);
+            if (historyStack.length === 0) {
+                const st = { layer: 'main' };
+                historyStack.push(st);
+                history.pushState(st, null, '#main');
+                for (const n in LAYERS) _visualClose(n, false);
+            } else {
+                const top = historyStack[historyStack.length - 1];
+                _visualOpen(top.layer, top.data);
+            }
+        };
+
+        window.onload = () => {
+            if (!history.state || history.state.layer === undefined) {
+                history.replaceState({ layer: 'main' }, null, '#main');
+                historyStack.push({ layer: 'main' });
+            } else {
+                historyStack.push(history.state);
+            }
+
+            const now = new Date().toISOString().slice(0, 10);
+            ['eDate', 'rDueDate', 'dDueDate'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = now;
+            });
+
+            const currencyLabel = document.getElementById('sidebarCurrencyLabel');
+            if (currencyLabel) currencyLabel.textContent = currentCurrency.symbol;
+
+            updateBalanceDisplay();
+            updateStats();
+            updateDriveUI();
+
+            setTimeout(() => {
+                initGapi();
+                initGis();
+                restoreDriveState();
+            }, 1000);
+        };
+
+        // =============================================================
+        // 3.  GOOGLE DRIVE API FUNCTIONS
+        // =============================================================
+        function startTokenRefresh() {
+            if (tokenRefreshInterval) {
+                clearInterval(tokenRefreshInterval);
+            }
+            tokenRefreshInterval = setInterval(async () => {
+                if (isDriveConnected && accessToken) {
+                    try {
+                        if (tokenClient) {
+                            tokenClient.requestAccessToken({ prompt: '' });
+                        }
+                    } catch (e) {
+                        console.log('Token refresh failed, will retry later');
+                    }
+                }
+            }, 50 * 60 * 1000);
+        }
+
+        function stopTokenRefresh() {
+            if (tokenRefreshInterval) {
+                clearInterval(tokenRefreshInterval);
+                tokenRefreshInterval = null;
+            }
+        }
+
+        function restoreDriveState() {
+            const savedToken = localStorage.getItem('drive_token');
+            const savedEmail = localStorage.getItem('drive_email');
+            const savedFolderId = localStorage.getItem('drive_folder_id');
+            const tokenExpiry = localStorage.getItem('drive_token_expiry');
+
+            if (savedToken && savedEmail) {
+                const now = Date.now();
+                const expiry = parseInt(tokenExpiry) || 0;
+
+                if (expiry > now) {
+                    accessToken = savedToken;
+                    userEmail = savedEmail;
+                    appFolderId = savedFolderId || null;
+                    isDriveConnected = true;
+                    updateDriveUI();
+                    startTokenRefresh();
+
+                    setTimeout(() => {
+                        if (accessToken) {
+                            loadBackupList();
+                            verifyTokenValidity();
+                        }
+                    }, 1000);
+                } else {
+                    console.log('Token expired, attempting to refresh...');
+                    if (tokenClient) {
+                        tokenClient.requestAccessToken({ prompt: '' });
+                    } else {
+                        setTimeout(() => {
+                            if (tokenClient) {
+                                tokenClient.requestAccessToken({ prompt: '' });
+                            }
+                        }, 2000);
+                    }
+                }
+            }
+        }
+
+        async function verifyTokenValidity() {
+            if (!accessToken) return;
+
+            try {
+                const response = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + accessToken);
+                if (!response.ok) {
+                    console.log('Token invalid, attempting to refresh...');
+                    if (tokenClient) {
+                        tokenClient.requestAccessToken({ prompt: '' });
+                    }
+                }
+            } catch (error) {
+                console.log('Token verification failed:', error);
+            }
+        }
+
+        function initGapi() {
+            if (gapiInitAttempts >= MAX_INIT_ATTEMPTS) {
+                console.warn('GAPI init max attempts reached');
+                return;
+            }
+            gapiInitAttempts++;
+
+            if (typeof gapi === 'undefined') {
+                console.warn('gapi not loaded yet, retrying...');
+                setTimeout(initGapi, 500);
+                return;
+            }
+
+            try {
+                gapi.load('client', async () => {
+                    try {
+                        await gapi.client.init({
+                            apiKey: '',
+                            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+                        });
+                        console.log('Google API loaded');
+                        restoreDriveState();
+                    } catch (error) {
+                        console.error('Error loading GAPI client:', error);
+                    }
+                });
+            } catch (error) {
+                console.error('Error in GAPI init:', error);
+                setTimeout(initGapi, 500);
+            }
+        }
+
+        function initGis() {
+            if (gisInitAttempts >= MAX_INIT_ATTEMPTS) {
+                console.warn('GIS init max attempts reached');
+                return;
+            }
+            gisInitAttempts++;
+
+            if (typeof google === 'undefined' || !google.accounts) {
+                console.warn('GIS not loaded yet, retrying...');
+                setTimeout(initGis, 500);
+                return;
+            }
+
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: async (resp) => {
+                        if (resp.error) {
+                            console.error('Auth error:', resp.error);
+                            if (resp.error === 'access_denied' || resp.error === 'invalid_token') {
+                                toastMsg('انتهت صلاحية الجلسة، جاري إعادة الاتصال...', "info");
+                                setTimeout(() => {
+                                    if (tokenClient) {
+                                        tokenClient.requestAccessToken({ prompt: '' });
+                                    }
+                                }, 2000);
+                            } else {
+                                toastMsg('فشل تسجيل الدخول: ' + resp.error, "error");
+                            }
+                            return;
+                        }
+                        accessToken = resp.access_token;
+                        localStorage.setItem('drive_token', accessToken);
+                        localStorage.setItem('drive_token_expiry', Date.now() + 3600 * 1000);
+
+                        try {
+                            const userInfo = await fetch(
+                                'https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+                                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                                });
+                            const userData = await userInfo.json();
+                            userEmail = userData.email || '';
+                            localStorage.setItem('drive_email', userEmail);
+
+                            await createAppFolder();
+
+                            isDriveConnected = true;
+                            updateDriveUI();
+                            toastMsg('تم ربط حساب Google Drive ✅', "success");
+
+                            startTokenRefresh();
+
+                            await loadBackupList();
+                            if (document.getElementById('confirmBackupModal').style.display === 'flex') {
+                                closeLayer('confirmBackup');
+                            }
+                            openLayer('driveBackup');
+                        } catch (e) {
+                            console.error('Error getting user info:', e);
+                            userEmail = '';
+                            toastMsg('حدث خطأ في تسجيل الدخول', "error");
+                        }
+                    },
+                });
+                console.log('GIS loaded');
+            } catch (error) {
+                console.error('Error initializing GIS:', error);
+                setTimeout(initGis, 500);
+            }
+        }
+
+        async function createAppFolder() {
+            if (!accessToken) return;
+
+            try {
+                const searchResponse = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='${APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id)`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    }
+                );
+                const result = await searchResponse.json();
+
+                if (result.files && result.files.length > 0) {
+                    appFolderId = result.files[0].id;
+                    localStorage.setItem('drive_folder_id', appFolderId);
+                    console.log('Folder exists:', appFolderId);
+                    return;
+                }
+
+                const metadata = {
+                    name: APP_FOLDER_NAME,
+                    mimeType: 'application/vnd.google-apps.folder'
+                };
+
+                const createResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(metadata)
+                });
+
+                if (!createResponse.ok) {
+                    throw new Error(`Failed to create folder: ${createResponse.status}`);
+                }
+
+                const folderData = await createResponse.json();
+                appFolderId = folderData.id;
+                localStorage.setItem('drive_folder_id', appFolderId);
+                console.log('Folder created:', appFolderId);
+                toastMsg('تم إنشاء مجلد التطبيق في Drive 📁', "success");
+            } catch (error) {
+                console.error('Error creating folder:', error);
+                toastMsg('فشل إنشاء مجلد التطبيق', "error");
+            }
+        }
+
+        function handleDriveClick() {
+            const savedToken = localStorage.getItem('drive_token');
+            const tokenExpiry = localStorage.getItem('drive_token_expiry');
+
+            if (savedToken && tokenExpiry) {
+                const now = Date.now();
+                const expiry = parseInt(tokenExpiry) || 0;
+
+                if (expiry > now && !isDriveConnected) {
+                    accessToken = savedToken;
+                    userEmail = localStorage.getItem('drive_email') || '';
+                    appFolderId = localStorage.getItem('drive_folder_id') || null;
+                    isDriveConnected = true;
+                    updateDriveUI();
+                    startTokenRefresh();
+                    openLayer('driveBackup');
+                    return;
+                }
+            }
+
+            openLayer('confirmBackup');
+        }
+
+        function handleBackupConfirm() {
+            const savedToken = localStorage.getItem('drive_token');
+            const tokenExpiry = localStorage.getItem('drive_token_expiry');
+
+            if (savedToken && tokenExpiry) {
+                const now = Date.now();
+                const expiry = parseInt(tokenExpiry) || 0;
+
+                if (expiry > now && !isDriveConnected) {
+                    accessToken = savedToken;
+                    userEmail = localStorage.getItem('drive_email') || '';
+                    appFolderId = localStorage.getItem('drive_folder_id') || null;
+                    isDriveConnected = true;
+                    updateDriveUI();
+                    startTokenRefresh();
+                    closeLayer('confirmBackup');
+                    performBackup();
+                    return;
+                } else if (expiry > now && isDriveConnected) {
+                    closeLayer('confirmBackup');
+                    performBackup();
+                    return;
+                }
+            }
+
+            if (!tokenClient) {
+                toastMsg('جاري تحميل خدمة المصادقة...', "info");
+                return;
+            }
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+
+        function handleViewBackups() {
+            closeLayer('confirmBackup');
+
+            const savedToken = localStorage.getItem('drive_token');
+            const tokenExpiry = localStorage.getItem('drive_token_expiry');
+
+            if (savedToken && tokenExpiry) {
+                const now = Date.now();
+                const expiry = parseInt(tokenExpiry) || 0;
+
+                if (expiry > now) {
+                    if (!isDriveConnected) {
+                        accessToken = savedToken;
+                        userEmail = localStorage.getItem('drive_email') || '';
+                        appFolderId = localStorage.getItem('drive_folder_id') || null;
+                        isDriveConnected = true;
+                        updateDriveUI();
+                        startTokenRefresh();
+                    }
+                    openLayer('driveBackup');
+                    return;
+                }
+            }
+
+            if (!tokenClient) {
+                toastMsg('جاري تحميل خدمة المصادقة...', "info");
+                return;
+            }
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+
+        function handleDriveBackup() {
+            if (!isDriveConnected) {
+                toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
+                return;
+            }
+            performBackup();
+        }
+
+        function signOut() {
+            if (!confirm('هل تريد تسجيل الخروج من Google Drive؟')) return;
+
+            stopTokenRefresh();
+
+            accessToken = null;
+            localStorage.removeItem('drive_token');
+            localStorage.removeItem('drive_email');
+            localStorage.removeItem('drive_folder_id');
+            localStorage.removeItem('drive_token_expiry');
+            isDriveConnected = false;
+            userEmail = '';
+            appFolderId = null;
+            backupFiles = [];
+            updateDriveUI();
+            toastMsg('تم تسجيل الخروج من Google Drive', "info");
+        }
+
+        function updateDriveUI() {
+            const menuItem = document.getElementById('driveMenuItem');
+            const menuText = document.getElementById('driveMenuText');
+            const dot = document.getElementById('driveStatusDot');
+            const email = document.getElementById('driveMenuEmail');
+            const logoutBtn = document.getElementById('driveLogoutBtn');
+            const modalStatus = document.getElementById('driveModalStatus');
+
+            if (menuItem) {
+                if (isDriveConnected) {
+                    menuItem.classList.add('connected');
+                    if (menuText) menuText.textContent = 'Google Drive';
+                    if (dot) {
+                        dot.style.display = 'inline-block';
+                        dot.style.background = 'var(--success)';
+                    }
+                    if (email) email.textContent = userEmail || '';
+                    if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                } else {
+                    menuItem.classList.remove('connected');
+                    if (menuText) menuText.textContent = 'Google Drive';
+                    if (dot) {
+                        dot.style.display = 'inline-block';
+                        dot.style.background = '#999';
+                    }
+                    if (email) email.textContent = '';
+                    if (logoutBtn) logoutBtn.style.display = 'none';
+                }
+            }
+
+            if (modalStatus) {
+                if (isDriveConnected) {
+                    modalStatus.className = 'status connected';
+                    modalStatus.textContent = '✅ متصل';
+                } else {
+                    modalStatus.className = 'status disconnected';
+                    modalStatus.textContent = '❌ غير متصل';
+                }
+            }
+        }
+
+        async function loadBackupList() {
+            if (!accessToken || !appFolderId) {
+                backupFiles = [];
+                renderDriveBackupList();
+                return;
+            }
+
+            try {
+                const searchResponse = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and trashed=false and (mimeType='application/json' or name contains '.json')&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    }
+                );
+                const result = await searchResponse.json();
+                backupFiles = result.files || [];
+                renderDriveBackupList();
+            } catch (error) {
+                console.error('Error loading backup list:', error);
+                toastMsg('فشل تحميل قائمة النسخ الاحتياطية', "error");
+            }
+        }
+
+        function renderDriveBackupList() {
+            const container = document.getElementById('driveBackupList');
+            const countEl = document.getElementById('driveBackupCount');
+
+            if (!container) return;
+
+            if (!isDriveConnected) {
+                container.innerHTML = `
+                    <div class="drive-empty">
+                        <i class="fab fa-google-drive"></i>
+                        <p>اضغط على زر Google Drive في القائمة لربط حسابك</p>
+                    </div>
+                `;
+                if (countEl) countEl.textContent = 'عدد النسخ المرفوعة : 0';
+                return;
+            }
+
+            if (backupFiles.length === 0) {
+                container.innerHTML = `
+                    <div class="drive-empty">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>لا توجد نسخ احتياطية محفوظة</p>
+                        <p style="font-size:0.85em;color:#888;">اضغط على زر "حفظ نسخة احتياطية جديدة"</p>
+                    </div>
+                `;
+                if (countEl) countEl.textContent = 'عدد النسخ المرفوعة : 0';
+                return;
+            }
+
+            const sortedByDate = [...backupFiles].sort((a, b) => {
+                return new Date(a.createdTime) - new Date(b.createdTime);
+            });
+
+            const filesWithNumbers = sortedByDate.map((file, index) => ({
+                ...file,
+                number: index + 1
+            }));
+
+            const displayFiles = [...filesWithNumbers].reverse();
+
+            let tableHtml = `
+                <table class="backup-table">
+                    <thead>
+                        <tr>
+                            <th>اسم النسخة</th>
+                            <th>التاريخ</th>
+                            <th>الحجم</th>
+                            <th style="text-align:left;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            displayFiles.forEach((file) => {
+                const date = new Date(file.createdTime);
+                const formattedDate = date.toLocaleString('ar-EG', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const size = file.size ? (parseInt(file.size) / 1024).toFixed(1) + 'KB' : 'غير معروف';
+                const name = `النسخة رقم ${file.number}`;
+
+                tableHtml += `
+                    <tr>
+                        <td class="file-name">${name}</td>
+                        <td class="file-date">${formattedDate}</td>
+                        <td class="file-size">${size}</td>
+                        <td>
+                            <div class="file-actions">
+                                <button class="restore-btn" onclick="restoreBackup('${file.id}')" title="استعادة النسخة">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="delete-btn" onclick="deleteBackup('${file.id}')" title="حذف النسخة">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `</tbody></table>`;
+            container.innerHTML = tableHtml;
+            if (countEl) countEl.textContent = `عدد النسخ المرفوعة : ${backupFiles.length}`;
+        }
+
+        function refreshBackupList() {
+            loadBackupList();
+            toastMsg('جاري تحديث القائمة...', "info");
+        }
+
+        async function performBackup() {
+            if (!accessToken || !appFolderId) {
+                toastMsg('الرجاء ربط حساب Google Drive أولاً', "error");
+                return;
+            }
+
+            showLoading('جاري حفظ النسخة الاحتياطية...');
+
+            try {
+                const data = {
+                    exp: db.exp,
+                    rig: db.rig,
+                    deb: db.deb,
+                    bal: db.bal,
+                    currency: currentCurrency,
+                    backupDate: new Date().toISOString()
+                };
+
+                const backupNumber = backupFiles.length + 1;
+                const fileName = `نسخة ${backupNumber}.json`;
+
+                const jsonData = JSON.stringify(data, null, 2);
+                const fileData = new Blob([jsonData], { type: 'application/json' });
+
+                const metadata = {
+                    name: fileName,
+                    parents: [appFolderId],
+                    mimeType: 'application/json'
+                };
+
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', fileData);
+
+                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    body: form
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+                }
+
+                hideLoading();
+                toastMsg(`تم حفظ النسخة الاحتياطية رقم ${backupNumber} بنجاح 💾`, "success");
+                await loadBackupList();
+                renderDriveBackupList();
+                if (document.getElementById('driveBackupModal').style.display !== 'flex') {
+                    openLayer('driveBackup');
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('Error uploading backup:', error);
+                toastMsg('فشل حفظ النسخة الاحتياطية: ' + error.message, "error");
+            }
+        }
+
+        async function restoreBackup(fileId) {
+            if (!confirm('⚠️ هل أنت متأكد من استعادة هذه النسخة؟ سيتم استبدال جميع البيانات الحالية.')) return;
+
+            showLoading('جاري استعادة البيانات...');
+
+            try {
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Failed to download file: ${response.status}`);
+                }
+
+                const text = await response.text();
+                const imported = JSON.parse(text);
+
+                if (imported.bal && Array.isArray(imported.bal.changes)) {
+                    imported.bal.clientId = 1;
+                    await addDataToStore('bal', [imported.bal]);
+                }
+                for (const sn of ['exp', 'rig', 'deb']) {
+                    if (imported[sn] && Array.isArray(imported[sn])) {
+                        await addDataToStore(sn, imported[sn]);
+                    }
+                }
+
+                if (imported.currency) {
+                    currentCurrency = imported.currency;
+                    localStorage.setItem('currencyCode', currentCurrency.code);
+                    const label = document.getElementById('sidebarCurrencyLabel');
+                    if (label) label.textContent = currentCurrency.symbol;
+                }
+
+                await loadAllData();
+                hideLoading();
+                updateStats();
+                updateBalanceDisplay();
+                toastMsg('تم استعادة البيانات بنجاح 🔄', "success");
+                await loadBackupList();
+                renderDriveBackupList();
+            } catch (error) {
+                hideLoading();
+                console.error('Error restoring backup:', error);
+                toastMsg('فشل استعادة النسخة: ' + error.message, "error");
+            }
+        }
+
+        async function deleteBackup(fileId) {
+            if (!confirm('هل أنت متأكد من حذف هذه النسخة الاحتياطية؟')) return;
+
+            try {
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${fileId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Delete failed: ${response.status}`);
+                }
+
+                toastMsg('تم حذف النسخة الاحتياطية 🗑️', "success");
+                await loadBackupList();
+                renderDriveBackupList();
+            } catch (error) {
+                console.error('Error deleting backup:', error);
+                toastMsg('فشل حذف النسخة: ' + error.message, "error");
+            }
+        }
+
+        // =============================================================
+        // 4.  EXPORT / IMPORT
+        // =============================================================
+        function openExportNameModal() {
+            openLayer('exportName');
+        }
+
+        function performExport() {
+            const fileName = document.getElementById('exportFileName').value.trim();
+            if (!fileName) {
+                toastMsg('الرجاء إدخال اسم الملف', "error");
+                return;
+            }
+
+            closeLayer('exportName');
+
+            if (!IDB_connection) return toastMsg('لا يمكن الاتصال بقاعدة البيانات.', "error");
+
+            const data = {
+                exp: db.exp,
+                rig: db.rig,
+                deb: db.deb,
+                bal: db.bal,
+                currency: currentCurrency
+            };
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${fileName}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toastMsg('تم تصدير البيانات بنجاح! 📤', "success");
+        }
+
+        async function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!confirm('تحذير: سيتم إضافة المعاملات المستوردة إلى بياناتك الحالية.')) {
+                event.target.value = null;
+                return;
+            }
+
+            showLoading('جاري استيراد البيانات...');
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.bal && Array.isArray(imported.bal.changes)) {
+                        imported.bal.clientId = 1;
+                        await addDataToStore('bal', [imported.bal]);
+                    }
+                    for (const sn of ['exp', 'rig', 'deb']) {
+                        if (imported[sn] && Array.isArray(imported[sn])) {
+                            await addDataToStore(sn, imported[sn]);
+                        }
+                    }
+
+                    if (imported.currency) {
+                        currentCurrency = imported.currency;
+                        localStorage.setItem('currencyCode', currentCurrency.code);
+                        const label = document.getElementById('sidebarCurrencyLabel');
+                        if (label) label.textContent = currentCurrency.symbol;
+                    }
+
+                    await loadAllData();
+                    hideLoading();
+                    updateStats();
+                    updateBalanceDisplay();
+                    toastMsg('تم استيراد البيانات وتحديثها! 📥', "success");
+                } catch (err) {
+                    hideLoading();
+                    toastMsg('فشل الاستيراد. تأكد من صيغة الملف.', "error");
+                    console.error(err);
+                } finally {
+                    event.target.value = null;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        async function addDataToStore(storeName, dataArray) {
+            if (!IDB_connection) return;
+            const tx = IDB_connection.transaction([storeName], 'readwrite');
+            const store = tx.objectStore(storeName);
+            for (const item of dataArray) {
+                await new Promise(resolve => {
+                    if (storeName === 'bal') { store.put(item).onsuccess = resolve; } else {
+                        const toSave = { ...item };
+                        delete toSave.id;
+                        toSave.clientId = item.clientId || `${storeName}-${Date.now()}`;
+                        store.add(toSave).onsuccess = resolve;
+                    }
+                });
+            }
+        }
+
+        // =============================================================
+        // 5.  LOADING OVERLAY
+        // =============================================================
+        function showLoading(message = 'جاري المعالجة...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const msg = document.getElementById('loadingMessage');
+            if (msg) msg.textContent = message;
+            if (overlay) overlay.classList.add('show');
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+
+        // =============================================================
+        // 6.  TOAST NOTIFICATION
+        // =============================================================
+        function toastMsg(message, type = "info") {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.className = 'toast ' + type;
+            const iconMap = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle'
+            };
+            t.innerHTML =
+                `<span class="toast-icon ${type}"><i class="fas ${iconMap[type] || 'fa-info-circle'}"></i></span> ${message}`;
+            t.classList.add('show');
+            setTimeout(() => {
+                t.classList.remove('show');
+            }, 3500);
+        }
+
+        // =============================================================
+        // 7.  FORMATTING HELPERS
+        // =============================================================
+        const ARABIC_CURRENCIES = [
+            { code: 'SDG', symbol: 'ج.س', name: 'جنيه سوداني' },
+            { code: 'SAR', symbol: 'ر.س', name: 'ريال سعودي' },
+            { code: 'EGP', symbol: 'ج.م', name: 'جنيه مصري' },
+            { code: 'AED', symbol: 'د.إ', name: 'درهم إماراتي' },
+            { code: 'KWD', symbol: 'د.ك', name: 'دينار كويتي' },
+            { code: 'QAR', symbol: 'ر.ق', name: 'ريال قطري' },
+            { code: 'OMR', symbol: 'ر.ع.', name: 'ريال عماني' },
+            { code: 'JOD', symbol: 'د.ا', name: 'دينار أردني' },
+            { code: 'BHD', symbol: 'د.ب', name: 'دينار بحريني' },
+            { code: 'MAD', symbol: 'د.م', name: 'درهم مغربي' },
+            { code: 'TND', symbol: 'د.ت', name: 'دينار تونسي' },
+            { code: 'DZD', symbol: 'د.ج', name: 'دينار جزائري' },
+            { code: 'LBP', symbol: 'ل.ل', name: 'ليرة لبنانية' },
+            { code: 'YER', symbol: 'ر.ي', name: 'ريال يمني' },
+            { code: 'USD', symbol: '$', name: 'دولار أمريكي' },
+            { code: 'EUR', symbol: '€', name: 'يورو' },
+            { code: 'INR', symbol: '₹', name: 'روبية هندية' },
+            { code: 'PKR', symbol: 'Rs', name: 'روبية باكستانية' },
+            { code: 'BDT', symbol: '৳', name: 'تاكا بنغلاديشي' }
+        ];
+
+        let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SDG')) ||
+            ARABIC_CURRENCIES[0];
+
+        function formatAmount(input) {
+            let val = input.value.replace(/[^\d.]/g, '');
+            const parts = val.split('.');
+            if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+            const intPart = parts[0];
+            const decPart = parts[1] ? '.' + parts[1] : '';
+            const num = parseFloat(intPart.replace(/,/g, ''));
+            let formatted = isNaN(num) ? '' : num.toLocaleString('ar');
+            if (input.value.endsWith('.') && !decPart) formatted += '.';
+            input.value = formatted + decPart;
+        }
+
+        function parseAmount(amount) {
+            let str = String(amount).replace(/[،\u066c]/g, '').replace(/[^\d.]/g, '');
+            str = str.replace(/([٠١٢٣٤٥٦٧٨٩])/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
+            return parseFloat(str) || 0;
+        }
+
+        function getFormattedAmount(num) {
+            return num.toLocaleString('ar', { minimumFractionDigits: num % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
+        }
+
+        function formatCurrency(amount, withColor = false) {
+            if (balanceHidden) return '<span class="hidden-balance">***</span>';
+            const num = parseAmount(amount);
+            const fmt = getFormattedAmount(num);
+            let colorClass = '';
+            if (withColor) {
+                if (num > 0) colorClass = 'balance-positive';
+                else if (num < 0) colorClass = 'balance-negative';
+                else colorClass = 'balance-zero';
+            }
+            return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
+        }
+
+        // دالة خاصة لعرض الرصيد مع اللون المناسب
+        function formatBalance(amount) {
+            if (balanceHidden) return '<span class="hidden-balance">***</span>';
+            const num = parseAmount(amount);
+            const fmt = getFormattedAmount(num);
+            let colorClass = '';
+            if (num > 0) colorClass = 'balance-positive';
+            else if (num < 0) colorClass = 'balance-negative';
+            else colorClass = 'balance-zero';
+            return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return '—';
+            const d = new Date(dateString);
+            if (isNaN(d)) return 'تاريخ غير صالح';
+            return d.toLocaleString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric',
+                minute: '2-digit', hour12: true });
+        }
+
+        function clearFields() {
+            ['eAmount', 'eDesc', 'eType', 'eDate',
+                'rAmount', 'rDesc', 'rDate', 'rType', 'rStatus', 'rEntity', 'rDueDate',
+                'dType', 'dAmount', 'dDesc', 'dDate', 'dStatus', 'dEntity', 'dDueDate'
+            ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            clearSelectedImage();
+            document.getElementById('rDynamicFields').innerHTML = '';
+            document.getElementById('dDynamicFields').innerHTML = '';
+            document.querySelectorAll('.edit-indicator').forEach(el => el.style.display = 'none');
+            document.getElementById('dEntity').style.display = 'none';
+        }
+
+        // =============================================================
+        // 8.  TAB NAVIGATION
+        // =============================================================
+        function openTab(id, keepEdit = false) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+
+            document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.tab === id) {
+                    btn.classList.add('active');
+                }
+            });
+
+            if (!keepEdit) { editMode = null;
+                clearFields(); }
+            if (id === 'overview') updateStats();
+            if (editMode) {
+                const indicatorMap = { exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
+                const ind = document.getElementById(indicatorMap[editMode.type]);
+                if (ind) ind.style.display = 'inline-block';
+            }
+        }
+
+        function openTabFromNav(tabId) {
+            if (document.getElementById(tabId).classList.contains('active')) return;
+            openTab(tabId);
+            for (const key in LAYERS) {
+                if (key !== 'sidebar' && key !== 'imageSource') {
+                    _visualClose(key, false);
+                }
+            }
+        }
+
+        // =============================================================
+        // 9.  BALANCE
+        // =============================================================
+        function toggleBalanceVisibility() {
+            balanceHidden = !balanceHidden;
+            localStorage.setItem('balanceHidden', balanceHidden);
+            updateBalanceDisplay();
+            updateStats();
+        }
+
+        function updateBalanceDisplay() {
+            const el = document.getElementById('currentBalanceDisplay');
+            el.innerHTML = formatBalance(currentBalance);
+            const act = document.getElementById('currentBalanceInAction');
+            if (act) act.innerHTML = formatBalance(currentBalance);
+            const icon = document.querySelector('#balanceVisibilityToggle i');
+            if (icon) icon.className = balanceHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+            if (document.getElementById('balanceLogModal').style.display === 'flex') renderBalanceLog();
+        }
+
+        async function processBalanceChange(amount, type, description, recordId = null, isEdit = false, oldAmount = 0) {
+            if (!recordId) recordId = `bal-${Date.now()}`;
+            const changeAmount = parseAmount(amount);
+            let netChange = changeAmount;
+            if (['expense', 'debt_payment', 'withdraw', 'revert_expense_debt'].includes(type)) netChange *= -1;
+            let effectiveChange = netChange;
+            if (isEdit) effectiveChange = netChange - oldAmount;
+
+            currentBalance = parseAmount(currentBalance) + effectiveChange;
+            db.bal.amount = currentBalance;
+
+            const entry = {
+                id: recordId,
+                التاريخ: new Date().toISOString().slice(0, 16),
+                النوع: description,
+                المبلغ: changeAmount,
+                التأثير: (netChange > 0 ? 'إيداع' : (netChange < 0 ? 'خصم' : 'تعديل')),
+                القيمة_الصافية: netChange,
+                الرصيد_بعد_العملية: currentBalance
+            };
+
+            const idx = db.bal.changes.findIndex(c => c.id === recordId);
+            if (idx > -1) db.bal.changes[idx] = entry;
+            else db.bal.changes.unshift(entry);
+
+            try {
+                await saveData('bal', db.bal);
+                updateBalanceDisplay();
+                return true;
+            } catch (e) {
+                console.error('Balance save failed', e);
+                currentBalance -= effectiveChange;
+                toastMsg('فشل تحديث الرصيد.', "error");
+                return false;
+            }
+        }
+
+        async function processBalanceAction() {
+            const amt = document.getElementById('bAmount').value;
+            const desc = document.getElementById('bDesc').value || (balanceActionType === 'deposit' ? 'إيداع عام' : 'سحب عام');
+            if (!amt) return toastMsg('الرجاء إدخال المبلغ.', "error");
+            const ok = await processBalanceChange(amt, balanceActionType, desc, `manual-${Date.now()}`);
+            if (ok) {
+                toastMsg(balanceActionType === 'deposit' ? 'تم الإيداع بنجاح 💰' : 'تم السحب بنجاح 💰', "success");
+                closeLayer('balanceAction');
+            }
+        }
+
+        function renderBalanceLog() {
+            const el = document.getElementById('balanceLogContent');
+            const changes = db.bal.changes || [];
+            if (!changes.length) {
+                el.innerHTML =
+                    '<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>لا توجد حركات رصيد.</p>';
+                return;
+            }
+            el.innerHTML = changes.map(i => {
+                const isDep = i.القيمة_الصافية > 0;
+                const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
+                const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
+                return `
+                    <div class="list-item" style="border-right-color:${color};">
+                        <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
+                        <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
+                        <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
+                        </div>
+                        <div class="details">
+                        <span>الرصيد بعد: ${formatBalance(i.الرصيد_بعد_العملية)}</span>
+                        <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // =============================================================
+        // 10. CRUD — EXPENSES, RIGHTS, DEBTS
+        // =============================================================
+
+        // =============================================================
+        // 10.1 EXPENSES
+        // =============================================================
+        async function addExpense() {
+            const eAmount = document.getElementById('eAmount');
+            const eType = document.getElementById('eType');
+            const eDate = document.getElementById('eDate');
+            const eDesc = document.getElementById('eDesc');
+
+            if (!eAmount.value || !eType.value || !eDate.value) return toastMsg('أكمل البيانات المطلوبة', "error");
+
+            const isEditing = editMode && editMode.type === 'exp';
+            const oldData = isEditing ? db.exp[editMode.index] : {};
+            const oldAmount = isEditing ? parseAmount(oldData.المبلغ) * -1 : 0;
+            const amount = parseAmount(eAmount.value);
+            if (amount === 0) return toastMsg('المبلغ يجب أن يكون أكبر من صفر.', "error");
+
+            const data = isEditing ? { ...oldData } : {};
+            data.المبلغ = getFormattedAmount(amount);
+            data.الفئة = eType.value;
+            data.الوصف = eDesc.value || '—';
+            data.التاريخ = eDate.value;
+            data.clientId = isEditing ? oldData.clientId : `exp-${Date.now()}`;
+
+            const img = getSelectedImage();
+            if (img && typeof img === 'string' && img.startsWith('data:image')) {
+                data.صورة = img;
+            } else if (!isEditing) {
+                delete data.صورة;
+            } else {
+                if (oldData.صورة) data.صورة = oldData.صورة;
+                else delete data.صورة;
+            }
+
+            try {
+                await saveData('exp', data);
+                await processBalanceChange(amount, 'expense', `مصروف: ${data.الفئة} (${data.الوصف})`, data.clientId,
+                    isEditing, oldAmount);
+                toastMsg(isEditing ? 'تم تعديل المصروف ✏️' : 'تم حفظ المصروف ✅', "success");
+                postSaveCleanup(isEditing, 'exp');
+            } catch (err) { toastMsg('فشل الحفظ.', "error");
+                console.error(err); }
+        }
+
+        // =============================================================
+        // 10.2 RIGHTS
+        // =============================================================
+        function updateRightFields(type, currentData = null) {
+            const container = document.getElementById('rDynamicFields');
+            container.innerHTML = '';
+
+            let paidHtml = `
+                <input id="rPaidAmount" type="text" placeholder="💰 المبلغ المحصل" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('ar') : ''}" />
+                <span class="field-hint">المبلغ الذي تم تحصيله حتى الآن (لا يمكن أن يتجاوز المبلغ الكلي)</span>
+            `;
+            container.innerHTML = paidHtml;
+
+            const statusEl = document.getElementById('rStatus');
+            if (statusEl) statusEl.style.display = 'none';
+        }
+
+        async function addRight() {
+            const rAmount = document.getElementById('rAmount');
+            const rType = document.getElementById('rType');
+            const rEntity = document.getElementById('rEntity');
+            const rDueDate = document.getElementById('rDueDate');
+            const rDesc = document.getElementById('rDesc');
+            const rPaidAmount = document.getElementById('rPaidAmount');
+
+            if (!rAmount.value || !rType.value || !rDueDate.value) return toastMsg('أكمل البيانات المطلوبة', "error");
+            const isEditing = editMode && editMode.type === 'rig';
+            const oldData = isEditing ? db.rig[editMode.index] : {};
+            const total = parseAmount(rAmount.value);
+            if (total === 0) return toastMsg('المبلغ يجب أن يكون أكبر من صفر.', "error");
+
+            const paid = parseAmount(rPaidAmount ? rPaidAmount.value : 0);
+            if (paid > total) {
+                toastMsg('⚠️ المبلغ المحصل لا يمكن أن يتجاوز المبلغ الكلي!', "error");
+                return;
+            }
+
+            const data = isEditing ? { ...oldData } : {};
+            data.clientId = isEditing ? oldData.clientId : `rig-${Date.now()}`;
+            data.النوع = rType.value;
+            data.المبلغ = getFormattedAmount(total);
+            data.الجهة = rEntity.value || '—';
+            data.تاريخ_الاستحقاق = rDueDate.value;
+            data.الوصف = rDesc.value || '—';
+
+            data.المبلغ_المدفوع = getFormattedAmount(paid);
+            const remaining = total - paid;
+            data.المتبقي = getFormattedAmount(remaining);
+
+            let status = 'غير مدفوع';
+            if (remaining <= 0) status = 'مدفوع بالكامل';
+            else if (paid > 0) status = 'مدفوع جزئياً';
+            else status = 'غير مدفوع';
+            data.الحالة = status;
+            data.المبلغ_المضاف_للرصيد = paid;
+
+            const oldPaid = isEditing ? parseAmount(oldData.المبلغ_المضاف_للرصيد || 0) : 0;
+
+            try {
+                await saveData('rig', data);
+                await processBalanceChange(paid, 'right_collection', `تحصيل: ${data.النوع} (${data.الجهة})`, data.clientId,
+                    isEditing, oldPaid);
+                toastMsg(isEditing ? 'تم تعديل الحق ✏️' : 'تم حفظ الحق ✅', "success");
+                postSaveCleanup(isEditing, 'rig');
+            } catch (err) { toastMsg('فشل الحفظ.', "error");
+                console.error(err); }
+        }
+
+        // =============================================================
+        // 10.3 DEBTS (مع الفئات الجديدة: كهرباء، ماء)
+        // =============================================================
+        function updateDebtFields(type, currentData = null) {
+            const container = document.getElementById('dDynamicFields');
+            const amountInput = document.getElementById('dAmount');
+            const statusSelect = document.getElementById('dStatus');
+            const entityInput = document.getElementById('dEntity');
+            container.innerHTML = '';
+
+            // تحديد الفئات التي تحتاج إلى حقل الجهة
+            const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍👧 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
+            const noEntityTypes = ['🏦 قروض وتمويل', '🛒 مشتريات بالتقسيط', '💡 فواتير الخدمات', '📦 أخرى'];
+
+            if (entityTypes.includes(type)) {
+                entityInput.style.display = 'block';
+                if (currentData && currentData.الجهة) {
+                    entityInput.value = currentData.الجهة;
+                }
+            } else {
+                entityInput.style.display = 'none';
+                entityInput.value = '';
+            }
+
+            const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
+
+            if (masterTypes.includes(type)) {
+                amountInput.style.display = 'none';
+                statusSelect.style.display = 'none';
+                amountInput.value = '';
+                statusSelect.value = '';
+
+                let html = `
+                    <input id="dTotalAmount" type="text" placeholder="💵 المبلغ الكلي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('ar') : ''}" />
+                    <span class="field-hint">المبلغ الكلي للالتزام</span>
+                `;
+
+                if (type === '🏦 قروض وتمويل' || type === '🛒 مشتريات بالتقسيط' || type === '🚗 تمويل السيارة') {
+                    html += `
+                        <input id="dInstallments" type="number" placeholder="عدد الأقساط الكلي" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
+                        <input id="dPaidInstallments" type="number" placeholder="الأقساط المدفوعة" value="${currentData && currentData.الأقساط_المدفوعة ? currentData.الأقساط_المدفوعة : ''}" />
+                    `;
+                } else {
+                    html += `
+                        <input id="dPaidAmount" type="text" placeholder="💰 إجمالي المدفوع حتى الآن" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('ar') : ''}" />
+                    `;
+                }
+                container.innerHTML = html;
+            } else {
+                amountInput.style.display = 'block';
+                statusSelect.style.display = 'block';
+                if (currentData) {
+                    amountInput.value = parseAmount(currentData.المبلغ || 0).toLocaleString('ar');
+                    statusSelect.value = currentData.الحالة || '';
+                }
+            }
+        }
+
+        async function addDebt() {
+            const dType = document.getElementById('dType');
+            const dAmount = document.getElementById('dAmount');
+            const dEntity = document.getElementById('dEntity');
+            const dDueDate = document.getElementById('dDueDate');
+            const dDesc = document.getElementById('dDesc');
+            const dStatus = document.getElementById('dStatus');
+
+            if (!dType.value || !dDueDate.value) return toastMsg('أكمل البيانات المطلوبة', "error");
+            const isEditing = editMode && editMode.type === 'deb';
+            const oldData = isEditing ? db.deb[editMode.index] : {};
+            const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
+            const isMaster = masterTypes.includes(dType.value);
+
+            const data = isEditing ? { ...oldData } : {};
+            data.clientId = isEditing ? oldData.clientId : `deb-${Date.now()}`;
+            data.النوع = dType.value;
+            data.تاريخ_الاستحقاق = dDueDate.value;
+            data.الوصف = dDesc.value || '—';
+
+            if (dEntity.style.display !== 'none' && dEntity.value) {
+                data.الجهة = dEntity.value;
+            } else {
+                data.الجهة = '—';
+            }
+
+            let paidAmount = 0;
+            let oldPaid = isEditing ? parseAmount(oldData.المبلغ_المخصوم_للرصيد || 0) : 0;
+
+            if (isMaster) {
+                const totalInput = document.getElementById('dTotalAmount');
+                if (!totalInput || !totalInput.value) return toastMsg('الرجاء إدخال المبلغ الكلي.', "error");
+                const total = parseAmount(totalInput.value);
+                if (total === 0) return toastMsg('المبلغ الكلي يجب أن يكون أكبر من صفر.', "error");
+                data.المبلغ_الكلي_للالتزام = getFormattedAmount(total);
+
+                let totalPaid = 0;
+                const isLoanOrInstallment = (dType.value === '🏦 قروض وتمويل' || dType.value === '🛒 مشتريات بالتقسيط' || dType
+                    .value === '🚗 تمويل السيارة');
+
+                if (isLoanOrInstallment) {
+                    const installmentsInput = document.getElementById('dInstallments');
+                    const paidInstallmentsInput = document.getElementById('dPaidInstallments');
+                    if (!installmentsInput || !installmentsInput.value) return toastMsg('أدخل عدد الأقساط.', "error");
+                    const installments = parseInt(installmentsInput.value) || 0;
+                    const paidInstallments = parseInt(paidInstallmentsInput ? paidInstallmentsInput.value : 0) || 0;
+                    if (installments <= 0) return toastMsg('عدد الأقساط يجب أن يكون أكبر من صفر.', "error");
+                    if (paidInstallments > installments) return toastMsg('الأقساط المدفوعة لا تتجاوز الكلي.', "error");
+                    const installmentVal = total / installments;
+                    totalPaid = paidInstallments * installmentVal;
+                    data.عدد_الاقساط = installments;
+                    data.قيمة_القسط = getFormattedAmount(installmentVal);
+                    data.الأقساط_المدفوعة = paidInstallments;
+                } else {
+                    const paidInput = document.getElementById('dPaidAmount');
+                    if (paidInput) totalPaid = parseAmount(paidInput.value);
+                    if (totalPaid > total) return toastMsg('المدفوع لا يمكن أن يتجاوز المبلغ الكلي.', "error");
+                }
+                data.إجمالي_المدفوع = getFormattedAmount(totalPaid);
+                data.المتبقي_للالتزام = getFormattedAmount(total - totalPaid);
+                data.المبلغ = '—';
+                data.الحالة = (total - totalPaid) <= 0 ? 'مدفوع' : 'مدفوع جزئياً';
+                paidAmount = totalPaid;
+            } else {
+                if (!dAmount.value || !dStatus.value) return toastMsg('أكمل بيانات الفاتورة.', "error");
+                const amt = parseAmount(dAmount.value);
+                if (amt === 0) return toastMsg('المبلغ يجب أن يكون أكبر من صفر.', "error");
+                data.المبلغ = getFormattedAmount(amt);
+                data.الحالة = dStatus.value;
+                paidAmount = (dStatus.value === 'مدفوع' || dStatus.value === 'مدفوع بالكامل') ? amt : 0;
+                delete data.المبلغ_الكلي_للالتزام;
+                delete data.إجمالي_المدفوع;
+                delete data.المتبقي_للالتزام;
+                delete data.عدد_الاقساط;
+                delete data.قيمة_القسط;
+                delete data.الأقساط_المدفوعة;
+            }
+
+            data.المبلغ_المخصوم_للرصيد = paidAmount;
+
+            try {
+                await saveData('deb', data);
+                await processBalanceChange(paidAmount, 'debt_payment', `دفعة: ${data.النوع} (${data.الجهة})`, data.clientId,
+                    isEditing, oldPaid);
+                toastMsg(isEditing ? 'تم تعديل الالتزام ✏️' : 'تم حفظ الالتزام ✅', "success");
+                postSaveCleanup(isEditing, 'deb');
+            } catch (err) { toastMsg('فشل الحفظ.', "error");
+                console.error(err); }
+        }
+
+        function postSaveCleanup(isEditing, type) {
+            _visualClose('detail', false);
+            if (document.getElementById('logModal').style.display === 'flex') {
+                _visualClose('log', false);
+            }
+            loadAllData().then(() => { updateStats();
+                updateBalanceDisplay(); });
+            editMode = null;
+            clearFields();
+        }
+
+        // =============================================================
+        // 11. DETAIL & LOG RENDERING
+        // =============================================================
+        function _renderDetailContent(o, type) {
+            const el = document.getElementById('detailContent');
+            let html = `<div class="card" style="border-top-color:var(--p);"><h3 style="color:var(--p);margin-top:0;"><i class="fas fa-info-circle" style="margin-left:5px;"></i> التفاصيل</h3>`;
+            for (const [key, val] of Object.entries(o)) {
+                if (['id', 'clientId', 'صورة', 'المبلغ_المضاف_للرصيد', 'المبلغ_المخصوم_للرصيد'].includes(key)) continue;
+                if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '' && key !== 'الوصف'))
+                    continue;
+                const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes(
+                    'القسط') || key.includes('إجمالي');
+                const display = isAmt ? formatCurrency(val, true) : val;
+                html += `<p style="margin:6px 0;"><strong>${key.replace(/_/g,' ')}:</strong> <span>${display}</span></p>`;
+            }
+            html += `</div>`;
+            if (o.صورة && type === 'exp') {
+                html += `<div class="card" style="border-top-color:var(--s);">
+                    <h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> صورة الفاتورة</h3>
+                    <img src="${o.صورة}" alt="الفاتورة" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" />
+                    </div>`;
+            }
+            html += `<div style="display:flex;gap:10px;margin-top:20px;">
+                    <button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> تعديل</button>
+                    <button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> حذف</button>
+                    </div>`;
+            el.innerHTML = html;
+        }
+
+        function renderLog() {
+            const el = document.getElementById('logContent');
+            const items = db[currentLog] || [];
+            const search = document.getElementById('search').value.toLowerCase();
+            const filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(search)));
+
+            if (!filtered.length) {
+                el.innerHTML =
+                    '<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>لا توجد معاملات.</p>';
+                return;
+            }
+
+            el.innerHTML = filtered.map(i => {
+                const isExp = currentLog === 'exp';
+                const isRig = currentLog === 'rig';
+                const isDeb = currentLog === 'deb';
+
+                let amountVal = parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0);
+                let amountDisplay = formatCurrency(amountVal);
+                let desc = i.الوصف || i.الفئة || i.النوع || '—';
+                let date = formatDateTime(i.التاريخ || i.تاريخ_الاستحقاق);
+                let borderColor = 'var(--s)';
+                let statusBadge = '';
+                let amountColor = 'var(--text-dark)';
+                let entity = i.الجهة || '';
+
+                if (isExp) { borderColor = 'var(--danger)';
+                    amountColor = 'var(--danger)'; } else if (isRig) {
+                    const st = i.الحالة || '';
+                    if (st.includes('كامل') || st === 'مدفوع بالكامل') { borderColor = 'var(--success)';
+                        statusBadge = `<span class="status-badge paid">مدفوع</span>`; } else if (st.includes('جزئياً') || st ===
+                        'مدفوع جزئياً') { borderColor = 'var(--warning)';
+                        statusBadge = `<span class="status-badge partial">جزئي</span>`; } else if (st === 'متأخر') {
+                        borderColor = '#e67e22';
+                        statusBadge = `<span class="status-badge late">متأخر</span>`; } else { borderColor =
+                            'var(--danger)';
+                        statusBadge = `<span class="status-badge unpaid">غير مدفوع</span>`; }
+                    amountColor = 'var(--success)';
+                } else if (isDeb) {
+                    const st = i.الحالة || '';
+                    const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
+                    const isMaster = masterTypes.includes(i.النوع);
+                    if (isMaster) {
+                        borderColor = 'var(--p)';
+                        const rem = parseAmount(i.المتبقي_للالتزام || 0);
+                        statusBadge =
+                            `<span style="font-size:0.8em;color:var(--p);">المتبقي: ${formatCurrency(rem)}</span>`;
+                        amountColor = 'var(--p)';
+                    } else {
+                        if (st === 'مدفوع' || st === 'مدفوع بالكامل') { borderColor = 'var(--success)';
+                            statusBadge =
+                            `<span class="status-badge paid">مدفوع</span>`; } else if (st === 'مدفوع جزئياً') {
+                            borderColor = 'var(--warning)';
+                            statusBadge = `<span class="status-badge partial">جزئي</span>`; } else if (st ===
+                            'متأخر') { borderColor = '#e67e22';
+                            statusBadge = `<span class="status-badge late">متأخر</span>`; } else { borderColor =
+                                'var(--danger)';
+                            statusBadge = `<span class="status-badge unpaid">غير مدفوع</span>`; }
+                        amountColor = borderColor;
+                    }
+                }
+
+                const imgIcon = i.صورة ? '<i class="fas fa-camera" style="margin-left:5px;color:var(--p);"></i>' : '';
+                const entityDisplay = entity && entity !== '—' ?
+                    `<span style="font-size:0.85em;color:#888;">${entity}</span>` : '';
+
+                const itemId = i.clientId || i.id || `temp-${Date.now()}`;
+
+                return `
+                    <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
+                        <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+                        <span>${imgIcon} ${desc} ${entityDisplay}</span>
+                        <span style="color:${amountColor};">${amountDisplay}</span>
+                        </div>
+                        <div class="details">
+                        <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
+                        <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
+                        </div>
+                        <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> اضغط لعرض التفاصيل</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editTransaction() {
+            if (!editMode) return;
+            const type = editMode.type;
+            const data = db[type][editMode.index];
+            const tabMap = { exp: 'expenses', rig: 'rights', deb: 'debts' };
+            const tabId = tabMap[type];
+
+            _visualClose('detail', false);
+            if (document.getElementById('logModal').style.display === 'flex') {
+                _visualClose('log', false);
+            }
+
+            openTab(tabId, true);
+
+            setTimeout(() => {
+                if (type === 'exp') {
+                    document.getElementById('eAmount').value = parseAmount(data.المبلغ).toLocaleString('ar');
+                    document.getElementById('eType').value = data.الفئة;
+                    document.getElementById('eDesc').value = data.الوصف;
+                    document.getElementById('eDate').value = data.التاريخ;
+                    if (data.صورة) {
+                        document.getElementById('eImgName').textContent = '📎 صورة مرفقة';
+                        selectedImageFile = data.صورة;
+                    } else {
+                        selectedImageFile = null;
+                        document.getElementById('eImgName').textContent = '';
+                    }
+                } else if (type === 'rig') {
+                    document.getElementById('rType').value = data.النوع;
+                    document.getElementById('rEntity').value = data.الجهة || '';
+                    document.getElementById('rAmount').value = parseAmount(data.المبلغ).toLocaleString('ar');
+                    document.getElementById('rDueDate').value = data.تاريخ_الاستحقاق || '';
+                    document.getElementById('rDesc').value = data.الوصف;
+                    updateRightFields(data.النوع, data);
+                    const paidInput = document.getElementById('rPaidAmount');
+                    if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع || 0).toLocaleString('ar');
+                } else if (type === 'deb') {
+                    document.getElementById('dType').value = data.النوع;
+                    document.getElementById('dDueDate').value = data.تاريخ_الاستحقاق || '';
+                    document.getElementById('dDesc').value = data.الوصف;
+                    const entityInput = document.getElementById('dEntity');
+                    if (data.الجهة && data.الجهة !== '—') {
+                        entityInput.value = data.الجهة;
+                        entityInput.style.display = 'block';
+                    } else {
+                        entityInput.value = '';
+                        entityInput.style.display = 'none';
+                    }
+                    updateDebtFields(data.النوع, data);
+                    const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
+                    const isMaster = masterTypes.includes(data.النوع);
+                    if (!isMaster) {
+                        document.getElementById('dAmount').value = parseAmount(data.المبلغ).toLocaleString('ar');
+                        document.getElementById('dStatus').value = data.الحالة || '';
+                    }
+                }
+                const indicatorMap = { exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
+                const ind = document.getElementById(indicatorMap[type]);
+                if (ind) ind.style.display = 'inline-block';
+            }, 100);
+        }
+
+        async function deleteTransaction() {
+            if (!editMode) return;
+            if (!confirm('هل أنت متأكد من حذف هذه المعاملة؟ سيتم التراجع عن تأثيرها على الرصيد.')) return;
+            const type = editMode.type;
+            const txn = db[type][editMode.index];
+            const id = txn.id || txn.clientId;
+
+            try {
+                await deleteFromDB(type, id);
+                if (txn.clientId) {
+                    const idx = db.bal.changes.findIndex(c => c.id === txn.clientId);
+                    if (idx > -1) {
+                        const oldNet = db.bal.changes[idx].القيمة_الصافية;
+                        db.bal.changes.splice(idx, 1);
+                        currentBalance -= oldNet;
+                        db.bal.amount = currentBalance;
+                        await saveData('bal', db.bal);
+                    }
+                }
+                editMode = null;
+                await loadAllData();
+                toastMsg('تم الحذف بنجاح 🗑️', "success");
+                updateStats();
+                updateBalanceDisplay();
+                closeLayer('detail');
+                closeLayer('log');
+            } catch (err) { toastMsg('فشل الحذف.', "error");
+                console.error(err); }
+        }
+
+        function updateStats() {
+            let expTotal = 0,
+                rigTotal = 0,
+                debTotal = 0,
+                rigPaid = 0,
+                debPaid = 0;
+            db.exp.forEach(i => expTotal += parseAmount(i.المبلغ));
+            db.rig.forEach(i => { rigTotal += parseAmount(i.المبلغ);
+                rigPaid += parseAmount(i.المبلغ_المضاف_للرصيد || 0); });
+            db.deb.forEach(i => { debTotal += parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0);
+                debPaid += parseAmount(i.المبلغ_المخصوم_للرصيد || 0); });
+
+            document.getElementById('sExpTotal').innerHTML = formatCurrency(expTotal, true);
+            document.getElementById('sRigTotal').innerHTML = formatCurrency(rigTotal, rigTotal > 0);
+            document.getElementById('sRigPaid').innerHTML = formatCurrency(rigPaid, true);
+            document.getElementById('sDebTotal').innerHTML = formatCurrency(debTotal, debTotal > 0);
+            document.getElementById('sDebPaid').innerHTML = formatCurrency(debPaid, false);
+        }
+
+        function renderCurrencyList() {
+            const list = document.getElementById('currencyList');
+            const q = document.getElementById('currencySearch').value.toLowerCase();
+            const filtered = ARABIC_CURRENCIES.filter(c =>
+                c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+            );
+            list.innerHTML = filtered.map(c => `
+                <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
+                    <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
+                    ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
+                </button>
+            `).join('');
+        }
+
+        function setCurrency(code) {
+            const sel = ARABIC_CURRENCIES.find(c => c.code === code);
+            if (sel) {
+                currentCurrency = sel;
+                localStorage.setItem('currencyCode', code);
+                document.getElementById('sidebarCurrencyLabel').textContent = sel.symbol;
+                updateBalanceDisplay();
+                updateStats();
+                closeLayer('currency');
+                toastMsg(`تم تعيين العملة إلى ${sel.name} 💱`, "success");
+            }
+        }
+
+        function confirmResetData() {
+            closeLayer('sidebar');
+            if (confirm('تحذير: هل أنت متأكد من حذف جميع البيانات؟ لا يمكن التراجع.')) resetAllData();
+        }
+
+        function resetAllData() {
+            if (!IDB_connection) return toastMsg('لا يمكن الاتصال بقاعدة البيانات.', "error");
+            const tx = IDB_connection.transaction(STORE_NAMES, 'readwrite');
+            let done = 0;
+            STORE_NAMES.forEach(sn => {
+                const req = tx.objectStore(sn).clear();
+                req.onsuccess = () => { done++; if (done === STORE_NAMES.length) {
+                        db.exp = db.rig = db.deb = [];
+                        db.bal = { clientId: 1, amount: 0, changes: [] };
+                        saveData('bal', db.bal).then(() => {
+                            loadAllData().then(() => { updateStats();
+                                updateBalanceDisplay();
+                                toastMsg('تم حذف جميع البيانات! 🗑️', "success"); });
+                        });
+                    } };
+                req.onerror = () => toastMsg('فشل حذف البيانات.', "error");
+            });
+        }
+
+        // =============================================================
+        // 12. SIDEBAR FUNCTIONS
+        // =============================================================
+        function openSidebar() { openLayer('sidebar'); }
+
+        function openCurrencyModal() { openLayer('currency'); }
+
+        function openAboutModal() { openLayer('about'); }
+
+        function openBalanceActionModal(actionType) { openLayer('balanceAction', { actionType: actionType }); }
+
+        function openBalanceLogModal() { openLayer('balanceLog'); }
+
+        function openLog(type) { currentLog = type;
+            openLayer('log', { logType: type }); }
+
+        function showDetailById(id, type) {
+            const store = db[type];
+            const item = store.find(entry => entry.clientId === id || entry.id === id);
+            if (!item) {
+                toastMsg('لم نعثر على هذه المعاملة', "error");
+                return;
+            }
+            const index = store.findIndex(entry => entry.clientId === id || entry.id === id);
+            if (index === -1) {
+                toastMsg('خطأ في تحديد المعاملة', "error");
+                return;
+            }
+            openLayer('detail', { logType: type, id: id });
+            editMode = { type: type, index: index };
+            _renderDetailContent(item, type);
+        }
+
+        function showImageSourceModal() { openLayer('imageSource'); }
+
+        function closeImageSource() { closeLayer('imageSource'); }
+
+        function openCameraInput() {
+            closeImageSource();
+            const input = document.getElementById('eImgCamera');
+            input.value = null;
+            input.setAttribute('capture', 'environment');
+            input.click();
+        }
+
+        function openGalleryInput() {
+            closeImageSource();
+            const input = document.getElementById('eImgGallery');
+            input.value = null;
+            input.removeAttribute('capture');
+            input.click();
+        }
+
+        function handleImageSelect(input) {
+            if (input.files && input.files.length > 0) {
+                const file = input.files[0];
+                selectedImageFile = file;
+                document.getElementById('eImgName').textContent = `✅ ${file.name}`;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImageFile = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                document.getElementById('eImgName').textContent = '';
+                selectedImageFile = null;
+            }
+        }
+
+        function getSelectedImage() { return selectedImageFile; }
+
+        function clearSelectedImage() {
+            selectedImageFile = null;
+            document.getElementById('eImgName').textContent = '';
+            document.getElementById('eImgCamera').value = null;
+            document.getElementById('eImgGallery').value = null;
+        }
+
+        // =============================================================
+        // 13. INDEXED DB OPERATIONS
+        // =============================================================
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) { toastMsg("المتصفح لا يدعم IndexedDB.", "error"); return reject(new Error(
+                    "IndexedDB not supported.")); }
+                const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+                req.onerror = (e) => { console.error("IDB error:", e.target.error);
+                    reject(e.target.error); };
+                req.onupgradeneeded = (e) => {
+                    IDB_connection = e.target.result;
+                    STORE_NAMES.forEach(sn => {
+                        if (IDB_connection.objectStoreNames.contains(sn)) IDB_connection.deleteObjectStore(
+                            sn);
+                        const kp = (sn === 'bal') ? 'clientId' : 'id';
+                        const auto = (sn !== 'bal');
+                        const store = IDB_connection.createObjectStore(sn, { keyPath: kp, autoIncrement: auto });
+                        if (sn === 'bal') store.add({ clientId: 1, amount: 0, changes: [] });
+                    });
+                };
+                req.onsuccess = (e) => {
+                    IDB_connection = e.target.result;
+                    resolve(IDB_connection);
+                    loadAllData().then(() => { updateStats();
+                        updateBalanceDisplay(); });
+                };
+            });
+        }
+        initDB();
+
+        function saveData(storeName, data) {
+            return new Promise((resolve, reject) => {
+                if (!IDB_connection) return reject(new Error("DB not connected."));
+                const tx = IDB_connection.transaction([storeName], "readwrite");
+                const store = tx.objectStore(storeName);
+                const req = store.put(data);
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function deleteFromDB(storeName, id) {
+            return new Promise((resolve, reject) => {
+                if (!IDB_connection) return reject(new Error("DB not connected."));
+                const tx = IDB_connection.transaction([storeName], "readwrite");
+                const store = tx.objectStore(storeName);
+                const req = store.delete(id);
+                req.onsuccess = () => resolve();
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function loadStoreData(storeName) {
+            return new Promise((resolve) => {
+                if (!IDB_connection) return resolve(storeName === 'bal' ? { clientId: 1, amount: 0, changes: [] } : []);
+                const tx = IDB_connection.transaction([storeName], "readonly");
+                const store = tx.objectStore(storeName);
+                const req = store.getAll();
+                req.onsuccess = (e) => {
+                    if (storeName === 'bal') {
+                        const res = e.target.result[0];
+                        return resolve(res || { clientId: 1, amount: 0, changes: [] });
+                    }
+                    resolve(e.target.result.reverse());
+                };
+                req.onerror = () => resolve(storeName === 'bal' ? { clientId: 1, amount: 0, changes: [] } : []);
+            });
+        }
+
+        async function loadAllData() {
+            const [exp, rig, deb, bal] = await Promise.all([
+                loadStoreData('exp'),
+                loadStoreData('rig'),
+                loadStoreData('deb'),
+                loadStoreData('bal')
+            ]);
+            db.exp = exp;
+            db.rig = rig;
+            db.deb = deb;
+            db.bal = bal;
+            currentBalance = db.bal.amount || 0;
+        }
+
+        // =============================================================
+        // 14. DARK MODE
+        // =============================================================
+        function loadDarkModePreference() {
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeToggle').checked = true;
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            toastMsg(isDark ? 'تم التبديل إلى الوضع الليلي 🌙' : 'تم التبديل إلى الوضع النهاري ☀️', "info");
+        }
+        loadDarkModePreference();
+
+        console.log('ميزانيتك الذكية جاهزة ✅');
+    </script>
+
 </body>
 </html>
