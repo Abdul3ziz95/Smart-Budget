@@ -1741,7 +1741,7 @@
             <button class="sidebar-currency-item" onclick="openCurrencyModal()">
                 <i class="fas fa-exchange-alt"></i>
                 <span>تغيير العملة</span>
-                <span class="currency-label" id="sidebarCurrencyLabel">ج.س</span>
+                <span class="currency-label" id="sidebarCurrencyLabel">﷼</span>
             </button>
 
             <div class="sidebar-divider"></div>
@@ -2771,29 +2771,42 @@
         // =============================================================
         // 7.  FORMATTING HELPERS
         // =============================================================
+        // قائمة العملات المعدّلة
         const ARABIC_CURRENCIES = [
-            { code: 'SDG', symbol: 'ج.س', name: 'جنيه سوداني' },
-            { code: 'SAR', symbol: 'ر.س', name: 'ريال سعودي' },
-            { code: 'EGP', symbol: 'ج.م', name: 'جنيه مصري' },
-            { code: 'AED', symbol: 'د.إ', name: 'درهم إماراتي' },
-            { code: 'KWD', symbol: 'د.ك', name: 'دينار كويتي' },
-            { code: 'QAR', symbol: 'ر.ق', name: 'ريال قطري' },
-            { code: 'OMR', symbol: 'ر.ع.', name: 'ريال عماني' },
-            { code: 'JOD', symbol: 'د.ا', name: 'دينار أردني' },
-            { code: 'BHD', symbol: 'د.ب', name: 'دينار بحريني' },
-            { code: 'MAD', symbol: 'د.م', name: 'درهم مغربي' },
-            { code: 'TND', symbol: 'د.ت', name: 'دينار تونسي' },
-            { code: 'DZD', symbol: 'د.ج', name: 'دينار جزائري' },
-            { code: 'LBP', symbol: 'ل.ل', name: 'ليرة لبنانية' },
-            { code: 'YER', symbol: 'ر.ي', name: 'ريال يمني' },
-            { code: 'USD', symbol: '$', name: 'دولار أمريكي' },
-            { code: 'EUR', symbol: '€', name: 'يورو' },
-            { code: 'INR', symbol: '₹', name: 'روبية هندية' },
-            { code: 'PKR', symbol: 'Rs', name: 'روبية باكستانية' },
-            { code: 'BDT', symbol: '৳', name: 'تاكا بنغلاديشي' }
+            { code: 'SAR', symbol: '﷼', name: 'الريال السعودي', flag: '🇸🇦' },
+            { code: 'SDG', symbol: 'ج.س', name: 'الجنيه السوداني', flag: '🇸🇩' },
+            { code: 'AED', symbol: 'د.إ', name: 'الدرهم الإماراتي', flag: '🇦🇪' },
+            { code: 'QAR', symbol: 'ر.ق', name: 'الريال القطري', flag: '🇶🇦' },
+            { code: 'KWD', symbol: 'د.ك', name: 'الدينار الكويتي', flag: '🇰🇼' },
+            { code: 'BHD', symbol: 'د.ب', name: 'الدينار البحريني', flag: '🇧🇭' },
+            { code: 'OMR', symbol: 'ر.ع', name: 'الريال العُماني', flag: '🇴🇲' },
+            { code: 'YER', symbol: 'ر.ي', name: 'الريال اليمني', flag: '🇾🇪' },
+            { code: 'IQD', symbol: 'ع.د', name: 'الدينار العراقي', flag: '🇮🇶' },
+            { code: 'JOD', symbol: 'د.أ', name: 'الدينار الأردني', flag: '🇯🇴' },
+            { code: 'LBP', symbol: 'ل.ل', name: 'الليرة اللبنانية', flag: '🇱🇧' },
+            { code: 'SYP', symbol: 'ل.س', name: 'الليرة السورية', flag: '🇸🇾' },
+            { code: 'ILS', symbol: '₪', name: 'الشيكل الفلسطيني', flag: '🇵🇸' },
+            { code: 'EGP', symbol: 'ج.م', name: 'الجنيه المصري', flag: '🇪🇬' },
+            { code: 'LYD', symbol: 'ل.د', name: 'الدينار الليبي', flag: '🇱🇾' },
+            { code: 'TND', symbol: 'د.ت', name: 'الدينار التونسي', flag: '🇹🇳' },
+            { code: 'DZD', symbol: 'دج', name: 'الدينار الجزائري', flag: '🇩🇿' },
+            { code: 'MAD', symbol: 'د.م', name: 'الدرهم المغربي', flag: '🇲🇦' },
+            { code: 'MRU', symbol: 'أ.م', name: 'الأوقية الموريتانية', flag: '🇲🇷' },
+            { code: 'SOS', symbol: 'ش.ص', name: 'الشلن الصومالي', flag: '🇸🇴' },
+            { code: 'DJF', symbol: 'ف.ج', name: 'الفرنك الجيبوتي', flag: '🇩🇯' },
+            { code: 'KMF', symbol: 'ف.ق', name: 'الفرنك القمري', flag: '🇰🇲' },
+            { code: 'SSP', symbol: 'ج.س.ج', name: 'جنيه جنوب السودان', flag: '🇸🇸' },
+            { code: 'USD', symbol: '$', name: 'الدولار الأمريكي', flag: '🇺🇸' },
+            { code: 'EUR', symbol: '€', name: 'اليورو', flag: '🇪🇺' },
+            { code: 'BDT', symbol: '৳', name: 'التاكا البنغلاديشي', flag: '🇧🇩' },
+            { code: 'INR', symbol: '₹', name: 'الروبية الهندية', flag: '🇮🇳' },
+            { code: 'PKR', symbol: '₨', name: 'الروبية الباكستانية', flag: '🇵🇰' },
+            { code: 'PHP', symbol: '₱', name: 'البيزو الفلبيني', flag: '🇵🇭' },
+            { code: 'CNY', symbol: '¥', name: 'اليوان الصيني', flag: '🇨🇳' }
         ];
 
-        let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SDG')) ||
+        // العملة الافتراضية: الريال السعودي
+        let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SAR')) ||
             ARABIC_CURRENCIES[0];
 
         function formatAmount(input) {
@@ -3540,7 +3553,7 @@
             );
             list.innerHTML = filtered.map(c => `
                 <button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
-                    <span><strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
+                    <span>${c.flag} <strong>${c.symbol}</strong> ${c.name} (${c.code})</span>
                     ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
                 </button>
             `).join('');
