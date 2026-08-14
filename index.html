@@ -1491,7 +1491,7 @@
         </div>
     </div>
 
-    <!-- DEBTS (updated categories with ماء and كهرباء) -->
+    <!-- DEBTS -->
     <div id="debts" class="section">
         <div class="card">
             <div id="debEditIndicator" style="display:none;" class="edit-indicator">
@@ -1522,7 +1522,6 @@
 
             <input id="dAmount" type="text" placeholder="💵 قيمة الفاتورة / القسط الحالي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
 
-            <!-- حقل الجهة مخفي افتراضياً، يظهر للفئات التي تحتاجه -->
             <input id="dEntity" placeholder="🏢 الجهة / الدائن" style="display:none;" />
 
             <div id="dDynamicFields"></div>
@@ -1553,7 +1552,7 @@
     </div>
 
     <!-- ==========================================================
-    BOTTOM NAVIGATION - Modern Fixed with big labels
+    BOTTOM NAVIGATION
     ========================================================== -->
     <nav class="bottom-nav" id="bottomNav">
         <button class="nav-item active" data-tab="overview" onclick="openTabFromNav('overview')">
@@ -1575,8 +1574,9 @@
     </nav>
 
     <!-- ==========================================================
-    LOG MODAL
+    MODALS
     ========================================================== -->
+    <!-- LOG MODAL -->
     <div class="modal" id="logModal">
         <header>
             <input id="search" placeholder="🔍 بحث في السجل..." oninput="renderLog()" />
@@ -1585,9 +1585,7 @@
         <div class="modal-content" id="logContent"></div>
     </div>
 
-    <!-- ==========================================================
-    DETAIL MODAL
-    ========================================================== -->
+    <!-- DETAIL MODAL -->
     <div class="modal" id="detailModal">
         <header>
             <span class="title">تفاصيل المعاملة</span>
@@ -1596,9 +1594,7 @@
         <div class="modal-content detail" id="detailContent"></div>
     </div>
 
-    <!-- ==========================================================
-    BALANCE ACTION MODAL
-    ========================================================== -->
+    <!-- BALANCE ACTION MODAL -->
     <div class="modal" id="balanceActionModal">
         <header>
             <span class="title" id="actionModalTitle"></span>
@@ -1620,9 +1616,7 @@
         </div>
     </div>
 
-    <!-- ==========================================================
-    BALANCE LOG MODAL
-    ========================================================== -->
+    <!-- BALANCE LOG MODAL -->
     <div class="modal" id="balanceLogModal">
         <header>
             <span class="title">سجل حركات الرصيد</span>
@@ -1631,9 +1625,7 @@
         <div class="modal-content" id="balanceLogContent"></div>
     </div>
 
-    <!-- ==========================================================
-    IMAGE SOURCE MODAL
-    ========================================================== -->
+    <!-- IMAGE SOURCE MODAL -->
     <div id="imageSourceModal">
         <h3>اختيار مصدر الصورة</h3>
         <button class="action" onclick="openCameraInput()"><i class="fas fa-camera" style="margin-left:10px;"></i> التقاط بالكاميرا</button>
@@ -1642,9 +1634,7 @@
     </div>
     <div class="sidebar-overlay" id="imageSourceOverlay" style="z-index:140; display:none;" onclick="closeImageSource()"></div>
 
-    <!-- ==========================================================
-    CONFIRM BACKUP MODAL
-    ========================================================== -->
+    <!-- CONFIRM BACKUP MODAL -->
     <div class="modal" id="confirmBackupModal">
         <header>
             <span class="title">نسخ احتياطي</span>
@@ -1662,9 +1652,7 @@
         </div>
     </div>
 
-    <!-- ==========================================================
-    DRIVE BACKUP MODAL
-    ========================================================== -->
+    <!-- DRIVE BACKUP MODAL -->
     <div class="modal" id="driveBackupModal">
         <header>
             <span class="title"><i class="fab fa-google-drive" style="color:#4285F4;"></i> النسخ الاحتياطية</span>
@@ -1685,9 +1673,7 @@
         </div>
     </div>
 
-    <!-- ==========================================================
-    EXPORT NAME MODAL
-    ========================================================== -->
+    <!-- EXPORT NAME MODAL -->
     <div class="modal" id="exportNameModal">
         <header>
             <span class="title">تصدير البيانات</span>
@@ -2831,16 +2817,24 @@
             return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
         }
 
-        // دالة خاصة لعرض الرصيد مع اللون المناسب
+        // دالة خاصة لعرض الرصيد مع اللون المناسب وعلامة سالب
         function formatBalance(amount) {
             if (balanceHidden) return '<span class="hidden-balance">***</span>';
             const num = parseAmount(amount);
-            const fmt = getFormattedAmount(num);
+            const fmt = getFormattedAmount(Math.abs(num));
             let colorClass = '';
-            if (num > 0) colorClass = 'balance-positive';
-            else if (num < 0) colorClass = 'balance-negative';
-            else colorClass = 'balance-zero';
-            return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
+            let sign = '';
+            if (num > 0) {
+                colorClass = 'balance-positive';
+                sign = '';
+            } else if (num < 0) {
+                colorClass = 'balance-negative';
+                sign = '− ';
+            } else {
+                colorClass = 'balance-zero';
+                sign = '';
+            }
+            return `<span class="${colorClass}">${sign}${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
         }
 
         function formatDateTime(dateString) {
@@ -2917,17 +2911,36 @@
             if (document.getElementById('balanceLogModal').style.display === 'flex') renderBalanceLog();
         }
 
+        // =============================================================
+        // 9.1  معالجة تغييرات الرصيد (محسّنة ودقيقة)
+        // =============================================================
         async function processBalanceChange(amount, type, description, recordId = null, isEdit = false, oldAmount = 0) {
             if (!recordId) recordId = `bal-${Date.now()}`;
             const changeAmount = parseAmount(amount);
-            let netChange = changeAmount;
-            if (['expense', 'debt_payment', 'withdraw', 'revert_expense_debt'].includes(type)) netChange *= -1;
-            let effectiveChange = netChange;
-            if (isEdit) effectiveChange = netChange - oldAmount;
 
+            // تحديد الإشارة: سالب للمصروفات وسحب ودفع التزامات، موجب للإيداع وتحصيل الحقوق
+            let netChange = changeAmount;
+            const expenseTypes = ['expense', 'debt_payment', 'withdraw'];
+            if (expenseTypes.includes(type)) {
+                netChange = -changeAmount;
+            } else if (type === 'right_collection' || type === 'deposit') {
+                netChange = changeAmount;
+            } else if (type === 'revert_expense_debt') {
+                netChange = -changeAmount; // التراجع عن مصروف أو دفع التزام
+            }
+
+            // في حالة التعديل: نأخذ الفرق بين القيمة الجديدة والقديمة
+            let effectiveChange = netChange;
+            if (isEdit) {
+                // oldAmount هي القيمة القديمة المؤثرة على الرصيد (موجبة للمصروفات، سالبة للدفع)
+                effectiveChange = netChange - oldAmount;
+            }
+
+            // تحديث الرصيد الحالي
             currentBalance = parseAmount(currentBalance) + effectiveChange;
             db.bal.amount = currentBalance;
 
+            // تسجيل الحركة في سجل الرصيد
             const entry = {
                 id: recordId,
                 التاريخ: new Date().toISOString().slice(0, 16),
@@ -2948,6 +2961,7 @@
                 return true;
             } catch (e) {
                 console.error('Balance save failed', e);
+                // التراجع عن التغيير في حال فشل الحفظ
                 currentBalance -= effectiveChange;
                 toastMsg('فشل تحديث الرصيد.', "error");
                 return false;
@@ -2981,7 +2995,7 @@
                     <div class="list-item" style="border-right-color:${color};">
                         <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
                         <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
-                        <span style="color:${color};">${formatCurrency(i.المبلغ)}</span>
+                        <span style="color:${color};">${formatBalance(i.المبلغ)}</span>
                         </div>
                         <div class="details">
                         <span>الرصيد بعد: ${formatBalance(i.الرصيد_بعد_العملية)}</span>
@@ -3009,7 +3023,7 @@
 
             const isEditing = editMode && editMode.type === 'exp';
             const oldData = isEditing ? db.exp[editMode.index] : {};
-            const oldAmount = isEditing ? parseAmount(oldData.المبلغ) * -1 : 0;
+            const oldAmount = isEditing ? parseAmount(oldData.المبلغ) * -1 : 0; // التأثير القديم على الرصيد (سالب)
             const amount = parseAmount(eAmount.value);
             if (amount === 0) return toastMsg('المبلغ يجب أن يكون أكبر من صفر.', "error");
 
@@ -3032,10 +3046,13 @@
 
             try {
                 await saveData('exp', data);
-                await processBalanceChange(amount, 'expense', `مصروف: ${data.الفئة} (${data.الوصف})`, data.clientId,
-                    isEditing, oldAmount);
-                toastMsg(isEditing ? 'تم تعديل المصروف ✏️' : 'تم حفظ المصروف ✅', "success");
-                postSaveCleanup(isEditing, 'exp');
+                // المصروفات تؤثر سالباً على الرصيد
+                const success = await processBalanceChange(amount, 'expense', `مصروف: ${data.الفئة} (${data.الوصف})`, data
+                    .clientId, isEditing, oldAmount);
+                if (success) {
+                    toastMsg(isEditing ? 'تم تعديل المصروف ✏️' : 'تم حفظ المصروف ✅', "success");
+                    postSaveCleanup(isEditing, 'exp');
+                }
             } catch (err) { toastMsg('فشل الحفظ.', "error");
                 console.error(err); }
         }
@@ -3100,16 +3117,18 @@
 
             try {
                 await saveData('rig', data);
-                await processBalanceChange(paid, 'right_collection', `تحصيل: ${data.النوع} (${data.الجهة})`, data.clientId,
-                    isEditing, oldPaid);
-                toastMsg(isEditing ? 'تم تعديل الحق ✏️' : 'تم حفظ الحق ✅', "success");
-                postSaveCleanup(isEditing, 'rig');
+                const success = await processBalanceChange(paid, 'right_collection', `تحصيل: ${data.النوع} (${data.الجهة})`,
+                    data.clientId, isEditing, oldPaid);
+                if (success) {
+                    toastMsg(isEditing ? 'تم تعديل الحق ✏️' : 'تم حفظ الحق ✅', "success");
+                    postSaveCleanup(isEditing, 'rig');
+                }
             } catch (err) { toastMsg('فشل الحفظ.', "error");
                 console.error(err); }
         }
 
         // =============================================================
-        // 10.3 DEBTS (مع الفئات الجديدة: كهرباء، ماء)
+        // 10.3 DEBTS
         // =============================================================
         function updateDebtFields(type, currentData = null) {
             const container = document.getElementById('dDynamicFields');
@@ -3118,7 +3137,6 @@
             const entityInput = document.getElementById('dEntity');
             container.innerHTML = '';
 
-            // تحديد الفئات التي تحتاج إلى حقل الجهة
             const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍👧 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
             const noEntityTypes = ['🏦 قروض وتمويل', '🛒 مشتريات بالتقسيط', '💡 فواتير الخدمات', '📦 أخرى'];
 
@@ -3248,10 +3266,13 @@
 
             try {
                 await saveData('deb', data);
-                await processBalanceChange(paidAmount, 'debt_payment', `دفعة: ${data.النوع} (${data.الجهة})`, data.clientId,
-                    isEditing, oldPaid);
-                toastMsg(isEditing ? 'تم تعديل الالتزام ✏️' : 'تم حفظ الالتزام ✅', "success");
-                postSaveCleanup(isEditing, 'deb');
+                // دفع الالتزامات يؤثر سالباً على الرصيد
+                const success = await processBalanceChange(paidAmount, 'debt_payment', `دفعة: ${data.النوع} (${data.الجهة})`,
+                    data.clientId, isEditing, oldPaid);
+                if (success) {
+                    toastMsg(isEditing ? 'تم تعديل الالتزام ✏️' : 'تم حفظ الالتزام ✅', "success");
+                    postSaveCleanup(isEditing, 'deb');
+                }
             } catch (err) { toastMsg('فشل الحفظ.', "error");
                 console.error(err); }
         }
