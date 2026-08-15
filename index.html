@@ -1290,6 +1290,46 @@
             transform: scale(0.9);
         }
 
+        /* ===== خاص بزر الرئيسية (دائرة خلفية) ===== */
+        .bottom-nav .nav-item-home {
+            position: relative;
+        }
+        .bottom-nav .nav-item-home .home-icon-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(72, 202, 228, 0.2);
+            transition: background 0.3s, transform 0.3s;
+            margin-bottom: 2px;
+        }
+        .bottom-nav .nav-item-home.active .home-icon-wrapper {
+            background: linear-gradient(135deg, #0077b6, #48cae4);
+            box-shadow: 0 4px 12px rgba(0, 119, 182, 0.3);
+        }
+        .bottom-nav .nav-item-home.active .home-icon-wrapper i {
+            color: #fff;
+            transform: scale(1.1);
+            filter: none;
+        }
+        .bottom-nav .nav-item-home .home-icon-wrapper i {
+            font-size: 22px;
+            color: var(--p);
+            transition: color 0.3s, transform 0.3s;
+        }
+        .bottom-nav .nav-item-home.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .bottom-nav .nav-item-home.active::after {
+            display: none;
+        }
+        .bottom-nav .nav-item-home .home-icon-wrapper:hover {
+            transform: scale(1.05);
+        }
+
         /* ============================================================
            RESPONSIVE TWEAKS
            ============================================================ */
@@ -1303,6 +1343,13 @@
             .bottom-nav .nav-item {
                 min-height: 48px;
                 padding: 4px 0;
+            }
+            .bottom-nav .nav-item-home .home-icon-wrapper {
+                width: 40px;
+                height: 40px;
+            }
+            .bottom-nav .nav-item-home .home-icon-wrapper i {
+                font-size: 18px;
             }
             :root {
                 --bottom-nav-height: 60px;
@@ -1360,7 +1407,7 @@
     <!-- ==========================================================
     SECTIONS
     ========================================================== -->
-    <!-- OVERVIEW -->
+    <!-- OVERVIEW (الرئيسية) -->
     <div id="overview" class="section active">
         <div class="balance-display">
             <h2>الرصيد النقدي الحالي</h2>
@@ -1385,11 +1432,52 @@
 
         <div class="card" style="margin-top:20px; border-top:5px solid var(--p);">
             <h3 style="color:var(--p); margin-top:0;"><i class="fas fa-calculator" style="margin-left:5px;"></i> ملخص الإحصائيات</h3>
+            <p style="color:var(--success);"><span>إجمالي الدخل:</span> <b id="sIncTotal" style="color:var(--success);">0</b></p>
             <p><span>إجمالي المصروفات:</span> <b id="sExpTotal">0</b></p>
             <p><span>إجمالي الحقوق المستحقة:</span> <b id="sRigTotal">0</b></p>
             <p><span>المحصل من الحقوق:</span> <b id="sRigPaid">0</b></p>
             <p><span>إجمالي الالتزامات الكلية:</span> <b id="sDebTotal">0</b></p>
             <p><span>المدفوع من الالتزامات:</span> <b id="sDebPaid">0</b></p>
+        </div>
+    </div>
+
+    <!-- INCOME (الدخل) -->
+    <div id="income" class="section">
+        <div class="card">
+            <div id="incEditIndicator" style="display:none;" class="edit-indicator">
+                <i class="fas fa-edit"></i> وضع التعديل
+            </div>
+            <p style="color:var(--success); font-weight:bold; font-size:0.9em; text-align:right;">
+                * الدخل يُضاف إلى رصيدك فوراً
+            </p>
+
+            <input id="iAmount" type="text" placeholder="💵 المبلغ" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
+
+            <select id="iType">
+                <option value="">📂 فئة الدخل</option>
+                <option value="💼 راتب">💼 راتب</option>
+                <option value="💻 عمل حر">💻 عمل حر</option>
+                <option value="🏪 تجارة">🏪 تجارة</option>
+                <option value="📈 استثمار">📈 استثمار</option>
+                <option value="💰 عمولة">💰 عمولة</option>
+                <option value="🎁 هدية">🎁 هدية</option>
+                <option value="🏆 مكافأة">🏆 مكافأة</option>
+                <option value="📦 دخل آخر">📦 دخل آخر</option>
+            </select>
+
+            <div class="datetime-container">
+                <input id="iDate" type="date" />
+                <span class="cal-icon"><i class="far fa-calendar-alt"></i></span>
+            </div>
+
+            <input id="iDesc" placeholder="📝 ملاحظات (اختياري)" />
+
+            <button class="action" onclick="addIncome()">
+                <i class="fas fa-save" style="margin-left:5px;"></i> حفظ الدخل
+            </button>
+            <button class="secondary" onclick="openLog('inc')">
+                <i class="fas fa-history" style="margin-left:5px;"></i> سجل الدخل
+            </button>
         </div>
     </div>
 
@@ -1444,25 +1532,26 @@
         </div>
     </div>
 
-    <!-- RIGHTS -->
+    <!-- RIGHTS (حقوق) -->
     <div id="rights" class="section">
         <div class="card">
             <div id="rigEditIndicator" style="display:none;" class="edit-indicator">
                 <i class="fas fa-edit"></i> وضع التعديل
             </div>
             <p style="color:var(--success); font-weight:bold; font-size:0.9em; text-align:right;">
-                * المبالغ المحصلة تُضاف إلى رصيدك الحالي
+                * تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل "المبلغ المحصل"
+            </p>
+            <p style="color:var(--warning); font-weight:bold; font-size:0.85em; text-align:right; background:var(--input-bg); padding:8px; border-radius:8px; border-right:3px solid var(--warning);">
+                ⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل
             </p>
 
             <select id="rType" onchange="updateRightFields(this.value)">
                 <option value="">🤝 نوع الحق</option>
-                <option value="🛒 بيع بالآجل">🛒 بيع بالآجل</option>
-                <option value="🏦 سلفة">🏦 سلفة</option>
-                <option value="💼 عمولة">💼 عمولة</option>
+                <option value="🛒 بيع آجل">🛒 بيع آجل</option>
+                <option value="💸 سلفة">💸 سلفة</option>
                 <option value="🏠 إيجار مستحق">🏠 إيجار مستحق</option>
-                <option value="📈 عائد الاستثمار">📈 عائد الاستثمار</option>
                 <option value="🤝 شراكة">🤝 شراكة</option>
-                <option value="📦 أخرى">📦 أخرى</option>
+                <option value="📦 حق آخر">📦 حق آخر</option>
             </select>
 
             <input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
@@ -1491,7 +1580,7 @@
         </div>
     </div>
 
-    <!-- DEBTS (updated categories with ماء and كهرباء) -->
+    <!-- DEBTS (التزامات) -->
     <div id="debts" class="section">
         <div class="card">
             <div id="debEditIndicator" style="display:none;" class="edit-indicator">
@@ -1522,7 +1611,6 @@
 
             <input id="dAmount" type="text" placeholder="💵 قيمة الفاتورة / القسط الحالي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" />
 
-            <!-- حقل الجهة مخفي افتراضياً، يظهر للفئات التي تحتاجه -->
             <input id="dEntity" placeholder="🏢 الجهة / الدائن" style="display:none;" />
 
             <div id="dDynamicFields"></div>
@@ -1553,21 +1641,30 @@
     </div>
 
     <!-- ==========================================================
-    BOTTOM NAVIGATION - Modern Fixed with big labels
+    BOTTOM NAVIGATION - 5 buttons (income, expenses, overview, rights, debts)
     ========================================================== -->
     <nav class="bottom-nav" id="bottomNav">
-        <button class="nav-item active" data-tab="overview" onclick="openTabFromNav('overview')">
-            <i class="fas fa-house"></i>
-            <span>الرئيسية</span>
+        <!-- الدخل (أقصى يمين) -->
+        <button class="nav-item" data-tab="income" onclick="openTabFromNav('income')">
+            <i class="fas fa-arrow-up"></i>
+            <span>الدخل</span>
         </button>
+        <!-- مصروفات -->
         <button class="nav-item" data-tab="expenses" onclick="openTabFromNav('expenses')">
             <i class="fas fa-wallet"></i>
             <span>مصروفات</span>
         </button>
+        <!-- الرئيسية (وسط، مميز) -->
+        <button class="nav-item nav-item-home" data-tab="overview" onclick="openTabFromNav('overview')">
+            <span class="home-icon-wrapper"><i class="fas fa-house"></i></span>
+            <span>الرئيسية</span>
+        </button>
+        <!-- حقوق -->
         <button class="nav-item" data-tab="rights" onclick="openTabFromNav('rights')">
             <i class="fas fa-hand-holding-heart"></i>
             <span>حقوق</span>
         </button>
+        <!-- التزامات (أقصى يسار) -->
         <button class="nav-item" data-tab="debts" onclick="openTabFromNav('debts')">
             <i class="fas fa-file-invoice"></i>
             <span>التزامات</span>
@@ -1787,6 +1884,7 @@
         <div class="modal-content">
             <p>تطبيق ميزانيتك المالية الذكية يساعدك على تتبع:</p>
             <ul>
+                <li><i class="fas fa-arrow-up" style="color:var(--success);"></i> الدخل.</li>
                 <li><i class="fas fa-wallet" style="color:var(--s);"></i> المصروفات اليومية.</li>
                 <li><i class="fas fa-receipt" style="color:var(--s);"></i> الحقوق المالية المستحقة لك.</li>
                 <li><i class="fas fa-clipboard-list" style="color:var(--s);"></i> الالتزامات المالية المستحقة عليك.</li>
@@ -1794,7 +1892,7 @@
             <p class="card" style="border-top:3px solid var(--danger);">
                 <strong>ملاحظة:</strong> تُحفظ البيانات محلياً باستخدام IndexedDB.
             </p>
-            <p style="text-align:center; margin-top:20px; color:#999; font-size:0.9em;">الإصدار 5.0</p>
+            <p style="text-align:center; margin-top:20px; color:#999; font-size:0.9em;">الإصدار 5.1 (الدخل)</p>
         </div>
     </div>
 
@@ -1843,10 +1941,10 @@
         // 1.  INDEXED DB SETUP
         // =============================================================
         const IDB_NAME = "MySmartBudgetDB";
-        const IDB_VERSION = 5;
-        const STORE_NAMES = ["exp", "rig", "deb", "bal"];
+        const IDB_VERSION = 6; // زيادة الإصدار لإضافة store 'inc'
+        const STORE_NAMES = ["exp", "rig", "deb", "bal", "inc"];
 
-        let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] } };
+        let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] }, inc: [] };
         let IDB_connection = null;
 
         let currentBalance = 0;
@@ -1963,7 +2061,7 @@
             if (top && top.layer === layerName) { history.back(); } else { _visualClose(layerName, clearEdit); }
         }
 
-        // دالة لإغلاق جميع الطبقات والعودة إلى الرئيسية (إصلاح 1)
+        // دالة لإغلاق جميع الطبقات والعودة إلى الرئيسية
         function closeAllLayers() {
             while (historyStack.length > 1) {
                 const top = historyStack.pop();
@@ -1973,7 +2071,6 @@
                 }
                 _visualClose(top.layer);
             }
-            // تحديث history API دون إضافة دخول جديدة
             if (historyStack.length === 1) {
                 history.replaceState({ layer: 'main' }, null, '#main');
             }
@@ -2002,7 +2099,7 @@
             }
 
             const now = getLocalDateString();
-            ['eDate', 'rDueDate', 'dDueDate'].forEach(id => {
+            ['eDate', 'rDueDate', 'dDueDate', 'iDate'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = now;
             });
@@ -2538,11 +2635,11 @@
                     rig: db.rig,
                     deb: db.deb,
                     bal: db.bal,
+                    inc: db.inc,
                     currency: currentCurrency,
                     backupDate: new Date().toISOString()
                 };
 
-                // استخدام اسم فريد بطابع زمني
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                 const fileName = `نسخة_${timestamp}.json`;
 
@@ -2607,7 +2704,7 @@
                     imported.bal.clientId = 1;
                     await addDataToStore('bal', [imported.bal]);
                 }
-                for (const sn of ['exp', 'rig', 'deb']) {
+                for (const sn of ['exp', 'rig', 'deb', 'inc']) {
                     if (imported[sn] && Array.isArray(imported[sn])) {
                         await addDataToStore(sn, imported[sn]);
                     }
@@ -2681,6 +2778,7 @@
                 rig: db.rig,
                 deb: db.deb,
                 bal: db.bal,
+                inc: db.inc,
                 currency: currentCurrency
             };
 
@@ -2716,7 +2814,7 @@
                         imported.bal.clientId = 1;
                         await addDataToStore('bal', [imported.bal]);
                     }
-                    for (const sn of ['exp', 'rig', 'deb']) {
+                    for (const sn of ['exp', 'rig', 'deb', 'inc']) {
                         if (imported[sn] && Array.isArray(imported[sn])) {
                             await addDataToStore(sn, imported[sn]);
                         }
@@ -2754,7 +2852,6 @@
                     if (storeName === 'bal') { store.put(item).onsuccess = resolve; } else {
                         const toSave = { ...item };
                         delete toSave.id;
-                        // توليد معرف فريد
                         toSave.clientId = item.clientId || `${storeName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                         store.add(toSave).onsuccess = resolve;
                     }
@@ -2839,7 +2936,6 @@
             ARABIC_CURRENCIES[0];
 
         function formatAmount(input) {
-            // دعم تحويل الأرقام العربية إلى إنجليزية (إصلاح 5)
             let val = input.value.replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
             val = val.replace(/[^\d.]/g, '');
             const parts = val.split('.');
@@ -2852,7 +2948,6 @@
             input.value = formatted + decPart;
         }
 
-        // ===== الإصلاح الأساسي: parseAmount تحافظ على الإشارة السالبة وتدعم الفواصل العربية =====
         function parseAmount(amount) {
             if (amount === null || amount === undefined) return 0;
             let str = String(amount).trim();
@@ -2861,17 +2956,11 @@
                 negative = true;
                 str = str.substring(1);
             }
-            // تحويل الأرقام العربية إلى إنجليزية
             str = str.replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
-            // استبدال الفاصلة العشرية العربية "٫" بنقطة
             str = str.replace(/٫/g, '.');
-            // استبدال فاصل الآلاف العربي "٬" بلا شيء
             str = str.replace(/٬/g, '');
-            // إزالة الفواصل والمسافات ورموز العملات
             str = str.replace(/[،,\s]/g, '');
-            // إزالة أي شيء غير الأرقام والنقطة
             str = str.replace(/[^\d.]/g, '');
-            // إبقاء نقطة عشرية واحدة فقط
             const parts = str.split('.');
             if (parts.length > 2) str = parts[0] + '.' + parts.slice(1).join('');
             const val = parseFloat(str);
@@ -2879,14 +2968,12 @@
             return negative ? -val : val;
         }
 
-        // ===== تنسيق الأرقام مع إظهار السالب بشكل واضح =====
         function getFormattedAmount(num) {
             const abs = Math.abs(num);
             const formatted = abs.toLocaleString('en-US', { minimumFractionDigits: abs % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
             return num < 0 ? '-' + formatted : formatted;
         }
 
-        // ===== دوال التاريخ والوقت المحلي =====
         function getLocalDateString(date = new Date()) {
             const pad = n => String(n).padStart(2, '0');
             return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
@@ -2897,7 +2984,6 @@
             return `${getLocalDateString(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
         }
 
-        // تنسيق المبالغ العامة (إصلاح 2: لا تخفي المبالغ عند إخفاء الرصيد)
         function formatCurrency(amount, withColor = false) {
             const num = parseAmount(amount);
             const fmt = getFormattedAmount(num);
@@ -2910,7 +2996,6 @@
             return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
         }
 
-        // دالة خاصة لعرض الرصيد مع اللون المناسب (إخفاء الرصيد فقط هنا)
         function formatBalance(amount) {
             if (balanceHidden) return '<span class="hidden-balance">***</span>';
             const num = parseAmount(amount);
@@ -2924,7 +3009,6 @@
 
         function formatDateTime(dateString) {
             if (!dateString) return '—';
-            // إذا كان التاريخ فقط (YYYY-MM-DD) نفسّره كتاريخ محلي
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
                 const [y, m, d] = dateString.split('-').map(Number);
                 const date = new Date(y, m - 1, d);
@@ -2938,7 +3022,8 @@
         }
 
         function clearFields() {
-            ['eAmount', 'eDesc', 'eType', 'eDate',
+            ['iAmount', 'iDesc', 'iType', 'iDate',
+                'eAmount', 'eDesc', 'eType', 'eDate',
                 'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate',
                 'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate'
             ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -2967,7 +3052,8 @@
                 clearFields(); }
             if (id === 'overview') updateStats();
             if (editMode) {
-                const indicatorMap = { exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
+                const indicatorMap = { inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator',
+                    deb: 'debEditIndicator' };
                 const ind = document.getElementById(indicatorMap[editMode.type]);
                 if (ind) ind.style.display = 'inline-block';
             }
@@ -2975,7 +3061,6 @@
 
         function openTabFromNav(tabId) {
             if (document.getElementById(tabId).classList.contains('active')) return;
-            // إغلاق جميع الطبقات المفتوحة
             closeAllLayers();
             openTab(tabId);
         }
@@ -3004,7 +3089,10 @@
             if (!recordId) recordId = `bal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const changeAmount = parseAmount(amount);
             let netChange = changeAmount;
+            // أنواع الإيداع: deposit, income, right_collection
+            // أنواع الخصم: expense, debt_payment, withdraw, revert_expense_debt
             if (['expense', 'debt_payment', 'withdraw', 'revert_expense_debt'].includes(type)) netChange *= -1;
+            // if type is 'income' or 'right_collection' or 'deposit' netChange stays positive
             let effectiveChange = netChange;
             if (isEdit) effectiveChange = netChange - oldAmount;
 
@@ -3060,7 +3148,6 @@
                 const isDep = i.القيمة_الصافية > 0;
                 const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
                 const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
-                // عرض المبلغ مع الإشارة الصحيحة
                 const displayAmount = (i.القيمة_الصافية < 0 ? '-' : '') + formatCurrency(Math.abs(i.المبلغ));
                 return `
                     <div class="list-item" style="border-right-color:${color};">
@@ -3078,11 +3165,45 @@
         }
 
         // =============================================================
-        // 10. CRUD — EXPENSES, RIGHTS, DEBTS
+        // 10. CRUD — INCOME, EXPENSES, RIGHTS, DEBTS
         // =============================================================
 
         // =============================================================
-        // 10.1 EXPENSES
+        // 10.1 INCOME
+        // =============================================================
+        async function addIncome() {
+            const iAmount = document.getElementById('iAmount');
+            const iType = document.getElementById('iType');
+            const iDate = document.getElementById('iDate');
+            const iDesc = document.getElementById('iDesc');
+
+            if (!iAmount.value || !iType.value || !iDate.value) return toastMsg('أكمل البيانات المطلوبة', "error");
+
+            const isEditing = editMode && editMode.type === 'inc';
+            const oldData = isEditing ? db.inc[editMode.index] : {};
+            const oldAmount = isEditing ? parseAmount(oldData.المبلغ) : 0;
+            const amount = parseAmount(iAmount.value);
+            if (amount === 0) return toastMsg('المبلغ يجب أن يكون أكبر من صفر.', "error");
+
+            const data = isEditing ? { ...oldData } : {};
+            data.المبلغ = getFormattedAmount(amount);
+            data.الفئة = iType.value;
+            data.الوصف = iDesc.value || '—';
+            data.التاريخ = iDate.value;
+            data.clientId = isEditing ? oldData.clientId : `inc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+            try {
+                await saveData('inc', data);
+                await processBalanceChange(amount, 'income', `دخل: ${data.الفئة} (${data.الوصف})`, data.clientId,
+                    isEditing, oldAmount);
+                toastMsg(isEditing ? 'تم تعديل الدخل ✏️' : 'تم حفظ الدخل ✅', "success");
+                postSaveCleanup(isEditing, 'inc');
+            } catch (err) { toastMsg('فشل الحفظ.', "error");
+                console.error(err); }
+        }
+
+        // =============================================================
+        // 10.2 EXPENSES
         // =============================================================
         async function addExpense() {
             const eAmount = document.getElementById('eAmount');
@@ -3126,7 +3247,7 @@
         }
 
         // =============================================================
-        // 10.2 RIGHTS
+        // 10.3 RIGHTS
         // =============================================================
         function updateRightFields(type, currentData = null) {
             const container = document.getElementById('rDynamicFields');
@@ -3191,7 +3312,7 @@
         }
 
         // =============================================================
-        // 10.3 DEBTS (مع الفئات الجديدة: كهرباء، ماء)
+        // 10.4 DEBTS
         // =============================================================
         function updateDebtFields(type, currentData = null) {
             const container = document.getElementById('dDynamicFields');
@@ -3200,9 +3321,7 @@
             const entityInput = document.getElementById('dEntity');
             container.innerHTML = '';
 
-            // تحديد الفئات التي تحتاج إلى حقل الجهة
             const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍👧 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
-            // المتغير noEntityTypes حذف (إصلاح 6)
 
             if (entityTypes.includes(type)) {
                 entityInput.style.display = 'block';
@@ -3247,7 +3366,7 @@
                 }
             }
 
-            // إضافة حقل المبلغ المدفوع عند اختيار حالة "مدفوع جزئياً" للفواتير غير الرئيسية (إصلاح 3)
+            // حقل المبلغ المدفوع جزئياً
             if (!masterTypes.includes(type)) {
                 statusSelect.onchange = function() {
                     const status = statusSelect.value;
@@ -3266,7 +3385,6 @@
                         if (partialPaidContainer) partialPaidContainer.remove();
                     }
                 };
-                // استدعاء أولي
                 statusSelect.onchange();
                 if (currentData && currentData.الحالة === 'مدفوع جزئياً' && currentData.المبلغ_المدفوع_جزئياً) {
                     const paidInput = document.getElementById('dPartialPaidAmount');
@@ -3359,7 +3477,6 @@
                     paidAmount = 0;
                 }
 
-                // تنظيف الحقول غير ذات الصلة (إصلاح 7)
                 delete data.المبلغ_الكلي_للالتزام;
                 delete data.إجمالي_المدفوع;
                 delete data.المتبقي_للالتزام;
@@ -3435,12 +3552,13 @@
             }
 
             el.innerHTML = filtered.map(i => {
+                const isInc = currentLog === 'inc';
                 const isExp = currentLog === 'exp';
                 const isRig = currentLog === 'rig';
                 const isDeb = currentLog === 'deb';
 
-                let amountVal = parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0);
-                let amountDisplay = formatCurrency(amountVal);
+                let amountVal = 0;
+                let amountDisplay = '';
                 let desc = i.الوصف || i.الفئة || i.النوع || '—';
                 let date = formatDateTime(i.التاريخ || i.تاريخ_الاستحقاق);
                 let borderColor = 'var(--s)';
@@ -3448,8 +3566,18 @@
                 let amountColor = 'var(--text-dark)';
                 let entity = i.الجهة || '';
 
-                if (isExp) { borderColor = 'var(--danger)';
-                    amountColor = 'var(--danger)'; } else if (isRig) {
+                if (isInc) {
+                    amountVal = parseAmount(i.المبلغ);
+                    amountDisplay = '+' + formatCurrency(amountVal);
+                    amountColor = 'var(--success)';
+                    borderColor = 'var(--success)';
+                    statusBadge = `<span class="status-badge paid" style="background:var(--success);">دخل</span>`;
+                } else if (isExp) {
+                    amountVal = parseAmount(i.المبلغ);
+                    amountDisplay = formatCurrency(amountVal);
+                    borderColor = 'var(--danger)';
+                    amountColor = 'var(--danger)';
+                } else if (isRig) {
                     const st = i.الحالة || '';
                     if (st.includes('كامل') || st === 'مدفوع بالكامل') { borderColor = 'var(--success)';
                         statusBadge = `<span class="status-badge paid">مدفوع</span>`; } else if (st.includes('جزئياً') || st ===
@@ -3459,6 +3587,8 @@
                         statusBadge = `<span class="status-badge late">متأخر</span>`; } else { borderColor =
                             'var(--danger)';
                         statusBadge = `<span class="status-badge unpaid">غير مدفوع</span>`; }
+                    amountVal = parseAmount(i.المبلغ);
+                    amountDisplay = formatCurrency(amountVal);
                     amountColor = 'var(--success)';
                 } else if (isDeb) {
                     const st = i.الحالة || '';
@@ -3470,6 +3600,8 @@
                         statusBadge =
                             `<span style="font-size:0.8em;color:var(--p);">المتبقي: ${formatCurrency(rem)}</span>`;
                         amountColor = 'var(--p)';
+                        amountVal = parseAmount(i.المبلغ_الكلي_للالتزام);
+                        amountDisplay = formatCurrency(amountVal);
                     } else {
                         if (st === 'مدفوع' || st === 'مدفوع بالكامل') { borderColor = 'var(--success)';
                             statusBadge =
@@ -3481,6 +3613,8 @@
                                 'var(--danger)';
                             statusBadge = `<span class="status-badge unpaid">غير مدفوع</span>`; }
                         amountColor = borderColor;
+                        amountVal = parseAmount(i.المبلغ);
+                        amountDisplay = formatCurrency(amountVal);
                     }
                 }
 
@@ -3514,14 +3648,19 @@
             if (!editMode) return;
             const type = editMode.type;
             const data = db[type][editMode.index];
-            const tabMap = { exp: 'expenses', rig: 'rights', deb: 'debts' };
+            const tabMap = { inc: 'income', exp: 'expenses', rig: 'rights', deb: 'debts' };
             const tabId = tabMap[type];
 
             closeAllLayers();
             openTab(tabId, true);
 
             setTimeout(() => {
-                if (type === 'exp') {
+                if (type === 'inc') {
+                    document.getElementById('iAmount').value = parseAmount(data.المبلغ).toLocaleString('en-US');
+                    document.getElementById('iType').value = data.الفئة;
+                    document.getElementById('iDesc').value = data.الوصف;
+                    document.getElementById('iDate').value = data.التاريخ;
+                } else if (type === 'exp') {
                     document.getElementById('eAmount').value = parseAmount(data.المبلغ).toLocaleString('en-US');
                     document.getElementById('eType').value = data.الفئة;
                     document.getElementById('eDesc').value = data.الوصف;
@@ -3568,7 +3707,8 @@
                         }
                     }
                 }
-                const indicatorMap = { exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
+                const indicatorMap = { inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator',
+                    deb: 'debEditIndicator' };
                 const ind = document.getElementById(indicatorMap[type]);
                 if (ind) ind.style.display = 'inline-block';
             }, 100);
@@ -3605,17 +3745,20 @@
         }
 
         function updateStats() {
-            let expTotal = 0,
+            let incTotal = 0,
+                expTotal = 0,
                 rigTotal = 0,
                 debTotal = 0,
                 rigPaid = 0,
                 debPaid = 0;
+            db.inc.forEach(i => incTotal += parseAmount(i.المبلغ));
             db.exp.forEach(i => expTotal += parseAmount(i.المبلغ));
             db.rig.forEach(i => { rigTotal += parseAmount(i.المبلغ);
                 rigPaid += parseAmount(i.المبلغ_المضاف_للرصيد || 0); });
             db.deb.forEach(i => { debTotal += parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0);
                 debPaid += parseAmount(i.المبلغ_المخصوم_للرصيد || 0); });
 
+            document.getElementById('sIncTotal').innerHTML = formatCurrency(incTotal, true);
             document.getElementById('sExpTotal').innerHTML = formatCurrency(expTotal, true);
             document.getElementById('sRigTotal').innerHTML = formatCurrency(rigTotal, rigTotal > 0);
             document.getElementById('sRigPaid').innerHTML = formatCurrency(rigPaid, true);
@@ -3662,7 +3805,7 @@
             STORE_NAMES.forEach(sn => {
                 const req = tx.objectStore(sn).clear();
                 req.onsuccess = () => { done++; if (done === STORE_NAMES.length) {
-                        db.exp = db.rig = db.deb = [];
+                        db.exp = db.rig = db.deb = db.inc = [];
                         db.bal = { clientId: 1, amount: 0, changes: [] };
                         saveData('bal', db.bal).then(() => {
                             loadAllData().then(() => { updateStats();
@@ -3806,16 +3949,18 @@
         }
 
         async function loadAllData() {
-            const [exp, rig, deb, bal] = await Promise.all([
+            const [exp, rig, deb, bal, inc] = await Promise.all([
                 loadStoreData('exp'),
                 loadStoreData('rig'),
                 loadStoreData('deb'),
-                loadStoreData('bal')
+                loadStoreData('bal'),
+                loadStoreData('inc')
             ]);
             db.exp = exp;
             db.rig = rig;
             db.deb = deb;
             db.bal = bal;
+            db.inc = inc;
             currentBalance = parseAmount(db.bal.amount || 0);
         }
 
