@@ -28,6 +28,9 @@ let currentLog = '',
 editMode = null,
 balanceActionType = null;
 let selectedImageFile = null;
+// ✔ جديد: حالة فلاتر السجلات وسجل الرصيد
+let logFilters = { cat: 'all', status: 'all', period: 'all' };
+let balanceFilters = { type: 'all' };
 // =============================================================
 // 2.  NAVIGATION / LAYERS
 // =============================================================
@@ -54,6 +57,7 @@ if (!el) return;
 if (layer.type === 'modal') {
     el.style.display = 'flex';
     if (layerName === 'log') { currentLog = data.logType;
+        buildLogFilters();
         renderLog(); } else if (layerName === 'detail') {
         const o = db[data.logType]?.find(item => item.clientId === data.id || item.id === data.id);
         if (!o) { toastMsg(translate('notFound'), "error"); return; }
@@ -77,6 +81,7 @@ if (layer.type === 'modal') {
         if (searchEl) searchEl.value = '';
         renderCurrencyList();
     } else if (layerName === 'balanceLog') {
+        buildBalanceFilters();
         renderBalanceLog();
     } else if (layerName === 'driveBackup') {
         renderDriveBackupList();
@@ -206,8 +211,9 @@ langLabel.textContent = langNames[lang] || '🇸🇦 العربية';
 }
 updateBalanceDisplay();
 updateStats();
-if (document.getElementById('logModal').style.display === 'flex') renderLog();
-if (document.getElementById('balanceLogModal').style.display === 'flex') renderBalanceLog();
+// ✔ إعادة بناء الفلاتر عند تغيير اللغة
+if (document.getElementById('logModal').style.display === 'flex') { buildLogFilters(); renderLog(); }
+if (document.getElementById('balanceLogModal').style.display === 'flex') { buildBalanceFilters(); renderBalanceLog(); }
 if (document.getElementById('driveBackupModal').style.display === 'flex') renderDriveBackupList();
 if (document.getElementById('currencyModal').style.display === 'flex') renderCurrencyList();
 updateLanguageModalCheckmarks();
@@ -944,7 +950,7 @@ t.classList.remove('show');
 // =============================================================
 // 8.  FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
 // =============================================================
-// ✔ أسماء العملات بثلاث لغات (تتغير مع لغة التطبيق)
+// ✔ أسماء العملات بثلاث لغات
 const ARABIC_CURRENCIES = [
 { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
 { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
@@ -1161,15 +1167,29 @@ toastMsg(balanceActionType === 'deposit' ? translate('depositSuccess') : transla
 closeLayer('balanceAction');
 }
 }
+// ✔ سجل حركات الرصيد: بحث + فلتر نوع الحركة + شرائح الإحصائيات
 function renderBalanceLog() {
 const el = document.getElementById('balanceLogContent');
 const changes = db.bal.changes || [];
-if (!changes.length) {
+const qEl = document.getElementById('balanceSearch');
+const q = qEl ? qEl.value.toLowerCase() : '';
+let list = changes;
+if (q) list = list.filter(i => String(i.النوع).toLowerCase().includes(q));
+if (balanceFilters.type === 'deposit') list = list.filter(i => i.القيمة_الصافية > 0);
+if (balanceFilters.type === 'withdraw') list = list.filter(i => i.القيمة_الصافية < 0);
+let dep = 0, wit = 0;
+list.forEach(i => { if (i.القيمة_الصافية > 0) dep += i.القيمة_الصافية; else if (i.القيمة_الصافية < 0) wit += Math.abs(i.القيمة_الصافية); });
+const bar = document.getElementById('balanceStatsBar');
+if (bar) bar.innerHTML = `
+<div class="log-stat-chip"><span class="stat-label">${translate('movementsCount')}</span><span class="stat-value">${list.length}</span></div>
+<div class="log-stat-chip"><span class="stat-label">${translate('totalDeposits')}</span><span class="stat-value" style="color:var(--success)">${getFormattedAmount(dep)}</span></div>
+<div class="log-stat-chip"><span class="stat-label">${translate('totalWithdrawals')}</span><span class="stat-value" style="color:var(--danger)">${getFormattedAmount(wit)}</span></div>`;
+if (!list.length) {
 el.innerHTML =
 `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>${translate('noBalanceLog')}</p>`;
 return;
 }
-el.innerHTML = changes.map(i => {
+el.innerHTML = list.map(i => {
 const isDep = i.القيمة_الصافية > 0;
 const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
 const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
@@ -1303,7 +1323,7 @@ const amountInput = document.getElementById('dAmount');
 const statusSelect = document.getElementById('dStatus');
 const entityInput = document.getElementById('dEntity');
 container.innerHTML = '';
-const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍👧 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
+const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍‍👧 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
 if (entityTypes.includes(type)) {
     entityInput.style.display = 'block';
     if (currentData && currentData.الجهة) {
@@ -1471,8 +1491,81 @@ editMode = null;
 clearFields();
 }
 // =============================================================
-// 12. DETAIL & LOG RENDERING
+// 12. DETAIL & LOG RENDERING + FILTERS
 // =============================================================
+// ✔ فلترة حسب الفترة الزمنية
+function inPeriod(dateStr, period) {
+if (period === 'all' || !dateStr) return true;
+const d = new Date(dateStr);
+if (isNaN(d)) return true;
+const now = new Date();
+if (period === 'today') return d.toDateString() === now.toDateString();
+if (period === 'week') { const w = new Date(now); w.setDate(now.getDate() - 7); return d >= w; }
+if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+if (period === 'year') return d.getFullYear() === now.getFullYear();
+return true;
+}
+// ✔ مطابقة الحالة (تدعم العربي والإنجليزي)
+function matchStatus(st, f) {
+st = st || '';
+if (f === 'paid') return (/مدفوع بالكامل/.test(st) || /مدفوع$/.test(st) || /Fully Paid/.test(st) || /^Paid$/.test(st)) && !/جزئ|Partial/.test(st) && !/غير|Unpaid/.test(st);
+if (f === 'partial') return /جزئياً|Partial/.test(st);
+if (f === 'unpaid') return /غير مدفوع|Unpaid/.test(st);
+if (f === 'late') return /متأخر|Overdue/.test(st);
+return true;
+}
+function setLogFilter(kind, value) { logFilters[kind] = value; renderLog(); }
+function setBalanceFilter(kind, value) { balanceFilters[kind] = value; renderBalanceLog(); }
+// ✔ بناء قوائم الفلاتر حسب السجل الحالي واللغة
+function buildLogFilters() {
+const catSel = document.getElementById('logFilterCat');
+const statusSel = document.getElementById('logFilterStatus');
+const periodSel = document.getElementById('logFilterPeriod');
+if (!catSel || !statusSel || !periodSel) return;
+logFilters = { cat: 'all', status: 'all', period: 'all' };
+let catOptions = '';
+if (currentLog === 'inc' || currentLog === 'exp') {
+const src = document.getElementById(currentLog === 'inc' ? 'iType' : 'eType');
+catOptions = Array.from(src.options).filter(o => o.value).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('');
+catSel.style.display = 'block';
+} else if (currentLog === 'rig' || currentLog === 'deb') {
+const src = document.getElementById(currentLog === 'rig' ? 'rType' : 'dType');
+catOptions = Array.from(src.options).filter(o => o.value).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('');
+catSel.style.display = 'block';
+} else { catSel.style.display = 'none'; }
+catSel.innerHTML = `<option value="all">${translate('allCategories')}</option>` + catOptions;
+if (currentLog === 'rig' || currentLog === 'deb') {
+statusSel.style.display = 'block';
+statusSel.innerHTML = `<option value="all">${translate('allStatuses')}</option><option value="paid">${translate('statusPaid')}</option><option value="partial">${translate('statusPartiallyPaidShort')}</option><option value="unpaid">${translate('statusUnpaid')}</option><option value="late">${translate('statusOverdue')}</option>`;
+} else { statusSel.style.display = 'none'; }
+periodSel.innerHTML = `<option value="all">${translate('periodAll')}</option><option value="today">${translate('periodToday')}</option><option value="week">${translate('periodWeek')}</option><option value="month">${translate('periodMonth')}</option><option value="year">${translate('periodYear')}</option>`;
+}
+function buildBalanceFilters() {
+const typeSel = document.getElementById('balanceFilterType');
+if (!typeSel) return;
+typeSel.innerHTML = `<option value="all">${translate('allTypes')}</option><option value="deposit">${translate('deposit')}</option><option value="withdraw">${translate('withdraw')}</option>`;
+typeSel.value = balanceFilters.type || 'all';
+}
+// ✔ شرائح إحصائيات السجلات (العدد + الإجمالي + الأعلى)
+function renderLogStats(list, field) {
+const bar = document.getElementById('logStatsBar');
+if (!bar) return;
+let total = 0;
+const byCat = {};
+list.forEach(i => {
+const v = (currentLog === 'deb') ? parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0) : parseAmount(i.المبلغ);
+total += v;
+const c = i[field] || '—';
+byCat[c] = (byCat[c] || 0) + v;
+});
+let topName = '—', topVal = 0;
+Object.entries(byCat).forEach(([n, v]) => { if (v > topVal) { topVal = v; topName = n; } });
+const titles = { inc: translate('topIncomeSource'), exp: translate('topExpenseCategory'), rig: translate('topRightsType'), deb: translate('topDebtsType') };
+bar.innerHTML = `
+<div class="log-stat-chip"><span class="stat-label">${translate('operationsCount')}</span><span class="stat-value">${list.length}</span></div>
+<div class="log-stat-chip"><span class="stat-label">${translate('totalAmountStat')}</span><span class="stat-value">${getFormattedAmount(total)}</span></div>
+<div class="log-stat-chip"><span class="stat-label">${titles[currentLog] || ''}</span><span class="stat-value">${topName} (${getFormattedAmount(topVal)})</span></div>`;
+}
 function _renderDetailContent(o, type) {
 const el = document.getElementById('detailContent');
 let html = `<div class="card" style="border-top-color:var(--p);"><h3 style="color:var(--p);margin-top:0;"><i class="fas fa-info-circle" style="margin-left:5px;"></i> ${translate('details')}</h3>`;
@@ -1492,11 +1585,17 @@ html += `<div class="card" style="border-top-color:var(--s);"><h3 style="color:v
 html += `<div style="display:flex;gap:10px;margin-top:20px;"><button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> ${translate('edit')}</button><button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> ${translate('delete')}</button></div>`;
 el.innerHTML = html;
 }
+// ✔ السجلات: بحث + فلاتر (فئة/نوع + حالة + فترة) + إحصائيات
 function renderLog() {
 const el = document.getElementById('logContent');
 const items = db[currentLog] || [];
 const search = document.getElementById('search').value.toLowerCase();
-const filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(search)));
+const field = (currentLog === 'inc' || currentLog === 'exp') ? 'الفئة' : 'النوع';
+let filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(search)));
+if (logFilters.cat !== 'all') filtered = filtered.filter(i => i[field] === logFilters.cat);
+if ((currentLog === 'rig' || currentLog === 'deb') && logFilters.status !== 'all') filtered = filtered.filter(i => matchStatus(i.الحالة, logFilters.status));
+if (logFilters.period !== 'all') filtered = filtered.filter(i => inPeriod(i.التاريخ || i.تاريخ_الاستحقاق, logFilters.period));
+renderLogStats(filtered, field);
 if (!filtered.length) {
     el.innerHTML =
         `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>${translate('noTransactions')}</p>`;
@@ -1709,7 +1808,7 @@ document.getElementById('sDebPaid').innerHTML = formatCurrency(debPaid, false);
 // =============================================================
 // 14. OTHER FUNCTIONS (currency, reset, sidebar, etc.)
 // =============================================================
-// ✔ قائمة العملات تعرض الأسماء بلغة التطبيق الحالية
+// ✔ قائمة العملات بأسماء مترجمة + بحث متعدد اللغات
 function renderCurrencyList() {
 const list = document.getElementById('currencyList');
 const q = document.getElementById('currencySearch').value.toLowerCase();
