@@ -61,7 +61,7 @@ position: absolute; left: 16px; top: 16px; background: none; border: none;
 color: var(--p); font-size: 26px; cursor: pointer; transition: color 0.2s, transform 0.2s;
 }
 #overview .balance-display #balanceVisibilityToggle:hover { color: var(--s); transform: scale(1.1); }
-/* ----- أزرار الإجراءات (إيداع / سحب / السجل) ----- */
+/* ----- أزرار الإجراءات ----- */
 .balance-actions { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 6px; width: 100%; }
 .balance-actions .action {
 width: 100%; min-height: 130px; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -87,14 +87,14 @@ transition: background var(--transition), transform 0.2s, box-shadow 0.2s;
 .stat-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
 .stat-card h3 { margin: 0 0 10px; font-size: 16px; font-weight: 800; color: var(--text-dark); line-height: 1.6; }
 .stat-card p { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 800; }
-/* ألوان الشريط العلوي لكل بطاقة */
+/* ألوان الشريط العلوي */
 .stat-card.stat-income { border-top-color: #2a9d8f; }
 .stat-card.stat-expense { border-top-color: #ef476f; }
 .stat-card.stat-rights-total { border-top-color: #3b82f6; }
 .stat-card.stat-rights-paid { border-top-color: #10b981; }
 .stat-card.stat-debt-total { border-top-color: #f59e0b; }
 .stat-card.stat-debt-paid { border-top-color: #ef4444; }
-/* ألوان الأرقام داخل البطاقات (تعمل مع innerHTML الذي يولّده app.js) */
+/* ألوان الأرقام (تعمل مع innerHTML المولّد من app.js) */
 #sIncTotal span:not(.currency-symbol) { color: #2a9d8f; }
 #sExpTotal span:not(.currency-symbol) { color: #ef476f; }
 #sRigTotal span:not(.currency-symbol) { color: #3b82f6; }
@@ -109,6 +109,16 @@ body.dark-mode #sDebTotal span:not(.currency-symbol) { color: #fbbf24; }
 body.dark-mode #sDebPaid span:not(.currency-symbol) { color: #f87171; }
 .stats-grid .currency-symbol { color: var(--p) !important; }
 @media (max-width: 340px) { .stats-grid { grid-template-columns: 1fr; } }
+/* ============ SECTION HINTS — النصوص الإرشادية الواضحة ============ */
+.section-hint {
+display: block; padding: 10px 14px; margin: 6px 0 12px; border-radius: 10px;
+font-size: 0.95em; font-weight: 700; line-height: 1.7;
+background: rgba(0, 119, 182, 0.08); color: #0077b6; border-right: 4px solid #0077b6;
+transition: background var(--transition), color var(--transition);
+}
+body.dark-mode .section-hint { background: rgba(144, 224, 239, 0.12); color: #90e0ef; border-right-color: #90e0ef; }
+.section-hint.warning { background: rgba(251, 192, 45, 0.15); color: #8a6d00; border-right-color: #fbc02d; }
+body.dark-mode .section-hint.warning { background: rgba(251, 192, 45, 0.12); color: #ffd54f; border-right-color: #fbc02d; }
 /* ============ FORM ELEMENTS ============ */
 input, select,
 .datetime-container input[type="date"],
@@ -207,8 +217,8 @@ display: flex; justify-content: space-between; align-items: center; font-weight:
 .sidebar-menu-item {
 padding: 14px 20px; margin: 2px 0; display: flex; align-items: center; gap: 15px;
 font-size: 17px; color: var(--text-dark); cursor: pointer; transition: all 0.2s;
-border-right: 3px solid transparent; background: var(--card-bg); border-left: none; border-top: none; border-bottom: none;
-width: 100%; text-align: right; font-family: inherit;
+border-right: 3px solid transparent; background: var(--card-bg);
+border-left: none; border-top: none; border-bottom: none; width: 100%; text-align: right; font-family: inherit;
 }
 .sidebar-menu-item:hover { background: color-mix(in srgb, var(--bg) 85%, var(--p)); border-right-color: var(--p); }
 .sidebar-menu-item i { font-size: 1.2em; width: 28px; text-align: center; color: var(--p); }

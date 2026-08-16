@@ -85,7 +85,7 @@
 <section id="income" class="section">
   <div class="card">
     <span class="edit-indicator" id="incEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
-    <p class="field-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</p>
+    <p class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</p>
     <input id="iAmount" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)">
     <div class="datetime-container">
       <i class="fa-solid fa-calendar-days cal-icon"></i>
@@ -112,7 +112,7 @@
 <section id="expenses" class="section">
   <div class="card">
     <span class="edit-indicator" id="expEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
-    <p class="field-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</p>
+    <p class="section-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</p>
     <input id="eAmount" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)">
     <div class="datetime-container">
       <i class="fa-solid fa-calendar-days cal-icon"></i>
@@ -147,8 +147,8 @@
 <section id="rights" class="section">
   <div class="card">
     <span class="edit-indicator" id="rigEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
-    <p class="field-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل "المبلغ المحصل"</p>
-    <p class="field-hint" data-i18n="rightsWarning">⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</p>
+    <p class="section-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل "المبلغ المحصل"</p>
+    <p class="section-hint warning" data-i18n="rightsWarning">⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</p>
     <select id="rType" onchange="updateRightFields(this.value)">
       <option value="" disabled selected data-i18n="rightTypePlaceholder">🤝 نوع الحق</option>
       <option value="🛒 بيع آجل" data-i18n="rightCreditSale">🛒 بيع آجل</option>
@@ -174,7 +174,7 @@
 <section id="debts" class="section">
   <div class="card">
     <span class="edit-indicator" id="debEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
-    <p class="field-hint" data-i18n="debtsHint">* دفع الالتزامات يُخصم من رصيدك الحالي</p>
+    <p class="section-hint" data-i18n="debtsHint">* دفع الالتزامات يُخصم من رصيدك الحالي</p>
     <select id="dType" onchange="updateDebtFields(this.value)">
       <option value="" disabled selected data-i18n="debtTypePlaceholder">🧾 نوع الالتزام</option>
       <option value="🏠 إيجار" data-i18n="debtRent">🏠 إيجار</option>
@@ -188,7 +188,7 @@
       <option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
       <option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
       <option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-      <option value="👨👩‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍👧 التزامات عائلية</option>
+      <option value="👨‍👩‍👧 التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
       <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
       <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
       <option value="📦 أخرى" data-i18n="debtOther">📦 أخرى</option>
@@ -348,7 +348,7 @@
   <div class="sidebar-content">
     <button class="sidebar-menu-item" onclick="openLanguageModal()">
       <i class="fa-solid fa-language"></i> <span data-i18n="language">اللغة</span>
-      <span class="drive-email" id="sidebarLanguageLabel">🇸🇦 العربية</span>
+      <span class="drive-email" id="sidebarLanguageLabel">🇸 العربية</span>
     </button>
 
     <div class="sidebar-menu-item drive-item" id="driveMenuItem" onclick="handleDriveClick()">
