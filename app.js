@@ -602,14 +602,14 @@ try {
     toastMsg(translate('backupListLoadFailed'), "error");
 }
 }
-// ✔ جديد: استخراج رقم النسخة من بداية اسم الملف
+// ✔ استخراج رقم النسخة من بداية اسم الملف
 function parseBackupNumber(name) {
 const m = (name || '').match(/^(\d+)/);
 if (!m) return null;
 const n = parseInt(m[1], 10);
 return isNaN(n) ? null : n;
 }
-// ✔ جديد: الرقم التسلسلي للنسخة القادمة (أكبر رقم + 1)
+// ✔ الرقم التسلسلي للنسخة القادمة (أكبر رقم + 1)
 function getNextBackupNumber() {
 let max = 0;
 (backupFiles || []).forEach(f => {
@@ -618,7 +618,7 @@ if (n && n > max) max = n;
 });
 return max + 1;
 }
-// ✔ معدّلة: الترتيب الصحيح من النسخة رقم 1 حتى آخر نسخة
+// ✔ الترتيب الصحيح: من النسخة رقم 1 حتى آخر نسخة
 function renderDriveBackupList() {
 const container = document.getElementById('driveBackupList');
 const countEl = document.getElementById('driveBackupCount');
@@ -644,14 +644,12 @@ if (backupFiles.length === 0) {
     if (countEl) countEl.textContent = translate('backupCountLabel') + ' 0';
     return;
 }
-// ترقيم النسخ: من الرقم في اسم الملف، وللقديمة حسب الأقدمية
 const sortedByDate = [...backupFiles].sort((a, b) => new Date(a.createdTime) - new Date(b.createdTime));
 let fallback = 1;
 const filesWithNumbers = sortedByDate.map(file => {
     const parsed = parseBackupNumber(file.name);
     return { ...file, number: parsed || fallback++ };
 });
-// ✔ الترتيب الصحيح: تصاعدي من 1 حتى آخر نسخة
 const displayFiles = filesWithNumbers.sort((a, b) => a.number - b.number);
 let tableHtml = `
     <table class="backup-table">
@@ -703,7 +701,7 @@ function refreshBackupList() {
 loadBackupList();
 toastMsg(translate('refreshingList'), "info");
 }
-// ✔ معدّلة: اسم الملف = رقم تسلسلي + التاريخ والوقت الحالي
+// ✔ اسم الملف: رقم تسلسلي + التاريخ والوقت الحالي
 async function performBackup() {
 if (!accessToken || !appFolderId) {
 toastMsg(translate('driveNotConnected'), "error");
@@ -944,42 +942,48 @@ t.classList.remove('show');
 }, 3500);
 }
 // =============================================================
-// 8.  FORMATTING HELPERS
+// 8.  FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
 // =============================================================
+// ✔ أسماء العملات بثلاث لغات (تتغير مع لغة التطبيق)
 const ARABIC_CURRENCIES = [
-{ code: 'SAR', symbol: '﷼', name: 'الريال السعودي', flag: '🇸🇦' },
-{ code: 'SDG', symbol: 'ج.س', name: 'الجنيه السوداني', flag: '🇸🇩' },
-{ code: 'AED', symbol: 'د.إ', name: 'الدرهم الإماراتي', flag: '🇦🇪' },
-{ code: 'QAR', symbol: 'ر.ق', name: 'الريال القطري', flag: '🇶🇦' },
-{ code: 'KWD', symbol: 'د.ك', name: 'الدينار الكويتي', flag: '🇰🇼' },
-{ code: 'BHD', symbol: 'د.ب', name: 'الدينار البحريني', flag: '🇧🇭' },
-{ code: 'OMR', symbol: 'ر.ع', name: 'الريال العُماني', flag: '🇴' },
-{ code: 'YER', symbol: 'ر.ي', name: 'الريال اليمني', flag: '🇾🇪' },
-{ code: 'IQD', symbol: 'ع.د', name: 'الدينار العراقي', flag: '🇮🇶' },
-{ code: 'JOD', symbol: 'د.أ', name: 'الدينار الأردني', flag: '🇯🇴' },
-{ code: 'LBP', symbol: 'ل.ل', name: 'الليرة اللبنانية', flag: '🇱🇧' },
-{ code: 'SYP', symbol: 'ل.س', name: 'الليرة السورية', flag: '🇸🇾' },
-{ code: 'ILS', symbol: '₪', name: 'الشيكل الفلسطيني', flag: '🇵🇸' },
-{ code: 'EGP', symbol: 'ج.م', name: 'الجنيه المصري', flag: '🇪🇬' },
-{ code: 'LYD', symbol: 'ل.د', name: 'الدينار الليبي', flag: '🇱🇾' },
-{ code: 'TND', symbol: 'د.ت', name: 'الدينار التونسي', flag: '🇹🇳' },
-{ code: 'DZD', symbol: 'دج', name: 'الدينار الجزائري', flag: '🇩🇿' },
-{ code: 'MAD', symbol: 'د.م', name: 'الدرهم المغربي', flag: '🇲🇦' },
-{ code: 'MRU', symbol: 'أ.م', name: 'الأوقية الموريتانية', flag: '🇲🇷' },
-{ code: 'SOS', symbol: 'ش.ص', name: 'الشلن الصومالي', flag: '🇸🇴' },
-{ code: 'DJF', symbol: 'ف.ج', name: 'الفرنك الجيبوتي', flag: '🇩🇯' },
-{ code: 'KMF', symbol: 'ف.ق', name: 'الفرنك القمري', flag: '🇰🇲' },
-{ code: 'SSP', symbol: 'ج.س.ج', name: 'جنيه جنوب السودان', flag: '🇸🇸' },
-{ code: 'USD', symbol: '$', name: 'الدولار الأمريكي', flag: '🇺🇸' },
-{ code: 'EUR', symbol: '€', name: 'اليورو', flag: '🇪🇺' },
-{ code: 'BDT', symbol: '৳', name: 'التاكا البنغلاديشي', flag: '🇧🇩' },
-{ code: 'INR', symbol: '₹', name: 'الروبية الهندية', flag: '🇮🇳' },
-{ code: 'PKR', symbol: '₨', name: 'الروبية الباكستانية', flag: '🇵🇰' },
-{ code: 'PHP', symbol: '₱', name: 'البيزو الفلبيني', flag: '🇵🇭' },
-{ code: 'CNY', symbol: '¥', name: 'اليوان الصيني', flag: '🇨🇳' }
+{ code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
+{ code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
+{ code: 'AED', symbol: 'د.إ', flag: '🇦🇪', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
+{ code: 'QAR', symbol: 'ر.ق', flag: '🇶🇦', name: { ar: 'الريال القطري', en: 'Qatari Riyal', ur: 'قطری ریال' } },
+{ code: 'KWD', symbol: 'د.ك', flag: '🇰🇼', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
+{ code: 'BHD', symbol: 'د.ب', flag: '🇧🇭', name: { ar: 'الدينار البحريني', en: 'Bahraini Dinar', ur: 'بحرینی دینار' } },
+{ code: 'OMR', symbol: 'ر.ع', flag: '🇴🇲', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
+{ code: 'YER', symbol: 'ر.ي', flag: '🇾🇪', name: { ar: 'الريال اليمني', en: 'Yemeni Rial', ur: 'یمنی ریال' } },
+{ code: 'IQD', symbol: 'ع.د', flag: '🇮🇶', name: { ar: 'الدينار العراقي', en: 'Iraqi Dinar', ur: 'عراقی دینار' } },
+{ code: 'JOD', symbol: 'د.أ', flag: '🇯🇴', name: { ar: 'الدينار الأردني', en: 'Jordanian Dinar', ur: 'اردنی دینار' } },
+{ code: 'LBP', symbol: 'ل.ل', flag: '🇱🇧', name: { ar: 'الليرة اللبنانية', en: 'Lebanese Lira', ur: 'لبنانی لیرا' } },
+{ code: 'SYP', symbol: 'ل.س', flag: '🇸🇾', name: { ar: 'الليرة السورية', en: 'Syrian Lira', ur: 'شامی لیرا' } },
+{ code: 'ILS', symbol: '₪', flag: '🇵🇸', name: { ar: 'الشيكل الفلسطيني', en: 'Israeli Shekel', ur: 'اسرائیلی شیکل' } },
+{ code: 'EGP', symbol: 'ج.م', flag: '🇪🇬', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
+{ code: 'LYD', symbol: 'ل.د', flag: '🇱🇾', name: { ar: 'الدينار الليبي', en: 'Libyan Dinar', ur: 'لیبیائی دینار' } },
+{ code: 'TND', symbol: 'د.ت', flag: '🇹🇳', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
+{ code: 'DZD', symbol: 'دج', flag: '🇩🇿', name: { ar: 'الدينار الجزائري', en: 'Algerian Dinar', ur: 'الجزائری دینار' } },
+{ code: 'MAD', symbol: 'د.م', flag: '🇲🇦', name: { ar: 'الدرهم المغربي', en: 'Moroccan Dirham', ur: 'مراکشی درہم' } },
+{ code: 'MRU', symbol: 'أ.م', flag: '🇲🇷', name: { ar: 'الأوقية الموريتانية', en: 'Mauritanian Ouguiya', ur: 'موریطانی اوگوئیا' } },
+{ code: 'SOS', symbol: 'ش.ص', flag: '🇸🇴', name: { ar: 'الشلن الصومالي', en: 'Somali Shilling', ur: 'صومالی شلنگ' } },
+{ code: 'DJF', symbol: 'ف.ج', flag: '🇩🇯', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
+{ code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
+{ code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
+{ code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
+{ code: 'EUR', symbol: '€', flag: '🇪🇺', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
+{ code: 'BDT', symbol: '৳', flag: '🇧🇩', name: { ar: 'التاكا البنغلاديشي', en: 'Bangladeshi Taka', ur: 'بنگلادیشی ٹاکا' } },
+{ code: 'INR', symbol: '₹', flag: '🇮🇳', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
+{ code: 'PKR', symbol: '₨', flag: '🇵🇰', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
+{ code: 'PHP', symbol: '₱', flag: '🇵🇭', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
+{ code: 'CNY', symbol: '¥', flag: '🇨🇳', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
 ];
 let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SAR')) ||
 ARABIC_CURRENCIES[0];
+// ✔ إرجاع اسم العملة بلغة التطبيق الحالية
+function getCurrencyName(c) {
+const lang = (c.name && c.name[currentLang]) ? currentLang : 'ar';
+return (c.name && c.name[lang]) || c.code;
+}
 function formatAmount(input) {
 let val = input.value.replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
 val = val.replace(/[^\d.]/g, '');
@@ -1549,14 +1553,14 @@ el.innerHTML = filtered.map(i => {
             amountDisplay = formatCurrency(amountVal);
         } else {
             if (st === 'مدفوع' || st === 'مدفوع بالكامل') { borderColor = 'var(--success)';
-            statusBadge =
-            `<span class="status-badge paid">${translate('statusPaid')}</span>`; } else if (st === 'مدفوع جزئياً') {
-            borderColor = 'var(--warning)';
-            statusBadge = `<span class="status-badge partial">${translate('statusPartiallyPaidShort')}</span>`; } else if (st ===
-            'متأخر') { borderColor = '#e67e22';
-            statusBadge = `<span class="status-badge late">${translate('statusOverdue')}</span>`; } else { borderColor =
-                'var(--danger)';
-            statusBadge = `<span class="status-badge unpaid">${translate('statusUnpaid')}</span>`; }
+                statusBadge =
+                `<span class="status-badge paid">${translate('statusPaid')}</span>`; } else if (st === 'مدفوع جزئياً') {
+                borderColor = 'var(--warning)';
+                statusBadge = `<span class="status-badge partial">${translate('statusPartiallyPaidShort')}</span>`; } else if (st ===
+                'متأخر') { borderColor = '#e67e22';
+                statusBadge = `<span class="status-badge late">${translate('statusOverdue')}</span>`; } else { borderColor =
+                    'var(--danger)';
+                statusBadge = `<span class="status-badge unpaid">${translate('statusUnpaid')}</span>`; }
             amountColor = borderColor;
             amountVal = parseAmount(i.المبلغ);
             amountDisplay = formatCurrency(amountVal);
@@ -1705,13 +1709,15 @@ document.getElementById('sDebPaid').innerHTML = formatCurrency(debPaid, false);
 // =============================================================
 // 14. OTHER FUNCTIONS (currency, reset, sidebar, etc.)
 // =============================================================
+// ✔ قائمة العملات تعرض الأسماء بلغة التطبيق الحالية
 function renderCurrencyList() {
 const list = document.getElementById('currencyList');
 const q = document.getElementById('currencySearch').value.toLowerCase();
 const filtered = ARABIC_CURRENCIES.filter(c =>
-c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+getCurrencyName(c).toLowerCase().includes(q) || c.code.toLowerCase().includes(q) ||
+(c.name.ar || '').includes(q) || (c.name.en || '').toLowerCase().includes(q) || (c.name.ur || '').includes(q)
 );
-list.innerHTML = filtered.map(c => `<button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')"> <span>${c.flag} <strong>${c.symbol}</strong> ${c.name} (${c.code})</span> ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''} </button>`).join('');
+list.innerHTML = filtered.map(c => `<button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')"> <span>${c.flag} <strong>${c.symbol}</strong> ${getCurrencyName(c)} (${c.code})</span> ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''} </button>`).join('');
 }
 function setCurrency(code) {
 const sel = ARABIC_CURRENCIES.find(c => c.code === code);
@@ -1722,7 +1728,7 @@ document.getElementById('sidebarCurrencyLabel').textContent = sel.symbol;
 updateBalanceDisplay();
 updateStats();
 closeLayer('currency');
-toastMsg(`${translate('currencySet')} ${sel.name} 💱`, "success");
+toastMsg(`${translate('currencySet')} ${getCurrencyName(sel)} 💱`, "success");
 }
 }
 function confirmResetData() {
