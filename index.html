@@ -190,9 +190,9 @@
       <option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
       <option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
       <option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-      <option value="👨‍👩‍ التزامات عائلية" data-i18n="debtFamily">👨‍‍👧 التزامات عائلية</option>
+      <option value="👨‍👩‍👧 التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
       <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
-      <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍ رواتب</option>
+      <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
       <option value="📦 أخرى" data-i18n="debtOther">📦 أخرى</option>
     </select>
     <div id="dDynamicFields"></div>
@@ -235,7 +235,7 @@
   </button>
 </nav>
 
-<!-- ================= مودال السجل ================= -->
+<!-- ================= مودال السجل (مع الفلاتر والإحصائيات) ================= -->
 <div class="modal" id="logModal">
   <header>
     <button onclick="closeLayer('log')"><i class="fa-solid fa-xmark"></i></button>
@@ -243,6 +243,12 @@
     <span></span>
   </header>
   <div class="modal-content">
+    <div class="log-stats" id="logStatsBar"></div>
+    <div class="log-filters">
+      <select id="logFilterCat" onchange="setLogFilter('cat', this.value)"></select>
+      <select id="logFilterStatus" onchange="setLogFilter('status', this.value)"></select>
+      <select id="logFilterPeriod" onchange="setLogFilter('period', this.value)"></select>
+    </div>
     <input type="text" id="search" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderLog()">
     <div id="logContent"></div>
   </div>
@@ -279,14 +285,21 @@
   </div>
 </div>
 
-<!-- ================= مودال سجل حركات الرصيد ================= -->
+<!-- ================= مودال سجل حركات الرصيد (مع البحث والفلاتر) ================= -->
 <div class="modal" id="balanceLogModal">
   <header>
     <button onclick="closeLayer('balanceLog')"><i class="fa-solid fa-xmark"></i></button>
     <div class="title" data-i18n="balanceLogTitle">سجل حركات الرصيد</div>
     <span></span>
   </header>
-  <div class="modal-content" id="balanceLogContent"></div>
+  <div class="modal-content">
+    <div class="log-stats" id="balanceStatsBar"></div>
+    <div class="log-filters">
+      <select id="balanceFilterType" onchange="setBalanceFilter('type', this.value)"></select>
+    </div>
+    <input type="text" id="balanceSearch" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderBalanceLog()">
+    <div id="balanceLogContent"></div>
+  </div>
 </div>
 
 <!-- ================= طبقة + مودال مصدر الصورة ================= -->
@@ -390,7 +403,7 @@
     <span></span>
   </header>
   <div class="modal-content">
-    <button class="secondary" onclick="setLanguage('ar')">🇸🇦 العربية <span id="langCheckAr" style="display:none;color:var(--success);">✔</span></button>
+    <button class="secondary" onclick="setLanguage('ar')">🇸 العربية <span id="langCheckAr" style="display:none;color:var(--success);">✔</span></button>
     <button class="secondary" onclick="setLanguage('en')">🇬🇧 English <span id="langCheckEn" style="display:none;color:var(--success);">✔</span></button>
     <button class="secondary" onclick="setLanguage('ur')">🇵🇰 اردو <span id="langCheckUr" style="display:none;color:var(--success);">✔</span></button>
   </div>
