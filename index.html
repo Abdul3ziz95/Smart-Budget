@@ -31,7 +31,7 @@
 <!-- ================= الرئيسية ================= -->
 <section id="overview" class="section active">
 
-  <!-- بطاقة الرصيد النقدي الحالي (تصميم جديد) -->
+  <!-- بطاقة الرصيد النقدي الحالي -->
   <div class="balance-display">
     <button id="balanceVisibilityToggle" onclick="toggleBalanceVisibility()" aria-label="إظهار/إخفاء الرصيد"><i class="fas fa-eye"></i></button>
     <h2 data-i18n="currentBalance">الرصيد النقدي الحالي</h2>
@@ -49,7 +49,7 @@
     </div>
   </div>
 
-  <!-- بطاقة ملخص الإحصائيات (تصميم جديد) -->
+  <!-- بطاقة ملخص الإحصائيات -->
   <div class="stats-summary">
     <h2 class="stats-title" data-i18n="statsSummary">ملخص الإحصائيات</h2>
     <div class="stats-grid">
@@ -81,7 +81,7 @@
   </div>
 </section>
 
-<!-- ================= الدخل (الترتيب الجديد: الفئة ← المبلغ ← التاريخ ← الملاحظة) ================= -->
+<!-- ================= الدخل ================= -->
 <section id="income" class="section">
   <div class="card">
     <span class="edit-indicator" id="incEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
@@ -95,6 +95,8 @@
       <option value="💰 عمولة" data-i18n="incomeCommission">💰 عمولة</option>
       <option value="🎁 هدية" data-i18n="incomeGift">🎁 هدية</option>
       <option value="🏆 مكافأة" data-i18n="incomeBonus">🏆 مكافأة</option>
+      <option value="🛡️ الضمان الاجتماعي" data-i18n="incomeSocialSecurity">🛡️ الضمان الاجتماعي</option>
+      <option value="🧓 المعاش التقاعدي" data-i18n="incomePension">🧓 المعاش التقاعدي</option>
       <option value="📦 دخل آخر" data-i18n="incomeOther">📦 دخل آخر</option>
     </select>
     <input id="iAmount" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)">
@@ -108,7 +110,7 @@
   </div>
 </section>
 
-<!-- ================= المصروفات (الترتيب الجديد: الفئة ← المبلغ ← التاريخ ← الملاحظة) ================= -->
+<!-- ================= المصروفات ================= -->
 <section id="expenses" class="section">
   <div class="card">
     <span class="edit-indicator" id="expEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
@@ -188,9 +190,9 @@
       <option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
       <option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
       <option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-      <option value="👨‍👩‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
+      <option value="👨‍👩‍ التزامات عائلية" data-i18n="debtFamily">👨‍‍👧 التزامات عائلية</option>
       <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
-      <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
+      <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍ رواتب</option>
       <option value="📦 أخرى" data-i18n="debtOther">📦 أخرى</option>
     </select>
     <div id="dDynamicFields"></div>
