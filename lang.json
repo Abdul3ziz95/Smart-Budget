@@ -244,6 +244,15 @@
     "invalidDate": "تاريخ غير صالح",
     "balanceUpdateFailed": "فشل تحديث الرصيد.",
     "imageSource": "مصدر الصورة"
+  
+"incomeSocialSecurity": "🛡️ الضمان الاجتماعي",
+ "incomePension": "🧓 المعاش التقاعدي",
+ "depositTitle": "إيداع",
+ "withdrawTitle": "سحب",
+ "enterAmount": "الرجاء إدخال المبلغ.",
+ "defaultFileName": "ميزانيتك_الذكية_بيانات",
+ "partialPaidAmount": "💰 المبلغ المدفوع جزئياً",
+ "partialPaidHint": "المبلغ الذي تم دفعه حتى الآن (يجب أن يكون أقل من قيمة الفاتورة)",
   },
   "en": {
     "appTitle": "Smart Budget | Smart Budget",
@@ -490,6 +499,15 @@
     "invalidDate": "Invalid date",
     "balanceUpdateFailed": "Failed to update balance.",
     "imageSource": "Image Source"
+  
+"incomeSocialSecurity": "🛡️ Social Security",
+ "incomePension": "🧓 Retirement Pension",
+ "depositTitle": "Deposit",
+ "withdrawTitle": "Withdraw",
+ "enterAmount": "Please enter the amount.",
+ "defaultFileName": "MySmartBudget_Data",
+ "partialPaidAmount": "💰 Partial Paid Amount",
+ "partialPaidHint": "Amount paid so far (must be less than the bill amount)",
   },
   "ur": {
     "appTitle": "سمارٹ بجٹ | Smart Budget",
@@ -736,5 +754,13 @@
     "invalidDate": "غلط تاریخ",
     "balanceUpdateFailed": "بیلنس اپ ڈیٹ کرنے میں ناکامی۔",
     "imageSource": "تصویر کا ذریعہ"
+"incomeSocialSecurity": "🛡️ سماجی تحفظ",
+ "incomePension": "🧓 پنشن",
+ "depositTitle": "جمع",
+ "withdrawTitle": "نکالنا",
+ "enterAmount": "براہ کرم رقم درج کریں۔",
+ "defaultFileName": "MySmartBudget_Data",
+ "partialPaidAmount": "💰 جزوی طور پر ادا شدہ رقم",
+ "partialPaidHint": "اب تک ادا کی گئی رقم (بل کی رقم سے کم ہونی چاہیے)",
   }
 }
