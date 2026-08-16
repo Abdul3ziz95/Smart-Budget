@@ -81,16 +81,11 @@
   </div>
 </section>
 
-<!-- ================= الدخل ================= -->
+<!-- ================= الدخل (الترتيب الجديد: الفئة ← المبلغ ← التاريخ ← الملاحظة) ================= -->
 <section id="income" class="section">
   <div class="card">
     <span class="edit-indicator" id="incEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
     <p class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</p>
-    <input id="iAmount" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)">
-    <div class="datetime-container">
-      <i class="fa-solid fa-calendar-days cal-icon"></i>
-      <input type="date" id="iDate">
-    </div>
     <select id="iType">
       <option value="" disabled selected data-i18n="incomeCategoryPlaceholder">📂 فئة الدخل</option>
       <option value="💼 راتب" data-i18n="incomeSalary">💼 راتب</option>
@@ -102,22 +97,22 @@
       <option value="🏆 مكافأة" data-i18n="incomeBonus">🏆 مكافأة</option>
       <option value="📦 دخل آخر" data-i18n="incomeOther">📦 دخل آخر</option>
     </select>
+    <input id="iAmount" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)">
+    <div class="datetime-container">
+      <i class="fa-solid fa-calendar-days cal-icon"></i>
+      <input type="date" id="iDate">
+    </div>
     <input id="iDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
     <button class="action" onclick="addIncome()" data-i18n="saveIncome">حفظ الدخل</button>
     <button class="secondary" onclick="openLog('inc')" data-i18n="incomeLog">سجل الدخل</button>
   </div>
 </section>
 
-<!-- ================= المصروفات ================= -->
+<!-- ================= المصروفات (الترتيب الجديد: الفئة ← المبلغ ← التاريخ ← الملاحظة) ================= -->
 <section id="expenses" class="section">
   <div class="card">
     <span class="edit-indicator" id="expEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
     <p class="section-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</p>
-    <input id="eAmount" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)">
-    <div class="datetime-container">
-      <i class="fa-solid fa-calendar-days cal-icon"></i>
-      <input type="date" id="eDate">
-    </div>
     <select id="eType">
       <option value="" disabled selected data-i18n="expenseCategoryPlaceholder">🛒 الفئة (نفقات متغيرة)</option>
       <option value="🍽️ طعام" data-i18n="expenseFood">🍽️ طعام</option>
@@ -133,6 +128,11 @@
       <option value="🔧 صيانة وإصلاح" data-i18n="expenseMaintenance">🔧 صيانة وإصلاح</option>
       <option value="📦 أخرى" data-i18n="expenseOther">📦 أخرى</option>
     </select>
+    <input id="eAmount" type="text" inputmode="decimal" pattern="[0-9]*" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)">
+    <div class="datetime-container">
+      <i class="fa-solid fa-calendar-days cal-icon"></i>
+      <input type="date" id="eDate">
+    </div>
     <input id="eDesc" type="text" placeholder="📝 وصف / ملاحظة" data-i18n-placeholder="descriptionNotes">
     <button class="secondary" onclick="showImageSourceModal()">
       <i class="fa-solid fa-camera"></i> <span data-i18n="attachInvoice">إرفاق صورة الفاتورة (اختياري)</span>
@@ -188,7 +188,7 @@
       <option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
       <option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
       <option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-      <option value="👨‍👩‍👧 التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
+      <option value="👨‍👩‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
       <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
       <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
       <option value="📦 أخرى" data-i18n="debtOther">📦 أخرى</option>
@@ -348,7 +348,7 @@
   <div class="sidebar-content">
     <button class="sidebar-menu-item" onclick="openLanguageModal()">
       <i class="fa-solid fa-language"></i> <span data-i18n="language">اللغة</span>
-      <span class="drive-email" id="sidebarLanguageLabel">🇸 العربية</span>
+      <span class="drive-email" id="sidebarLanguageLabel">🇸🇦 العربية</span>
     </button>
 
     <div class="sidebar-menu-item drive-item" id="driveMenuItem" onclick="handleDriveClick()">
