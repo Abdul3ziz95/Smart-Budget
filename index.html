@@ -21,38 +21,11 @@
   </div>
 </div>
 
-<!-- ============ الهيدر (مع زر الإشعارات) ============ -->
+<!-- الهيدر (بدون أيقونة الوضع الليلي) -->
 <header>
   <button onclick="openSidebar()" aria-label="القائمة"><i class="fa-solid fa-bars"></i></button>
   <div class="title" data-i18n="appTitleShort">ميزانيتك المالية الذكية</div>
-  
-  <!-- ✅ زر الإشعارات الجديد -->
-  <div class="notification-container">
-    <button class="notification-btn" onclick="toggleNotifications()" aria-label="الإشعارات">
-      <i class="fa-solid fa-bell"></i>
-      <span class="notification-badge hidden" id="notificationBadge">0</span>
-    </button>
-    
-    <!-- القائمة المنسدلة للإشعارات -->
-    <div class="notification-dropdown" id="notificationDropdown">
-      <div class="notification-header">
-        <span data-i18n="notifications">الإشعارات</span>
-        <button class="mark-all-read" onclick="markAllNotificationsRead()">
-          <i class="fa-solid fa-check-double"></i>
-          <span data-i18n="markAllRead">تحديد الكل كمقروء</span>
-        </button>
-      </div>
-      <div class="notification-list" id="notificationList">
-        <!-- سيتم ملؤها بواسطة JavaScript -->
-      </div>
-      <div class="notification-footer">
-        <button class="clear-all" onclick="clearAllNotifications()">
-          <i class="fa-solid fa-trash-can"></i>
-          <span data-i18n="clearAll">مسح الكل</span>
-        </button>
-      </div>
-    </div>
-  </div>
+  <span class="header-spacer" aria-hidden="true"></span>
 </header>
 
 <!-- ================= الرئيسية ================= -->
