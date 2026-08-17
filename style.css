@@ -419,7 +419,7 @@ border-radius: 50%; background: rgba(72,202,228,0.2); transition: background 0.3
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); } 70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
 
 /* ============================================================
-   🔔 NOTIFICATION SYSTEM — الجرس + التنبيهات + المقروء/غير المقروء
+   🔔 NOTIFICATION SYSTEM — نظام التنبيهات الكامل
    ============================================================ */
 
 /* ✔ زر الجرس في الهيدر + أنيميشن الاهتزاز */
@@ -446,6 +446,31 @@ box-shadow: 0 2px 6px rgba(239,71,111,0.45);
 border: 2px solid var(--p);
 animation: pulse 1.5s infinite;
 pointer-events: none; z-index: 2;
+}
+
+/* ✔ إعدادات وقت التنبيه (ساعة / 24 ساعة / 7 أيام) */
+.notif-settings {
+background: var(--input-bg); border: 1px solid var(--border-color);
+border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;
+box-shadow: var(--shadow-light);
+}
+.notif-settings-label {
+display: flex; align-items: center; font-size: 0.9em;
+font-weight: 700; color: var(--text-dark); margin-bottom: 10px;
+}
+.notif-settings-label i { color: var(--p); }
+.notif-timing-options { display: flex; gap: 8px; }
+.notif-timing-btn {
+flex: 1; padding: 10px 8px; border-radius: 10px;
+border: 2px solid var(--border-color); background: var(--card-bg);
+color: var(--text-dark); font-size: 0.85em; font-weight: 700;
+cursor: pointer; transition: all 0.2s; font-family: inherit;
+text-align: center;
+}
+.notif-timing-btn:hover { border-color: var(--p); }
+.notif-timing-btn.active {
+background: var(--p); color: var(--text-light);
+border-color: var(--p); box-shadow: 0 3px 10px rgba(0,119,182,0.3);
 }
 
 /* ✔ شريط الملخص داخل مودال التنبيهات */
@@ -557,6 +582,7 @@ width: 90px; height: 90px; line-height: 90px; border-radius: 50%; margin: 0 auto
 @media (max-width: 380px) {
 .notif-summary { grid-template-columns: 1fr; }
 .notif-item .notif-head { flex-direction: column; align-items: flex-start; }
+.notif-timing-options { flex-direction: column; }
 }
 
 /* ============ RESPONSIVE ============ */
