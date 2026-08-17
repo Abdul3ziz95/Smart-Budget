@@ -269,7 +269,7 @@
 <div class="modal-content" id="detailContent"></div>
 </div>
 
-<!-- ===== MODAL: BALANCE ACTION (DEPOSIT/WITHDRAW) ===== -->
+<!-- ===== MODAL: BALANCE ACTION ===== -->
 <div class="modal" id="balanceActionModal">
 <header>
 <button onclick="closeLayer('balanceAction')">✕</button>
@@ -308,14 +308,26 @@
 </div>
 </div>
 
-<!-- ===== MODAL: NOTIFICATIONS (🔔 جديد) ===== -->
+<!-- ===== MODAL: NOTIFICATIONS (🔔 جديد مع إعدادات التوقيت) ===== -->
 <div class="modal" id="notificationsModal">
 <header>
 <button onclick="closeLayer('notifications')">✕</button>
 <span class="title"><i class="fas fa-bell" style="margin-left:8px;color:var(--warning);"></i> <span data-i18n="notificationsTitle">التنبيهات المالية</span></span>
 <span class="header-spacer"></span>
 </header>
-<div class="modal-content" id="notificationsContent"></div>
+<div class="modal-content">
+<!-- ⏱️ إعدادات وقت التنبيه -->
+<div class="notif-settings">
+<span class="notif-settings-label"><i class="fas fa-clock" style="margin-left:6px;"></i><span data-i18n="notifTimingLabel">التنبيه قبل الاستحقاق بـ:</span></span>
+<div class="notif-timing-options">
+<button class="notif-timing-btn" data-hours="1" onclick="setNotifTiming(1)"><span data-i18n="notif1Hour">ساعة</span></button>
+<button class="notif-timing-btn" data-hours="24" onclick="setNotifTiming(24)"><span data-i18n="notif24Hours">24 ساعة</span></button>
+<button class="notif-timing-btn" data-hours="168" onclick="setNotifTiming(168)"><span data-i18n="notif7Days">7 أيام</span></button>
+</div>
+</div>
+<!-- 📋 محتوى التنبيهات -->
+<div id="notificationsContent"></div>
+</div>
 </div>
 
 <!-- ===== MODAL: IMAGE SOURCE ===== -->
