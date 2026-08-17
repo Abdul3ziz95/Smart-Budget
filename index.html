@@ -28,12 +28,11 @@
 <header>
 <button onclick="openSidebar()" aria-label="القائمة"><i class="fas fa-bars"></i></button>
 <span class="title" data-i18n="appTitle">ميزانيتك الذكية | Smart Budget</span>
-<div style="display:flex;align-items:center;gap:4px;">
-<button id="notificationBell" onclick="openNotifications()" aria-label="التنبيهات" style="position:relative;">
+<!-- 🔔 زر جرس التنبيهات المالية -->
+<button id="notificationBell" onclick="openNotifications()" aria-label="التنبيهات" title="التنبيهات المالية">
 <i class="fas fa-bell"></i>
 <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
 </button>
-</div>
 </header>
 
 <!-- ===== SECTION: OVERVIEW (HOME) ===== -->
@@ -93,7 +92,7 @@
 <span class="edit-indicator" id="incEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</span>
 <input id="iAmount" type="text" data-i18n-placeholder="amountPlaceholder" placeholder="💵 المبلغ" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*"/>
-<select id="iType" data-i18n-placeholder="incomeCategoryPlaceholder">
+<select id="iType">
 <option value="" data-i18n="incomeCategoryPlaceholder">📂 فئة الدخل</option>
 <option value="💼 راتب" data-i18n="incomeSalary">💼 راتب</option>
 <option value="💻 عمل حر" data-i18n="incomeFreelance">💻 عمل حر</option>
@@ -155,7 +154,7 @@
 <span class="edit-indicator" id="rigEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل "المبلغ المحصل"</span>
 <span class="section-hint warning" data-i18n="rightsWarning">⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</span>
-<select id="rType">
+<select id="rType" onchange="updateRightFields(this.value)">
 <option value="" data-i18n="rightTypePlaceholder">🤝 نوع الحق</option>
 <option value="🛒 بيع آجل" data-i18n="rightCreditSale">🛒 بيع آجل</option>
 <option value="💸 سلفة" data-i18n="rightLoan">💸 سلفة</option>
@@ -193,9 +192,9 @@
 <option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
 <option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
 <option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-<option value="👨‍👩‍👧 التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
+<option value="👨‍👩‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
 <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
-<option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍ رواتب</option>
+<option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
 <option value="📦 أخرى" data-i18n="debtOther">📦 أخرى</option>
 </select>
 <input id="dAmount" type="text" data-i18n-placeholder="billAmount" placeholder="💵 قيمة الفاتورة / القسط الحالي" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*"/>
@@ -313,7 +312,7 @@
 <div class="modal" id="notificationsModal">
 <header>
 <button onclick="closeLayer('notifications')">✕</button>
-<span class="title"><i class="fas fa-bell" style="margin-left:8px;color:var(--warning);"></i> التنبيهات المالية</span>
+<span class="title"><i class="fas fa-bell" style="margin-left:8px;color:var(--warning);"></i> <span data-i18n="notificationsTitle">التنبيهات المالية</span></span>
 <span class="header-spacer"></span>
 </header>
 <div class="modal-content" id="notificationsContent"></div>
