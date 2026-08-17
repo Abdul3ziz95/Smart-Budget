@@ -81,7 +81,7 @@
     "debtCarFinance": "🚗 تمويل السيارة",
     "debtFamily": "👨‍👩‍ التزامات عائلية",
     "debtSubscriptions": "📅 اشتراكات دورية",
-    "debtSalaries": "👨‍ رواتب",
+    "debtSalaries": "👨‍💼 رواتب",
     "debtOther": "📦 أخرى",
     "billAmount": "💵 قيمة الفاتورة / القسط الحالي",
     "entityCreditor": "🏢 الجهة / الدائن",
@@ -107,7 +107,7 @@
     "gallery": "اختيار من المعرض",
     "cancel": "إلغاء",
     "backupTitle": "نسخ احتياطي",
-    "backupConfirmMsg": "هل تريد عمل نسخة احتياطية للبيانات على\nGoogle Drive؟",
+    "backupConfirmMsg": "هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟",
     "backupSave": "نعم، احفظ النسخة",
     "backupView": "عرض النسخ المحفوظة",
     "backupDriveTitle": "النسخ الاحتياطية",
@@ -267,7 +267,12 @@
     "periodMonth": "هذا الشهر",
     "periodYear": "هذه السنة",
     "totalDeposits": "إجمالي الإيداعات",
-    "totalWithdrawals": "إجمالي السحوبات"
+    "totalWithdrawals": "إجمالي السحوبات",
+    "notificationsTitle": "التنبيهات المالية",
+    "noNotifications": "لا توجد تنبيهات حالياً 🎉",
+    "noNotificationsHint": "ستظهر هنا الحقوق والالتزامات المتأخرة أو القريبة من الاستحقاق",
+    "overdueItems": "متأخرة ⚠️",
+    "upcomingItems": "قادمة 📅"
   },
   "en": {
     "appTitle": "Smart Budget | Smart Budget",
@@ -377,7 +382,7 @@
     "gallery": "Choose from Gallery",
     "cancel": "Cancel",
     "backupTitle": "Backup",
-    "backupConfirmMsg": "Do you want to create a backup of your data on\nGoogle Drive?",
+    "backupConfirmMsg": "Do you want to create a backup of your data on Google Drive?",
     "backupSave": "Yes, Save Backup",
     "backupView": "View Saved Backups",
     "backupDriveTitle": "Backups",
@@ -537,7 +542,12 @@
     "periodMonth": "This month",
     "periodYear": "This year",
     "totalDeposits": "Total deposits",
-    "totalWithdrawals": "Total withdrawals"
+    "totalWithdrawals": "Total withdrawals",
+    "notificationsTitle": "Financial Notifications",
+    "noNotifications": "No notifications right now 🎉",
+    "noNotificationsHint": "Overdue or upcoming rights and obligations will appear here",
+    "overdueItems": "Overdue ⚠️",
+    "upcomingItems": "Upcoming 📅"
   },
   "ur": {
     "appTitle": "سمارٹ بجٹ | Smart Budget",
@@ -621,7 +631,7 @@
     "debtCarFinance": "🚗 گاڑی کی مالیات",
     "debtFamily": "👨‍👩‍👧 خاندانی ذمہ داریاں",
     "debtSubscriptions": "📅 بار بار سبسکرپشنز",
-    "debtSalaries": "👨‍ تنخواہیں",
+    "debtSalaries": "👨‍💼 تنخواہیں",
     "debtOther": "📦 دیگر",
     "billAmount": "💵 بل / قسط کی رقم",
     "entityCreditor": "🏢 فریق / قرض دہندہ",
@@ -647,7 +657,7 @@
     "gallery": "گیلری سے منتخب کریں",
     "cancel": "منسوخ کریں",
     "backupTitle": "بیک اپ",
-    "backupConfirmMsg": "کیا آپ اپنے ڈیٹا کا بیک اپ\nGoogle Drive پر بنانا چاہتے ہیں؟",
+    "backupConfirmMsg": "کیا آپ اپنے ڈیٹا کا بیک اپ Google Drive پر بنانا چاہتے ہیں؟",
     "backupSave": "ہاں، بیک اپ محفوظ کریں",
     "backupView": "محفوظ شدہ بیک اپ دیکھیں",
     "backupDriveTitle": "بیک اپ",
@@ -807,6 +817,11 @@
     "periodMonth": "اس مہینے",
     "periodYear": "اس سال",
     "totalDeposits": "کل جمع شدہ",
-    "totalWithdrawals": "کل نکالی گئی"
+    "totalWithdrawals": "کل نکالی گئی",
+    "notificationsTitle": "مالی اطلاعات",
+    "noNotifications": "ابھی کوئی اطلاعات نہیں 🎉",
+    "noNotificationsHint": "واجب الادا یا آنے والی حقوق اور ذمہ داریاں یہاں ظاہر ہوں گی",
+    "overdueItems": "واجب الادا ⚠️",
+    "upcomingItems": "آنے والی 📅"
   }
 }
