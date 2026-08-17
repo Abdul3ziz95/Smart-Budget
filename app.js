@@ -2076,15 +2076,36 @@ async function deleteTransaction() {
 }
 
 // =============================================================
-// 12.5 🔔 NOTIFICATIONS — التنبيهات المالية (جديد)
+// 12.5 🔔 NOTIFICATIONS — التنبيهات المالية (نظام مقروء/غير مقروء)
 // =============================================================
-// ✔ جمع الاستحقاقات المتأخرة والقادمة خلال 7 أيام
+
+// ✔ تخزين التنبيهات المقروءة في localStorage
+function getReadNotifications() {
+    try {
+        const list = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+        return Array.isArray(list) ? list : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveReadNotifications(list) {
+    localStorage.setItem('readNotifications', JSON.stringify(list));
+}
+
+// ✔ معرف فريد لكل تنبيه (نوع + clientId + تاريخ الاستحقاق)
+function getNotificationId(item) {
+    return `${item.type}|${item.id}|${item.date}`;
+}
+
+// ✔ جمع جميع الاستحقاقات المتأخرة والقادمة خلال 7 أيام (مع تحديد المقروءة)
 function getUpcomingItems() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const next7 = new Date(today);
     next7.setDate(today.getDate() + 7);
 
+    const readList = getReadNotifications();
     const items = [];
 
     // --- الحقوق المستحقة (لك) ---
@@ -2095,14 +2116,17 @@ function getUpcomingItems() {
         const due = new Date(r.تاريخ_الاستحقاق);
         if (isNaN(due)) return;
         if (due <= next7) {
-            items.push({
+            const item = {
                 type: 'right',
+                id: r.clientId || r.id || '',
                 name: r.النوع,
                 entity: r.الجهة,
                 amount: remaining,
                 date: r.تاريخ_الاستحقاق,
                 overdue: due < today
-            });
+            };
+            item.read = readList.includes(getNotificationId(item));
+            items.push(item);
         }
     });
 
@@ -2110,31 +2134,40 @@ function getUpcomingItems() {
     (db.deb || []).forEach(d => {
         const remaining = d.المتبقي_للالتزام !== undefined
             ? parseAmount(d.المتبقي_للالتزام)
-            : ((d.الحالة === 'مدفوع' || d.الحالة === 'مدفوع بالكامل' || d.الحالة === 'Fully Paid') ? 0 : parseAmount(d.المبلغ || 0));
+            : ((d.الحالة === 'مدفوع' || d.الحالة === 'مدفوع بالكامل' || d.الحالة === 'Fully Paid')
+                ? 0 : parseAmount(d.المبلغ || 0));
         if (remaining <= 0) return;
         if (!d.تاريخ_الاستحقاق) return;
         const due = new Date(d.تاريخ_الاستحقاق);
         if (isNaN(due)) return;
         if (due <= next7) {
-            items.push({
+            const item = {
                 type: 'debt',
+                id: d.clientId || d.id || '',
                 name: d.النوع,
                 entity: d.الجهة,
                 amount: remaining,
                 date: d.تاريخ_الاستحقاق,
                 overdue: due < today
-            });
+            };
+            item.read = readList.includes(getNotificationId(item));
+            items.push(item);
         }
     });
 
     return items.sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 
-// ✔ تحديث رقم الشارة على زر الجرس
+// ✔ عدد التنبيهات غير المقروءة فقط (للعداد على الجرس)
+function getUnreadCount() {
+    return getUpcomingItems().filter(i => !i.read).length;
+}
+
+// ✔ تحديث رقم الشارة على زر الجرس (عدد غير المقروءة فقط)
 function updateNotificationBadge() {
     const badge = document.getElementById('notifBadge');
     if (!badge) return;
-    const count = getUpcomingItems().length;
+    const count = getUnreadCount();
     badge.textContent = count > 99 ? '99+' : count;
     badge.style.display = count > 0 ? 'flex' : 'none';
 }
@@ -2144,7 +2177,95 @@ function openNotifications() {
     openLayer('notifications');
 }
 
-// ✔ رسم محتوى مودال التنبيهات
+// ✔ تعليم تنبيه محدد كمقروء عند عرض تفاصيله + فتح شاشة التفاصيل
+function viewNotification(id) {
+    const items = getUpcomingItems();
+    const item = items.find(i => getNotificationId(i) === id);
+    if (!item) return;
+
+    // تعليم كمقروء إذا لم يكن مقروءاً
+    if (!item.read) {
+        const readList = getReadNotifications();
+        if (!readList.includes(id)) {
+            readList.push(id);
+            saveReadNotifications(readList);
+        }
+        updateNotificationBadge(); // ✔ ينقص العداد بمقدار 1
+    }
+
+    // عرض شاشة التفاصيل الكاملة
+    renderNotificationDetail(item);
+}
+
+// ✔ شاشة عرض تفاصيل تنبيه واحد (مع زر رجوع)
+function renderNotificationDetail(item) {
+    const el = document.getElementById('notificationsContent');
+    if (!el) return;
+
+    // البحث عن العنصر الأصلي في db
+    let source = null;
+    if (item.type === 'right') {
+        source = db.rig.find(r => (r.clientId || r.id) === item.id);
+    } else {
+        source = db.deb.find(d => (d.clientId || d.id) === item.id);
+    }
+
+    const typeLabel = item.type === 'right' ? translate('rightLabel') : translate('debtLabel');
+    const typeColor = item.type === 'right' ? 'var(--success)' : 'var(--danger)';
+    const typeIcon = item.type === 'right' ? 'fa-hand-holding-usd' : 'fa-file-invoice-dollar';
+    const arrowIcon = item.type === 'right' ? 'fa-arrow-down' : 'fa-arrow-up';
+    const statusText = item.overdue ? translate('statusOverdue') : translate('upcomingItems');
+    const statusColor = item.overdue ? 'var(--danger)' : 'var(--warning)';
+
+    let html = `
+        <button class="secondary" onclick="renderNotifications()" style="margin-bottom:15px;">
+            <i class="fas fa-arrow-right" style="margin-left:6px;"></i> ${translate('backToNotifications')}
+        </button>
+
+        <div class="card" style="border-top-color:${typeColor};">
+            <div style="text-align:center;margin-bottom:18px;">
+                <span style="display:inline-block;background:${typeColor};color:#fff;padding:8px 24px;border-radius:24px;font-weight:800;font-size:1.05em;">
+                    <i class="fas ${typeIcon}" style="margin-left:8px;"></i> ${typeLabel}
+                </span>
+            </div>
+
+            <h3 style="color:${typeColor};margin-top:0;display:flex;align-items:center;gap:8px;">
+                <i class="fas ${typeIcon}"></i> ${item.name}
+            </h3>
+
+            <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;">
+                <span style="background:${statusColor};color:#fff;padding:4px 14px;border-radius:14px;font-size:0.85em;font-weight:700;">
+                    ${item.overdue ? '⚠️' : '📅'} ${statusText}
+                </span>
+                <span style="background:${typeColor};color:#fff;padding:4px 14px;border-radius:14px;font-size:0.85em;font-weight:700;">
+                    <i class="fas ${arrowIcon}" style="margin-left:4px;"></i> ${formatCurrency(item.amount)}
+                </span>
+            </div>
+    `;
+
+    // عرض جميع حقول العنصر الأصلي
+    if (source) {
+        html += `<div style="border-top:1px solid var(--border-color);padding-top:12px;margin-top:8px;">`;
+        for (const [key, val] of Object.entries(source)) {
+            if (['id', 'clientId', 'صورة', 'المبلغ_المضاف_للرصيد', 'المبلغ_المخصوم_للرصيد'].includes(key)) continue;
+            if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '' && key !== 'الوصف')) continue;
+
+            const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
+            const display = isAmt ? formatCurrency(val, true) : val;
+
+            html += `<p style="margin:8px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                <strong style="color:#666;">${key.replace(/_/g, ' ')}:</strong>
+                <span style="font-weight:600;">${display}</span>
+            </p>`;
+        }
+        html += `</div>`;
+    }
+
+    html += `</div>`;
+    el.innerHTML = html;
+}
+
+// ✔ رسم محتوى مودال التنبيهات (مقروءة + غير مقروءة بمظهر مختلف + شارة النوع)
 function renderNotifications() {
     const el = document.getElementById('notificationsContent');
     if (!el) return;
@@ -2160,48 +2281,66 @@ function renderNotifications() {
         return;
     }
 
-    const overdue = items.filter(i => i.overdue);
-    const upcoming = items.filter(i => !i.overdue);
+    const unread = items.filter(i => !i.read);
+    const read = items.filter(i => i.read);
 
-    let html = `<div class="notif-summary">
+    let html = '';
+
+    // ✔ ملخص سريع: عدد غير المقروءة والمقروءة
+    html += `<div class="notif-summary">
         <div class="notif-sum-card overdue-card">
-            <span class="sum-label">${translate('overdueItems')}</span>
-            <span class="sum-value">${overdue.length}</span>
+            <span class="sum-label">${translate('unreadNotifications')}</span>
+            <span class="sum-value">${unread.length}</span>
         </div>
         <div class="notif-sum-card upcoming-card">
-            <span class="sum-label">${translate('upcomingItems')}</span>
-            <span class="sum-value">${upcoming.length}</span>
+            <span class="sum-label">${translate('readNotifications')}</span>
+            <span class="sum-value">${read.length}</span>
         </div>
     </div>`;
 
+    // ✔ دالة رسم عنصر تنبيه واحد (مع شارة حق/التزام)
     const renderItem = (i) => {
-        const cls = i.overdue ? 'overdue' : 'upcoming';
+        const nid = getNotificationId(i);
+        const cls = i.read ? 'notif-item read' : (i.overdue ? 'notif-item overdue' : 'notif-item upcoming');
         const icon = i.type === 'right' ? 'fa-hand-holding-usd' : 'fa-file-invoice-dollar';
+        const typeLabel = i.type === 'right' ? translate('rightLabel') : translate('debtLabel');
+        const typeColor = i.type === 'right' ? 'var(--success)' : 'var(--danger)';
+        const arrowIcon = i.type === 'right' ? 'fa-arrow-down' : 'fa-arrow-up';
         const tag = i.overdue ? translate('statusOverdue') : translate('upcomingItems');
-        const typeLabel = i.type === 'right' ? translate('navRights') : translate('navDebts');
+        const readBadge = i.read
+            ? `<span class="notif-tag read-tag"><i class="fas fa-check"></i> ${translate('readNotification')}</span>`
+            : `<span class="notif-tag">${tag}</span>`;
         const entity = (i.entity && i.entity !== '—')
             ? `<span class="notif-entity"><i class="fas fa-user"></i> ${i.entity}</span>` : '';
+        const clickAttr = i.read ? '' : `onclick="viewNotification('${nid}')"`;
 
-        return `<div class="notif-item ${cls}">
+        return `<div class="${cls}" ${clickAttr}>
             <div class="notif-head">
                 <span class="notif-name"><i class="fas ${icon}"></i>${i.name}</span>
-                <span class="notif-tag">${tag}</span>
+                ${readBadge}
             </div>
+            <span class="notif-type-badge" style="background:${typeColor};">
+                <i class="fas ${arrowIcon}"></i> ${typeLabel}
+            </span>
             <div class="notif-body">
                 <span class="notif-amount">${formatCurrency(i.amount)}</span>
                 <span class="notif-date"><i class="far fa-clock"></i>${formatDateTime(i.date)}</span>
             </div>
             ${entity}
+            ${i.read ? '' : `<div class="notif-read-hint"><i class="fas fa-hand-pointer"></i> ${translate('clickToRead')}</div>`}
         </div>`;
     };
 
-    if (overdue.length) {
-        html += `<div class="notif-group-title overdue"><i class="fas fa-exclamation-triangle"></i> ${translate('overdueItems')} <span class="count-pill">${overdue.length}</span></div>`;
-        html += overdue.map(renderItem).join('');
+    // ✔ غير المقروءة أولاً (الأهم)
+    if (unread.length) {
+        html += `<div class="notif-group-title unread-title"><i class="fas fa-bell"></i> ${translate('unreadNotifications')} <span class="count-pill">${unread.length}</span></div>`;
+        html += unread.map(renderItem).join('');
     }
-    if (upcoming.length) {
-        html += `<div class="notif-group-title upcoming"><i class="fas fa-clock"></i> ${translate('upcomingItems')} <span class="count-pill">${upcoming.length}</span></div>`;
-        html += upcoming.map(renderItem).join('');
+
+    // ✔ المقروءة ثانياً (باهتة)
+    if (read.length) {
+        html += `<div class="notif-group-title read-title"><i class="fas fa-check-circle"></i> ${translate('readNotifications')} <span class="count-pill">${read.length}</span></div>`;
+        html += read.map(renderItem).join('');
     }
 
     el.innerHTML = html;
@@ -2489,7 +2628,7 @@ window.onload = () => {
     updateStats();
     updateDriveUI();
 
-    // 🔔 جديد: تحديث الشارة عند بدء التشغيل
+    // 🔔 جديد: تحديث شارة الجرس عند بدء التشغيل
     updateNotificationBadge();
 
     setTimeout(() => {
