@@ -56,8 +56,26 @@
 </button>
 </div>
 </div>
+
+<!-- 🎯 جديد: بطاقة الأهداف -->
+<div class="goals-card" id="goalsCard">
+<div class="goals-card-header">
+<span class="goals-card-title"><i class="fas fa-bullseye" style="margin-left:8px;"></i><span data-i18n="goalsMyGoals">أهدافي</span></span>
+<span class="goals-badge" id="goalsBadge" style="display:none;">0</span>
+</div>
+<div id="goalsCardSummary"></div>
+<button class="secondary" onclick="openGoalsModal()" style="margin-top:12px;">
+<i class="fas fa-list" style="margin-left:6px;"></i><span data-i18n="viewAllGoals">عرض الكل</span>
+</button>
+</div>
+
+<!-- 📊 ملخص الإحصائيات (قابل للطي) -->
 <div class="stats-summary">
-<h2 class="stats-title" data-i18n="statsSummary">ملخص الإحصائيات</h2>
+<button class="stats-toggle-btn" id="statsToggleBtn" onclick="toggleStatsSummary()">
+<span><i class="fas fa-chart-bar" style="margin-left:8px;"></i><span data-i18n="statsSummary">ملخص الإحصائيات</span></span>
+<i class="fas fa-chevron-down stats-toggle-icon" id="statsToggleIcon"></i>
+</button>
+<div class="stats-collapsible" id="statsCollapsible">
 <div class="stats-grid">
 <div class="stat-card stat-income">
 <h3 data-i18n="totalIncome">إجمالي الدخل</h3>
@@ -82,6 +100,7 @@
 <div class="stat-card stat-debt-paid">
 <h3 data-i18n="debtsPaid">المدفوع من الالتزامات</h3>
 <p id="sDebPaid">0 <span class="currency-symbol">﷼</span></p>
+</div>
 </div>
 </div>
 </div>
@@ -170,7 +189,6 @@
 <span class="cal-icon">📅</span>
 </div>
 <span class="field-hint" data-i18n="dueDateHint">تاريخ الاستحقاق المتوقع</span>
-<!-- ⏱️ جديد: اختيار وقت التنبيه -->
 <select id="rNotifTiming">
 <option value="" data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
 <option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
@@ -219,7 +237,6 @@
 <input id="dDueDate" type="date"/>
 <span class="cal-icon">📅</span>
 </div>
-<!-- ⏱️ جديد: اختيار وقت التنبيه -->
 <select id="dNotifTiming">
 <option value="" data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
 <option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
@@ -285,7 +302,7 @@
 <div class="modal-content" id="detailContent"></div>
 </div>
 
-<!-- ===== MODAL: BALANCE ACTION (DEPOSIT/WITHDRAW) ===== -->
+<!-- ===== MODAL: BALANCE ACTION ===== -->
 <div class="modal" id="balanceActionModal">
 <header>
 <button onclick="closeLayer('balanceAction')">✕</button>
@@ -324,7 +341,7 @@
 </div>
 </div>
 
-<!-- ===== MODAL: NOTIFICATIONS (🔔 بدون شريط التوقيت) ===== -->
+<!-- ===== MODAL: NOTIFICATIONS ===== -->
 <div class="modal" id="notificationsModal">
 <header>
 <button onclick="closeLayer('notifications')">✕</button>
@@ -333,6 +350,73 @@
 </header>
 <div class="modal-content">
 <div id="notificationsContent"></div>
+</div>
+</div>
+
+<!-- ===== MODAL: GOALS (🎯 جديد) ===== -->
+<div class="modal" id="goalsModal">
+<header>
+<button onclick="closeLayer('goals')">✕</button>
+<span class="title"><i class="fas fa-bullseye" style="margin-left:8px;"></i> <span data-i18n="goalsTitle">الأهداف</span></span>
+<span class="header-spacer"></span>
+</header>
+<div class="modal-content">
+<div id="goalsList"></div>
+<button class="action" onclick="openAddGoalModal()" style="margin-top:16px;">
+<i class="fas fa-plus" style="margin-left:6px;"></i> <span data-i18n="addGoal">إضافة هدف</span>
+</button>
+</div>
+</div>
+
+<!-- ===== MODAL: ADD/EDIT GOAL (🎯 جديد) ===== -->
+<div class="modal" id="addGoalModal">
+<header>
+<button onclick="closeLayer('addGoal')">✕</button>
+<span class="title" id="addGoalTitle" data-i18n="addGoalTitle">هدف جديد</span>
+<span class="header-spacer"></span>
+</header>
+<div class="modal-content">
+<!-- الخطوة 1: اختيار النوع -->
+<div id="goalTypeStep">
+<p class="goal-type-label" data-i18n="chooseGoalType">اختر نوع الهدف:</p>
+<div class="goal-type-grid">
+<button class="goal-type-btn" onclick="selectGoalType('saving')">
+<i class="fas fa-piggy-bank"></i>
+<span data-i18n="goalSaving">توفير</span>
+<small data-i18n="goalSavingDesc">الوصول لرصيد معين</small>
+</button>
+<button class="goal-type-btn" onclick="selectGoalType('repayment')">
+<i class="fas fa-hand-holding-usd"></i>
+<span data-i18n="goalRepayment">سداد</span>
+<small data-i18n="goalRepaymentDesc">سداد الالتزامات</small>
+</button>
+<button class="goal-type-btn" onclick="selectGoalType('collection')">
+<i class="fas fa-hand-holding-heart"></i>
+<span data-i18n="goalCollection">تحصيل</span>
+<small data-i18n="goalCollectionDesc">تحصيل الحقوق</small>
+</button>
+<button class="goal-type-btn" onclick="selectGoalType('monthly')">
+<i class="fas fa-calendar-check"></i>
+<span data-i18n="goalMonthly">شهري</span>
+<small data-i18n="goalMonthlyDesc">توفير مبلغ شهرياً</small>
+</button>
+</div>
+</div>
+<!-- الخطوة 2: التفاصيل -->
+<div id="goalDetailsStep" style="display:none;">
+<button class="secondary" onclick="backToGoalTypeStep()" style="margin-bottom:12px;">
+<i class="fas fa-arrow-right" style="margin-left:6px;"></i> <span data-i18n="backToTypeChoice">رجوع لاختيار النوع</span>
+</button>
+<div id="goalTypeBadge"></div>
+<input id="goalName" type="text" data-i18n-placeholder="goalNamePlaceholder" placeholder="📝 اسم الهدف"/>
+<input id="goalAmount" type="text" data-i18n-placeholder="goalAmountPlaceholder" placeholder="💵 المبلغ المستهدف" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*"/>
+<div class="datetime-container">
+<input id="goalDate" type="date"/>
+<span class="cal-icon">📅</span>
+</div>
+<span class="field-hint" data-i18n="goalDateHint">التاريخ المستهدف لتحقيق الهدف</span>
+<button class="action" onclick="saveGoal()" data-i18n="saveGoal">حفظ الهدف 🎯</button>
+</div>
 </div>
 </div>
 
@@ -488,6 +572,12 @@
 <i class="fas fa-coins"></i>
 <span data-i18n="changeCurrency">تغيير العملة</span>
 <span class="currency-label" id="sidebarCurrencyLabel">﷼</span>
+</button>
+<!-- 🎯 جديد: زر الأهداف -->
+<button class="sidebar-menu-item" onclick="closeLayer('sidebar');openGoalsModal();">
+<i class="fas fa-bullseye"></i>
+<span data-i18n="goalsTitle">الأهداف</span>
+<span id="sidebarGoalsCount" style="margin-right:auto;font-size:0.85em;color:#888;"></span>
 </button>
 <div class="sidebar-divider"></div>
 <button class="sidebar-menu-item" onclick="openExportNameModal()">
