@@ -75,9 +75,138 @@ transition: all 0.2s; cursor: pointer; font-family: inherit; font-size: 16px; fo
 .balance-actions .deposit i { color: var(--success); }
 .balance-actions .withdraw i { color: var(--danger); }
 .balance-actions .balance-log i { color: var(--p); }
-/* ============ OVERVIEW — ملخص الإحصائيات ============ */
+
+/* ============================================================
+   🎯 GOALS CARD — بطاقة الأهداف في الصفحة الرئيسية
+   ============================================================ */
+.goals-card {
+background: var(--card-bg); border-radius: 20px; padding: 20px;
+margin-bottom: 20px; box-shadow: var(--shadow-hover);
+border-top: 5px solid #8b5cf6; position: relative; overflow: hidden;
+transition: background var(--transition);
+}
+.goals-card-header {
+display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+}
+.goals-card-title {
+font-size: 17px; font-weight: 800; color: var(--text-dark);
+display: flex; align-items: center;
+}
+.goals-card-title i { color: #8b5cf6; }
+.goals-badge {
+background: #8b5cf6; color: #fff; font-size: 11px; font-weight: 800;
+min-width: 22px; height: 22px; padding: 0 6px; border-radius: 12px;
+display: flex; align-items: center; justify-content: center;
+box-shadow: 0 2px 8px rgba(139,92,246,0.4);
+}
+/* عنصر هدف واحد في البطاقة الرئيسية */
+.goal-item {
+background: var(--input-bg); border-radius: 14px; padding: 14px 16px;
+margin-bottom: 10px; border: 1px solid var(--border-color);
+transition: all 0.2s;
+}
+.goal-item:last-child { margin-bottom: 0; }
+.goal-item-header {
+display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+}
+.goal-item-name { font-weight: 700; font-size: 0.95em; color: var(--text-dark); }
+.goal-item-type {
+font-size: 0.72em; font-weight: 700; padding: 3px 10px; border-radius: 12px;
+color: #fff; white-space: nowrap;
+}
+.goal-item-type.saving { background: #8b5cf6; }
+.goal-item-type.repayment { background: var(--danger); }
+.goal-item-type.collection { background: var(--success); }
+.goal-item-type.monthly { background: #f59e0b; }
+/* شريط التقدم */
+.goal-progress-bar {
+width: 100%; height: 10px; background: var(--border-color);
+border-radius: 6px; overflow: hidden; margin: 8px 0;
+}
+.goal-progress-fill {
+height: 100%; border-radius: 6px;
+transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+position: relative;
+}
+.goal-progress-fill.progress-low { background: linear-gradient(90deg, #ef476f, #ff6b8a); }
+.goal-progress-fill.progress-mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.goal-progress-fill.progress-high { background: linear-gradient(90deg, #2a9d8f, #34d399); }
+.goal-progress-fill.progress-complete {
+background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+0% { opacity: 1; }
+50% { opacity: 0.7; }
+100% { opacity: 1; }
+}
+.goal-item-stats {
+display: flex; justify-content: space-between; align-items: center;
+font-size: 0.82em; color: #888;
+}
+body.dark-mode .goal-item-stats { color: #aaa; }
+.goal-item-stats .goal-amount { font-weight: 700; color: var(--text-dark); }
+.goal-item-stats .goal-percent { font-weight: 800; }
+.goal-percent.low { color: var(--danger); }
+.goal-percent.mid { color: #f59e0b; }
+.goal-percent.high { color: var(--success); }
+.goal-percent.complete { color: #8b5cf6; }
+/* حالة لا توجد أهداف */
+.goals-empty {
+text-align: center; padding: 20px 10px; color: #999;
+}
+.goals-empty i { font-size: 2.5em; color: #8b5cf6; opacity: 0.4; display: block; margin-bottom: 10px; }
+.goals-empty p { margin: 0 0 4px; font-weight: 700; font-size: 0.95em; }
+.goals-empty small { font-size: 0.82em; color: #aaa; }
+/* التأثير الاحتفالي عند اكتمال هدف */
+.goal-celebration {
+position: relative; overflow: hidden;
+}
+.goal-celebration::after {
+content: '🎉';
+position: absolute; top: 8px; left: 12px;
+font-size: 1.4em;
+animation: bounce 1s ease infinite;
+}
+@keyframes bounce {
+0%, 100% { transform: translateY(0); }
+50% { transform: translateY(-6px); }
+}
+.goal-complete-badge {
+display: inline-flex; align-items: center; gap: 4px;
+background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+color: #fff; font-size: 0.72em; font-weight: 800;
+padding: 3px 10px; border-radius: 12px;
+}
+
+/* ============================================================
+   📊 STATS COLLAPSIBLE — ملخص الإحصائيات القابل للطي
+   ============================================================ */
 .stats-summary { margin-bottom: 15px; }
-.stats-title { font-size: 18px; font-weight: 800; margin: 0 0 12px; color: var(--text-dark); }
+.stats-toggle-btn {
+width: 100%; padding: 14px 18px; border-radius: 14px;
+background: var(--card-bg); border: 1px solid var(--border-color);
+box-shadow: var(--shadow-light); cursor: pointer;
+display: flex; justify-content: space-between; align-items: center;
+font-family: inherit; font-size: 16px; font-weight: 800; color: var(--text-dark);
+transition: all 0.2s;
+}
+.stats-toggle-btn:hover { box-shadow: var(--shadow-hover); border-color: var(--p); }
+.stats-toggle-btn span { display: flex; align-items: center; }
+.stats-toggle-btn span i { color: var(--p); }
+.stats-toggle-icon {
+transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+color: var(--p); font-size: 0.9em;
+}
+.stats-toggle-icon.open { transform: rotate(180deg); }
+.stats-collapsible {
+max-height: 0; overflow: hidden;
+transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, margin 0.4s ease;
+opacity: 0; margin-top: 0;
+}
+.stats-collapsible.open {
+max-height: 800px; opacity: 1; margin-top: 14px;
+}
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .stat-card {
 background: var(--card-bg); border-radius: 18px; padding: 16px 16px 20px;
@@ -107,6 +236,7 @@ body.dark-mode #sDebTotal span:not(.currency-symbol) { color: #fbbf24; }
 body.dark-mode #sDebPaid span:not(.currency-symbol) { color: #f87171; }
 .stats-grid .currency-symbol { color: var(--p) !important; }
 @media (max-width: 340px) { .stats-grid { grid-template-columns: 1fr; } }
+
 /* ============ SECTION HINTS ============ */
 .section-hint {
 display: block; padding: 10px 14px; margin: 6px 0 12px; border-radius: 10px;
@@ -419,11 +549,8 @@ border-radius: 50%; background: rgba(72,202,228,0.2); transition: background 0.3
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); } 70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
 
 /* ============================================================
-   🔔 NOTIFICATION SYSTEM — نظام التنبيهات الكامل
-   (الجرس + المقروء/غير المقروء + حق/التزام)
+   🔔 NOTIFICATION SYSTEM — نظام التنبيهات
    ============================================================ */
-
-/* ✔ زر الجرس في الهيدر + أنيميشن الاهتزاز */
 #notificationBell { position: relative; }
 #notificationBell i { display: inline-block; animation: bellRing 4s ease-in-out infinite; transform-origin: top center; }
 @keyframes bellRing {
@@ -435,8 +562,6 @@ border-radius: 50%; background: rgba(72,202,228,0.2); transition: background 0.3
 90% { transform: rotate(3deg); }
 92% { transform: rotate(0); }
 }
-
-/* ✔ شارة عدد التنبيهات غير المقروءة على الجرس */
 .notif-badge {
 position: absolute; top: -5px; right: -2px;
 background: var(--danger); color: #fff;
@@ -448,8 +573,6 @@ border: 2px solid var(--p);
 animation: pulse 1.5s infinite;
 pointer-events: none; z-index: 2;
 }
-
-/* ✔ شريط الملخص داخل مودال التنبيهات */
 .notif-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 14px; }
 .notif-summary .notif-sum-card {
 background: var(--input-bg); border: 1px solid var(--border-color);
@@ -464,8 +587,6 @@ body.dark-mode .notif-summary .notif-sum-card .sum-label { color: #aaa; }
 .notif-summary .notif-sum-card.upcoming-card { border-top: 4px solid var(--warning); }
 .notif-summary .notif-sum-card.upcoming-card .sum-value { color: #8a6d00; }
 body.dark-mode .notif-summary .notif-sum-card.upcoming-card .sum-value { color: var(--warning); }
-
-/* ✔ عناوين المجموعات (غير مقروءة / مقروءة) */
 .notif-group-title {
 font-size: 0.95em; font-weight: 800; margin: 16px 0 8px;
 display: flex; align-items: center; gap: 8px; color: var(--text-dark);
@@ -477,21 +598,15 @@ body.dark-mode .notif-group-title.read-title { color: #aaa; }
 background: var(--input-bg); border: 1px solid var(--border-color);
 border-radius: 12px; padding: 1px 10px; font-size: 0.85em;
 }
-
-/* ✔ عنصر التنبيه — الحالة الأساسية */
 .notif-item {
 background: var(--card-bg); padding: 16px; border-radius: 14px; margin-bottom: 10px;
 box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-right: 5px solid var(--s);
 transition: all 0.2s; color: var(--text-dark);
 }
-
-/* ✔ تنبيه غير مقروء (متأخر / قادم) — بارز وقابل للنقر */
 .notif-item.overdue, .notif-item.upcoming { cursor: pointer; }
 .notif-item.overdue { border-right-color: var(--danger); background: color-mix(in srgb, var(--danger) 5%, var(--card-bg)); }
 .notif-item.upcoming { border-right-color: var(--warning); background: color-mix(in srgb, var(--warning) 6%, var(--card-bg)); }
 .notif-item.overdue:hover, .notif-item.upcoming:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
-
-/* ✔ تنبيه مقروء — باهت وغير قابل للنقر */
 .notif-item.read {
 border-right-color: #ccc;
 background: color-mix(in srgb, var(--card-bg) 95%, #999);
@@ -504,16 +619,12 @@ opacity: 0.65; cursor: default;
 .notif-item.read .notif-body { color: #aaa; }
 .notif-item.read .notif-entity { color: #bbb; }
 body.dark-mode .notif-item.read { border-right-color: #555; background: color-mix(in srgb, var(--card-bg) 90%, #666); }
-
-/* ✔ رأس عنصر التنبيه */
 .notif-item .notif-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .notif-item .notif-name { font-weight: 800; font-size: 1em; }
 .notif-item .notif-name i { margin-left: 7px; }
 .notif-item.overdue .notif-name i { color: var(--danger); }
 .notif-item.upcoming .notif-name i { color: #b8860b; }
 body.dark-mode .notif-item.upcoming .notif-name i { color: var(--warning); }
-
-/* ✔ شارات الحالة (متأخر / قادم / مقروء) */
 .notif-item .notif-tag { font-size: 0.72em; font-weight: 800; padding: 3px 12px; border-radius: 20px; white-space: nowrap; }
 .notif-item.overdue .notif-tag { background: var(--danger); color: #fff; }
 .notif-item.upcoming .notif-tag { background: var(--warning); color: #333; }
@@ -521,8 +632,6 @@ body.dark-mode .notif-item.upcoming .notif-name i { color: var(--warning); }
 .notif-item.read .notif-tag.read-tag { background: #e0e0e0; color: #666; }
 body.dark-mode .notif-tag.read-tag,
 body.dark-mode .notif-item.read .notif-tag.read-tag { background: #444; color: #aaa; }
-
-/* ✔ شارة "حق لك" / "التزام عليك" */
 .notif-type-badge {
 display: inline-flex; align-items: center; gap: 6px;
 color: #fff; font-size: 0.8em; font-weight: 800;
@@ -531,8 +640,6 @@ margin: 6px 0 10px; white-space: nowrap;
 }
 .notif-type-badge i { font-size: 0.9em; }
 .notif-item.read .notif-type-badge { opacity: 0.5; }
-
-/* ✔ جسم عنصر التنبيه (المبلغ + التاريخ) */
 .notif-item .notif-body { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.9em; color: #666; flex-wrap: wrap; }
 body.dark-mode .notif-item .notif-body { color: #aaa; }
 .notif-item .notif-amount { font-weight: 800; color: var(--text-dark); }
@@ -540,12 +647,8 @@ body.dark-mode .notif-item .notif-body { color: #aaa; }
 .notif-item .notif-date i, .notif-item .notif-entity i { margin-left: 5px; }
 .notif-item .notif-entity { font-size: 0.85em; color: #888; margin-top: 6px; display: block; }
 body.dark-mode .notif-item .notif-entity { color: #aaa; }
-
-/* ✔ مؤشر "اضغط للعرض" في التنبيهات غير المقروءة */
 .notif-read-hint { font-size: 0.75em; color: var(--p); margin-top: 8px; display: block; font-weight: 700; }
 body.dark-mode .notif-read-hint { color: #90e0ef; }
-
-/* ✔ حالة عدم وجود تنبيهات */
 .notif-empty-state { text-align: center; color: #999; padding: 40px 10px; }
 .notif-empty-state i {
 font-size: 3.2em; display: block; margin-bottom: 16px; color: var(--success);
@@ -554,10 +657,81 @@ width: 90px; height: 90px; line-height: 90px; border-radius: 50%; margin: 0 auto
 }
 .notif-empty-state p { font-size: 1.1em; font-weight: 700; margin: 0 0 6px; }
 .notif-empty-state small { font-size: 0.85em; color: #aaa; }
-
 @media (max-width: 380px) {
 .notif-summary { grid-template-columns: 1fr; }
 .notif-item .notif-head { flex-direction: column; align-items: flex-start; }
+}
+
+/* ============================================================
+   🎯 GOALS MODAL — مودال إدارة الأهداف
+   ============================================================ */
+.goal-list-item {
+background: var(--card-bg); border-radius: 16px; padding: 18px;
+margin-bottom: 12px; box-shadow: var(--shadow-light);
+border-right: 5px solid #8b5cf6; transition: all 0.2s;
+}
+.goal-list-item:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+.goal-list-item.completed { border-right-color: var(--success); opacity: 0.85; }
+.goal-list-header {
+display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;
+}
+.goal-list-name { font-weight: 800; font-size: 1.05em; color: var(--text-dark); flex: 1; }
+.goal-list-actions { display: flex; gap: 6px; }
+.goal-list-actions button {
+background: none; border: none; cursor: pointer; padding: 6px 8px;
+border-radius: 8px; font-size: 0.9em; transition: all 0.2s;
+}
+.goal-list-actions .goal-edit-btn { color: var(--p); }
+.goal-list-actions .goal-edit-btn:hover { background: color-mix(in srgb, var(--p) 12%, transparent); }
+.goal-list-actions .goal-delete-btn { color: var(--danger); }
+.goal-list-actions .goal-delete-btn:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.goal-list-meta {
+display: flex; justify-content: space-between; align-items: center;
+font-size: 0.82em; color: #888; margin-top: 8px; flex-wrap: wrap; gap: 4px;
+}
+body.dark-mode .goal-list-meta { color: #aaa; }
+.goal-list-meta .goal-deadline { display: flex; align-items: center; gap: 4px; }
+.goal-list-meta .goal-deadline.overdue { color: var(--danger); font-weight: 700; }
+
+/* ============================================================
+   ➕ ADD GOAL MODAL — مودال إضافة/تعديل هدف
+   ============================================================ */
+.goal-type-label {
+font-size: 1em; font-weight: 800; color: var(--text-dark);
+margin: 0 0 14px; text-align: center;
+}
+.goal-type-grid {
+display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;
+}
+.goal-type-btn {
+display: flex; flex-direction: column; align-items: center; justify-content: center;
+gap: 8px; padding: 20px 12px; border-radius: 16px;
+background: var(--input-bg); border: 2px solid var(--border-color);
+cursor: pointer; transition: all 0.25s; font-family: inherit;
+text-align: center;
+}
+.goal-type-btn i { font-size: 2em; transition: transform 0.25s; }
+.goal-type-btn span { font-weight: 800; font-size: 0.95em; color: var(--text-dark); }
+.goal-type-btn small { font-size: 0.72em; color: #999; font-weight: 600; }
+.goal-type-btn:hover { border-color: #8b5cf6; transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.goal-type-btn:hover i { transform: scale(1.15); }
+.goal-type-btn:active { transform: scale(0.96); }
+.goal-type-btn.type-saving i { color: #8b5cf6; }
+.goal-type-btn.type-repayment i { color: var(--danger); }
+.goal-type-btn.type-collection i { color: var(--success); }
+.goal-type-btn.type-monthly i { color: #f59e0b; }
+.goal-type-btn.selected { border-color: #8b5cf6; background: color-mix(in srgb, #8b5cf6 8%, var(--input-bg)); }
+#goalTypeBadge {
+display: inline-flex; align-items: center; gap: 6px;
+padding: 6px 16px; border-radius: 14px; margin-bottom: 12px;
+font-size: 0.85em; font-weight: 800; color: #fff;
+}
+#goalTypeBadge.saving { background: #8b5cf6; }
+#goalTypeBadge.repayment { background: var(--danger); }
+#goalTypeBadge.collection { background: var(--success); }
+#goalTypeBadge.monthly { background: #f59e0b; }
+@media (max-width: 380px) {
+.goal-type-grid { grid-template-columns: 1fr; }
 }
 
 /* ============ RESPONSIVE ============ */
