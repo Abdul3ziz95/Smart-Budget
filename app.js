@@ -107,6 +107,7 @@ function _visualOpen(layerName, data = {}) {
         } else if (layerName === 'language') {
             updateLanguageModalCheckmarks();
         } else if (layerName === 'notifications') { // 🔔 جديد
+            cleanupExpiredReads(); // ✔ تنظيف المقروءة المنتهية فور الفتح
             renderNotifications();
         }
     } else if (layer.type === 'menu') {
@@ -2076,10 +2077,33 @@ async function deleteTransaction() {
 }
 
 // =============================================================
-// 12.5 🔔 NOTIFICATIONS — التنبيهات المالية (نظام مقروء/غير مقروء)
+// 12.5 🔔 NOTIFICATIONS — نظام التنبيهات المتقدم
+//      (توقيت قابل للتحديد + حذف المقروء بعد 24 ساعة)
 // =============================================================
 
-// ✔ تخزين التنبيهات المقروءة في localStorage
+// ⏱️ إعدادات وقت التنبيه (بالساعات): 1 ساعة، 24 ساعة، 7 أيام (168 ساعة)
+function getNotifTiming() {
+    const saved = parseInt(localStorage.getItem('notifTimingHours'));
+    if ([1, 24, 168].includes(saved)) return saved;
+    return 168; // الافتراضي: 7 أيام
+}
+
+function setNotifTiming(hours) {
+    localStorage.setItem('notifTimingHours', hours);
+    updateNotifTimingUI();
+    renderNotifications();
+    updateNotificationBadge();
+    toastMsg(translate('notifTimingChanged'), "success");
+}
+
+function updateNotifTimingUI() {
+    const current = getNotifTiming();
+    document.querySelectorAll('.notif-timing-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.hours) === current);
+    });
+}
+
+// 📖 تخزين التنبيهات المقروءة مع وقت القراءة
 function getReadNotifications() {
     try {
         const list = JSON.parse(localStorage.getItem('readNotifications') || '[]');
@@ -2093,19 +2117,31 @@ function saveReadNotifications(list) {
     localStorage.setItem('readNotifications', JSON.stringify(list));
 }
 
+// ✔ تنظيف التنبيهات المقروءة التي مر عليها أكثر من 24 ساعة
+function cleanupExpiredReads() {
+    const readList = getReadNotifications();
+    const now = Date.now();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+    const filtered = readList.filter(item => (now - item.readAt) < TWENTY_FOUR_HOURS);
+
+    if (filtered.length !== readList.length) {
+        saveReadNotifications(filtered);
+    }
+    return filtered;
+}
+
 // ✔ معرف فريد لكل تنبيه (نوع + clientId + تاريخ الاستحقاق)
 function getNotificationId(item) {
     return `${item.type}|${item.id}|${item.date}`;
 }
 
-// ✔ جمع جميع الاستحقاقات المتأخرة والقادمة خلال 7 أيام (مع تحديد المقروءة)
+// ✔ جمع الاستحقاقات بناءً على التوقيت المختار
 function getUpcomingItems() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const next7 = new Date(today);
-    next7.setDate(today.getDate() + 7);
-
-    const readList = getReadNotifications();
+    const now = new Date();
+    const timingHours = getNotifTiming();
+    const readList = cleanupExpiredReads();
+    const readIds = readList.map(r => r.id);
     const items = [];
 
     // --- الحقوق المستحقة (لك) ---
@@ -2113,9 +2149,14 @@ function getUpcomingItems() {
         const remaining = parseAmount(r.المتبقي || 0);
         if (remaining <= 0) return;
         if (!r.تاريخ_الاستحقاق) return;
+
         const due = new Date(r.تاريخ_الاستحقاق);
         if (isNaN(due)) return;
-        if (due <= next7) {
+
+        // حساب بداية نافذة التنبيه
+        const notifyFrom = new Date(due.getTime() - timingHours * 60 * 60 * 1000);
+
+        if (now >= notifyFrom) {
             const item = {
                 type: 'right',
                 id: r.clientId || r.id || '',
@@ -2123,9 +2164,9 @@ function getUpcomingItems() {
                 entity: r.الجهة,
                 amount: remaining,
                 date: r.تاريخ_الاستحقاق,
-                overdue: due < today
+                overdue: due < now
             };
-            item.read = readList.includes(getNotificationId(item));
+            item.read = readIds.includes(getNotificationId(item));
             items.push(item);
         }
     });
@@ -2138,9 +2179,13 @@ function getUpcomingItems() {
                 ? 0 : parseAmount(d.المبلغ || 0));
         if (remaining <= 0) return;
         if (!d.تاريخ_الاستحقاق) return;
+
         const due = new Date(d.تاريخ_الاستحقاق);
         if (isNaN(due)) return;
-        if (due <= next7) {
+
+        const notifyFrom = new Date(due.getTime() - timingHours * 60 * 60 * 1000);
+
+        if (now >= notifyFrom) {
             const item = {
                 type: 'debt',
                 id: d.clientId || d.id || '',
@@ -2148,9 +2193,9 @@ function getUpcomingItems() {
                 entity: d.الجهة,
                 amount: remaining,
                 date: d.تاريخ_الاستحقاق,
-                overdue: due < today
+                overdue: due < now
             };
-            item.read = readList.includes(getNotificationId(item));
+            item.read = readIds.includes(getNotificationId(item));
             items.push(item);
         }
     });
@@ -2163,7 +2208,7 @@ function getUnreadCount() {
     return getUpcomingItems().filter(i => !i.read).length;
 }
 
-// ✔ تحديث رقم الشارة على زر الجرس (عدد غير المقروءة فقط)
+// ✔ تحديث رقم الشارة على زر الجرس
 function updateNotificationBadge() {
     const badge = document.getElementById('notifBadge');
     if (!badge) return;
@@ -2186,8 +2231,8 @@ function viewNotification(id) {
     // تعليم كمقروء إذا لم يكن مقروءاً
     if (!item.read) {
         const readList = getReadNotifications();
-        if (!readList.includes(id)) {
-            readList.push(id);
+        if (!readList.find(r => r.id === id)) {
+            readList.push({ id: id, readAt: Date.now() });
             saveReadNotifications(readList);
         }
         updateNotificationBadge(); // ✔ ينقص العداد بمقدار 1
@@ -2269,6 +2314,8 @@ function renderNotificationDetail(item) {
 function renderNotifications() {
     const el = document.getElementById('notificationsContent');
     if (!el) return;
+
+    updateNotifTimingUI();
 
     const items = getUpcomingItems();
 
