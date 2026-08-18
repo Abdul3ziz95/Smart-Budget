@@ -279,11 +279,11 @@
  "debtLabel": "التزام عليك",
  "backToNotifications": "رجوع إلى التنبيهات",
  "upcomingItems": "قادمة 📅",
- "notifTimingLabel": "التنبيه قبل الاستحقاق بـ:",
- "notif1Hour": "ساعة",
- "notif24Hours": "24 ساعة",
- "notif7Days": "7 أيام",
- "notifTimingChanged": "تم تغيير وقت التنبيه ✅"
+ "notifTimingPlaceholder": "⏱️ التنبيه قبل الاستحقاق (اختياري)",
+ "notif1Hour": "⏱️ قبل ساعة",
+ "notif24Hours": "⏱️ قبل 24 ساعة",
+ "notif7Days": "⏱️ قبل 7 أيام",
+ "notifTimingHint": "الافتراضي: قبل 7 أيام"
 },
  "en": {
  "appTitle": "Smart Budget | Smart Budget",
@@ -565,11 +565,11 @@
  "debtLabel": "Obligation (Payable)",
  "backToNotifications": "Back to Notifications",
  "upcomingItems": "Upcoming 📅",
- "notifTimingLabel": "Notify before due date by:",
- "notif1Hour": "1 Hour",
- "notif24Hours": "24 Hours",
- "notif7Days": "7 Days",
- "notifTimingChanged": "Notification timing changed ✅"
+ "notifTimingPlaceholder": "⏱️ Notify before due date (optional)",
+ "notif1Hour": "⏱️ 1 Hour before",
+ "notif24Hours": "⏱️ 24 Hours before",
+ "notif7Days": "⏱️ 7 Days before",
+ "notifTimingHint": "Default: 7 days before"
 },
  "ur": {
  "appTitle": "سمارٹ بجٹ | Smart Budget",
@@ -851,10 +851,10 @@
  "debtLabel": "آپ کی ذمہ داری",
  "backToNotifications": "اطلاعات پر واپس",
  "upcomingItems": "آنے والی 📅",
- "notifTimingLabel": "میعاد سے پہلے مطلع کریں:",
- "notif1Hour": "1 گھنٹہ",
- "notif24Hours": "24 گھنٹے",
- "notif7Days": "7 دن",
- "notifTimingChanged": "اطلاع کا وقت تبدیل ہوگیا ✅"
+ "notifTimingPlaceholder": "⏱️ میعاد سے پہلے اطلاع (اختیاری)",
+ "notif1Hour": "⏱️ 1 گھنٹہ پہلے",
+ "notif24Hours": "⏱️ 24 گھنٹے پہلے",
+ "notif7Days": "⏱️ 7 دن پہلے",
+ "notifTimingHint": "پہلے سے طے شدہ: 7 دن پہلے"
 }
 }
