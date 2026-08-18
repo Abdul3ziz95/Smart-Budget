@@ -277,7 +277,13 @@
  "clickToRead": "اضغط لعرض التفاصيل وتعليم كمقروء",
  "rightLabel": "حق لك",
  "debtLabel": "التزام عليك",
- "backToNotifications": "رجوع إلى التنبيهات"
+ "backToNotifications": "رجوع إلى التنبيهات",
+ "upcomingItems": "قادمة 📅",
+ "notifTimingLabel": "التنبيه قبل الاستحقاق بـ:",
+ "notif1Hour": "ساعة",
+ "notif24Hours": "24 ساعة",
+ "notif7Days": "7 أيام",
+ "notifTimingChanged": "تم تغيير وقت التنبيه ✅"
 },
  "en": {
  "appTitle": "Smart Budget | Smart Budget",
@@ -557,7 +563,13 @@
  "clickToRead": "Tap to view details & mark as read",
  "rightLabel": "Right (Receivable)",
  "debtLabel": "Obligation (Payable)",
- "backToNotifications": "Back to Notifications"
+ "backToNotifications": "Back to Notifications",
+ "upcomingItems": "Upcoming 📅",
+ "notifTimingLabel": "Notify before due date by:",
+ "notif1Hour": "1 Hour",
+ "notif24Hours": "24 Hours",
+ "notif7Days": "7 Days",
+ "notifTimingChanged": "Notification timing changed ✅"
 },
  "ur": {
  "appTitle": "سمارٹ بجٹ | Smart Budget",
@@ -639,7 +651,7 @@
  "debtTuition": "🎓 ٹیوشن فیس",
  "debtMedical": "🏥 واجب الادا طبی اخراجات",
  "debtCarFinance": "🚗 گاڑی کی مالیات",
- "debtFamily": "👨‍👩‍👧 خاندانی ذمہ داریاں",
+ "debtFamily": "👨‍👩‍ خاندانی ذمہ داریاں",
  "debtSubscriptions": "📅 بار بار سبسکرپشنز",
  "debtSalaries": "👨‍ تنخواہیں",
  "debtOther": "📦 دیگر",
@@ -834,9 +846,15 @@
  "unreadNotifications": "غیر پڑھی گئی 🔔",
  "readNotifications": "پڑھی گئی ✓",
  "readNotification": "پڑھا گیا",
- "clickToRead": "تفصیلات دیکھنے اور پڑھا ہوا نشان کرنے کے لیے کلک کریں",
+ "clickToRead": "تفصیلات دیکھنے کے لیے کلک کریں",
  "rightLabel": "آپ کا حق",
  "debtLabel": "آپ کی ذمہ داری",
- "backToNotifications": "اطلاعات پر واپس"
+ "backToNotifications": "اطلاعات پر واپس",
+ "upcomingItems": "آنے والی 📅",
+ "notifTimingLabel": "میعاد سے پہلے مطلع کریں:",
+ "notif1Hour": "1 گھنٹہ",
+ "notif24Hours": "24 گھنٹے",
+ "notif7Days": "7 دن",
+ "notifTimingChanged": "اطلاع کا وقت تبدیل ہوگیا ✅"
 }
 }
