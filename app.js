@@ -1196,8 +1196,8 @@ function formatDateTime(dateString) {
 function clearFields() {
     ['iAmount', 'iDesc', 'iType', 'iDate',
         'eAmount', 'eDesc', 'eType', 'eDate',
-        'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate',
-        'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate'
+        'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate', 'rNotifTiming', // 🔔 جديد
+        'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate', 'dNotifTiming' // 🔔 جديد
     ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
     clearSelectedImage();
@@ -1489,6 +1489,10 @@ async function addRight() {
     data.الوصف = rDesc.value || '—';
     data.المبلغ_المدفوع = getFormattedAmount(paid);
 
+    // 🔔 جديد: حفظ وقت التنبيه المختار لهذه المعاملة
+    const rNotifTiming = document.getElementById('rNotifTiming');
+    data.وقت_التنبيه = rNotifTiming.value || '168'; // الافتراضي: 7 أيام
+
     const remaining = total - paid;
     data.المتبقي = getFormattedAmount(remaining);
 
@@ -1622,6 +1626,10 @@ async function addDebt() {
     } else {
         data.الجهة = '—';
     }
+
+    // 🔔 جديد: حفظ وقت التنبيه المختار لهذه المعاملة
+    const dNotifTiming = document.getElementById('dNotifTiming');
+    data.وقت_التنبيه = dNotifTiming.value || '168'; // الافتراضي: 7 أيام
 
     let paidAmount = 0;
     let oldPaid = isEditing ? parseAmount(oldData.المبلغ_المخصوم_للرصيد || 0) : 0;
@@ -2005,6 +2013,9 @@ function editTransaction() {
             updateRightFields(data.النوع, data);
             const paidInput = document.getElementById('rPaidAmount');
             if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع || 0).toLocaleString('en-US');
+            // 🔔 جديد: تعبئة حقل وقت التنبيه عند التعديل
+            const rTiming = document.getElementById('rNotifTiming');
+            if (rTiming) rTiming.value = data.وقت_التنبيه || '168';
         } else if (type === 'deb') {
             document.getElementById('dType').value = data.النوع;
             document.getElementById('dDueDate').value = data.تاريخ_الاستحقاق || '';
@@ -2036,6 +2047,9 @@ function editTransaction() {
                     if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع_جزئياً).toLocaleString('en-US');
                 }
             }
+            // 🔔 جديد: تعبئة حقل وقت التنبيه عند التعديل
+            const dTiming = document.getElementById('dNotifTiming');
+            if (dTiming) dTiming.value = data.وقت_التنبيه || '168';
         }
 
         const indicatorMap = { inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
@@ -2078,30 +2092,8 @@ async function deleteTransaction() {
 
 // =============================================================
 // 12.5 🔔 NOTIFICATIONS — نظام التنبيهات المتقدم
-//      (توقيت قابل للتحديد + حذف المقروء بعد 24 ساعة)
+//      (وقت تنبيه لكل معاملة + حذف المقروء بعد 24 ساعة)
 // =============================================================
-
-// ⏱️ إعدادات وقت التنبيه (بالساعات): 1 ساعة، 24 ساعة، 7 أيام (168 ساعة)
-function getNotifTiming() {
-    const saved = parseInt(localStorage.getItem('notifTimingHours'));
-    if ([1, 24, 168].includes(saved)) return saved;
-    return 168; // الافتراضي: 7 أيام
-}
-
-function setNotifTiming(hours) {
-    localStorage.setItem('notifTimingHours', hours);
-    updateNotifTimingUI();
-    renderNotifications();
-    updateNotificationBadge();
-    toastMsg(translate('notifTimingChanged'), "success");
-}
-
-function updateNotifTimingUI() {
-    const current = getNotifTiming();
-    document.querySelectorAll('.notif-timing-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.hours) === current);
-    });
-}
 
 // 📖 تخزين التنبيهات المقروءة مع وقت القراءة
 function getReadNotifications() {
@@ -2136,10 +2128,9 @@ function getNotificationId(item) {
     return `${item.type}|${item.id}|${item.date}`;
 }
 
-// ✔ جمع الاستحقاقات بناءً على التوقيت المختار
+// ✔ جمع الاستحقاقات بناءً على وقت التنبيه المخزن لكل معاملة
 function getUpcomingItems() {
     const now = new Date();
-    const timingHours = getNotifTiming();
     const readList = cleanupExpiredReads();
     const readIds = readList.map(r => r.id);
     const items = [];
@@ -2153,7 +2144,8 @@ function getUpcomingItems() {
         const due = new Date(r.تاريخ_الاستحقاق);
         if (isNaN(due)) return;
 
-        // حساب بداية نافذة التنبيه
+        // ✔ استخدام وقت التنبيه المخزن لهذه المعاملة تحديداً
+        const timingHours = parseAmount(r.وقت_التنبيه) || 168;
         const notifyFrom = new Date(due.getTime() - timingHours * 60 * 60 * 1000);
 
         if (now >= notifyFrom) {
@@ -2183,6 +2175,8 @@ function getUpcomingItems() {
         const due = new Date(d.تاريخ_الاستحقاق);
         if (isNaN(due)) return;
 
+        // ✔ استخدام وقت التنبيه المخزن لهذه المعاملة تحديداً
+        const timingHours = parseAmount(d.وقت_التنبيه) || 168;
         const notifyFrom = new Date(due.getTime() - timingHours * 60 * 60 * 1000);
 
         if (now >= notifyFrom) {
@@ -2314,8 +2308,6 @@ function renderNotificationDetail(item) {
 function renderNotifications() {
     const el = document.getElementById('notificationsContent');
     if (!el) return;
-
-    updateNotifTimingUI();
 
     const items = getUpcomingItems();
 
