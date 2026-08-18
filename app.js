@@ -20,10 +20,10 @@ let tokenRefreshInterval = null;
 // 1.  INDEXED DB SETUP
 // =============================================================
 const IDB_NAME = "MySmartBudgetDB";
-const IDB_VERSION = 6;
-const STORE_NAMES = ["exp", "rig", "deb", "bal", "inc"];
+const IDB_VERSION = 7; // 🎯 جديد: رُفع من 6 إلى 7 لإضافة store الأهداف
+const STORE_NAMES = ["exp", "rig", "deb", "bal", "inc", "goals"]; // 🎯 جديد: إضافة goals
 
-let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] }, inc: [] };
+let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] }, inc: [], goals: [] }; // 🎯 جديد: إضافة goals
 let IDB_connection = null;
 let currentBalance = 0;
 let balanceHidden = localStorage.getItem('balanceHidden') === 'true';
@@ -52,7 +52,9 @@ const LAYERS = {
     'driveBackup': { elementId: 'driveBackupModal', type: 'modal' },
     'exportName': { elementId: 'exportNameModal', type: 'modal' },
     'language': { elementId: 'languageModal', type: 'modal' },
-    'notifications': { elementId: 'notificationsModal', type: 'modal' } // 🔔 جديد
+    'notifications': { elementId: 'notificationsModal', type: 'modal' }, // 🔔 التنبيهات
+    'goals': { elementId: 'goalsModal', type: 'modal' },       // 🎯 جديد: مودال الأهداف
+    'addGoal': { elementId: 'addGoalModal', type: 'modal' }    // 🎯 جديد: مودال إضافة هدف
 };
 
 let historyStack = [];
@@ -106,9 +108,13 @@ function _visualOpen(layerName, data = {}) {
             }
         } else if (layerName === 'language') {
             updateLanguageModalCheckmarks();
-        } else if (layerName === 'notifications') { // 🔔 جديد
-            cleanupExpiredReads(); // ✔ تنظيف المقروءة المنتهية فور الفتح
+        } else if (layerName === 'notifications') { // 🔔 التنبيهات
+            cleanupExpiredReads();
             renderNotifications();
+        } else if (layerName === 'goals') { // 🎯 جديد: مودال الأهداف
+            renderGoalsList();
+        } else if (layerName === 'addGoal') { // 🎯 جديد: مودال إضافة هدف
+            // يتم التهيئة في openAddGoalModal()
         }
     } else if (layer.type === 'menu') {
         el.classList.add('open');
@@ -246,8 +252,11 @@ function applyTranslations(lang) {
     if (document.getElementById('balanceLogModal').style.display === 'flex') { buildBalanceFilters(); renderBalanceLog(); }
     if (document.getElementById('driveBackupModal').style.display === 'flex') renderDriveBackupList();
     if (document.getElementById('currencyModal').style.display === 'flex') renderCurrencyList();
-    // 🔔 جديد: إعادة رسم التنبيهات عند تغيير اللغة
+    // 🔔 إعادة رسم التنبيهات عند تغيير اللغة
     if (document.getElementById('notificationsModal').style.display === 'flex') renderNotifications();
+    // 🎯 جديد: إعادة رسم الأهداف عند تغيير اللغة
+    renderGoalsCard();
+    if (document.getElementById('goalsModal').style.display === 'flex') renderGoalsList();
 
     updateLanguageModalCheckmarks();
     localStorage.setItem('appLang', lang);
@@ -774,6 +783,7 @@ async function performBackup() {
             deb: db.deb,
             bal: db.bal,
             inc: db.inc,
+            goals: db.goals, // 🎯 جديد: تضمين الأهداف في النسخ الاحتياطي
             currency: currentCurrency,
             backupDate: new Date().toISOString()
         };
@@ -846,7 +856,7 @@ async function restoreBackup(fileId) {
             imported.bal.clientId = 1;
             await addDataToStore('bal', [imported.bal]);
         }
-        for (const sn of ['exp', 'rig', 'deb', 'inc']) {
+        for (const sn of ['exp', 'rig', 'deb', 'inc', 'goals']) { // 🎯 جديد: إضافة goals
             if (imported[sn] && Array.isArray(imported[sn])) {
                 await addDataToStore(sn, imported[sn]);
             }
@@ -919,6 +929,7 @@ function performExport() {
         deb: db.deb,
         bal: db.bal,
         inc: db.inc,
+        goals: db.goals, // 🎯 جديد: تضمين الأهداف في التصدير
         currency: currentCurrency
     };
 
@@ -957,7 +968,7 @@ async function importData(event) {
                 imported.bal.clientId = 1;
                 await addDataToStore('bal', [imported.bal]);
             }
-            for (const sn of ['exp', 'rig', 'deb', 'inc']) {
+            for (const sn of ['exp', 'rig', 'deb', 'inc', 'goals']) { // 🎯 جديد: إضافة goals
                 if (imported[sn] && Array.isArray(imported[sn])) {
                     await addDataToStore(sn, imported[sn]);
                 }
@@ -1196,8 +1207,8 @@ function formatDateTime(dateString) {
 function clearFields() {
     ['iAmount', 'iDesc', 'iType', 'iDate',
         'eAmount', 'eDesc', 'eType', 'eDate',
-        'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate', 'rNotifTiming', // 🔔 جديد
-        'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate', 'dNotifTiming' // 🔔 جديد
+        'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate', 'rNotifTiming',
+        'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate', 'dNotifTiming'
     ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
     clearSelectedImage();
@@ -1228,7 +1239,10 @@ function openTab(id, keepEdit = false) {
         clearFields();
     }
 
-    if (id === 'overview') updateStats();
+    if (id === 'overview') {
+        updateStats();
+        renderGoalsCard(); // 🎯 جديد: تحديث بطاقة الأهداف عند فتح الرئيسية
+    }
 
     if (editMode) {
         const indicatorMap = { inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
@@ -1317,6 +1331,10 @@ async function processBalanceAction() {
     if (ok) {
         toastMsg(balanceActionType === 'deposit' ? translate('depositSuccess') : translate('withdrawSuccess'), "success");
         closeLayer('balanceAction');
+        // 🎯 جديد: تحديث الأهداف بعد الإيداع/السحب
+        renderGoalsCard();
+        updateGoalsBadge();
+        if (document.getElementById('goalsModal').style.display === 'flex') renderGoalsList();
     }
 }
 
@@ -1489,9 +1507,9 @@ async function addRight() {
     data.الوصف = rDesc.value || '—';
     data.المبلغ_المدفوع = getFormattedAmount(paid);
 
-    // 🔔 جديد: حفظ وقت التنبيه المختار لهذه المعاملة
+    // 🔔 حفظ وقت التنبيه المختار لهذه المعاملة
     const rNotifTiming = document.getElementById('rNotifTiming');
-    data.وقت_التنبيه = rNotifTiming.value || '168'; // الافتراضي: 7 أيام
+    data.وقت_التنبيه = rNotifTiming.value || '168';
 
     const remaining = total - paid;
     data.المتبقي = getFormattedAmount(remaining);
@@ -1627,9 +1645,9 @@ async function addDebt() {
         data.الجهة = '—';
     }
 
-    // 🔔 جديد: حفظ وقت التنبيه المختار لهذه المعاملة
+    // 🔔 حفظ وقت التنبيه المختار لهذه المعاملة
     const dNotifTiming = document.getElementById('dNotifTiming');
-    data.وقت_التنبيه = dNotifTiming.value || '168'; // الافتراضي: 7 أيام
+    data.وقت_التنبيه = dNotifTiming.value || '168';
 
     let paidAmount = 0;
     let oldPaid = isEditing ? parseAmount(oldData.المبلغ_المخصوم_للرصيد || 0) : 0;
@@ -1730,6 +1748,10 @@ function postSaveCleanup(isEditing, type) {
     loadAllData().then(() => {
         updateStats();
         updateBalanceDisplay();
+        // 🎯 جديد: تحديث الأهداف بعد كل عملية حفظ
+        renderGoalsCard();
+        updateGoalsBadge();
+        if (document.getElementById('goalsModal').style.display === 'flex') renderGoalsList();
     });
     editMode = null;
     clearFields();
@@ -2013,7 +2035,7 @@ function editTransaction() {
             updateRightFields(data.النوع, data);
             const paidInput = document.getElementById('rPaidAmount');
             if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع || 0).toLocaleString('en-US');
-            // 🔔 جديد: تعبئة حقل وقت التنبيه عند التعديل
+            // 🔔 تعبئة حقل وقت التنبيه عند التعديل
             const rTiming = document.getElementById('rNotifTiming');
             if (rTiming) rTiming.value = data.وقت_التنبيه || '168';
         } else if (type === 'deb') {
@@ -2047,7 +2069,7 @@ function editTransaction() {
                     if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع_جزئياً).toLocaleString('en-US');
                 }
             }
-            // 🔔 جديد: تعبئة حقل وقت التنبيه عند التعديل
+            // 🔔 تعبئة حقل وقت التنبيه عند التعديل
             const dTiming = document.getElementById('dNotifTiming');
             if (dTiming) dTiming.value = data.وقت_التنبيه || '168';
         }
@@ -2091,8 +2113,7 @@ async function deleteTransaction() {
 }
 
 // =============================================================
-// 12.5 🔔 NOTIFICATIONS — نظام التنبيهات المتقدم
-//      (وقت تنبيه لكل معاملة + حذف المقروء بعد 24 ساعة)
+// 12.5 🔔 NOTIFICATIONS — نظام التنبيهات
 // =============================================================
 
 // 📖 تخزين التنبيهات المقروءة مع وقت القراءة
@@ -2123,7 +2144,7 @@ function cleanupExpiredReads() {
     return filtered;
 }
 
-// ✔ معرف فريد لكل تنبيه (نوع + clientId + تاريخ الاستحقاق)
+// ✔ معرف فريد لكل تنبيه
 function getNotificationId(item) {
     return `${item.type}|${item.id}|${item.date}`;
 }
@@ -2197,7 +2218,7 @@ function getUpcomingItems() {
     return items.sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 
-// ✔ عدد التنبيهات غير المقروءة فقط (للعداد على الجرس)
+// ✔ عدد التنبيهات غير المقروءة فقط
 function getUnreadCount() {
     return getUpcomingItems().filter(i => !i.read).length;
 }
@@ -2216,32 +2237,29 @@ function openNotifications() {
     openLayer('notifications');
 }
 
-// ✔ تعليم تنبيه محدد كمقروء عند عرض تفاصيله + فتح شاشة التفاصيل
+// ✔ تعليم تنبيه محدد كمقروء + فتح شاشة التفاصيل
 function viewNotification(id) {
     const items = getUpcomingItems();
     const item = items.find(i => getNotificationId(i) === id);
     if (!item) return;
 
-    // تعليم كمقروء إذا لم يكن مقروءاً
     if (!item.read) {
         const readList = getReadNotifications();
         if (!readList.find(r => r.id === id)) {
             readList.push({ id: id, readAt: Date.now() });
             saveReadNotifications(readList);
         }
-        updateNotificationBadge(); // ✔ ينقص العداد بمقدار 1
+        updateNotificationBadge();
     }
 
-    // عرض شاشة التفاصيل الكاملة
     renderNotificationDetail(item);
 }
 
-// ✔ شاشة عرض تفاصيل تنبيه واحد (مع زر رجوع)
+// ✔ شاشة عرض تفاصيل تنبيه واحد
 function renderNotificationDetail(item) {
     const el = document.getElementById('notificationsContent');
     if (!el) return;
 
-    // البحث عن العنصر الأصلي في db
     let source = null;
     if (item.type === 'right') {
         source = db.rig.find(r => (r.clientId || r.id) === item.id);
@@ -2282,7 +2300,6 @@ function renderNotificationDetail(item) {
             </div>
     `;
 
-    // عرض جميع حقول العنصر الأصلي
     if (source) {
         html += `<div style="border-top:1px solid var(--border-color);padding-top:12px;margin-top:8px;">`;
         for (const [key, val] of Object.entries(source)) {
@@ -2304,7 +2321,7 @@ function renderNotificationDetail(item) {
     el.innerHTML = html;
 }
 
-// ✔ رسم محتوى مودال التنبيهات (مقروءة + غير مقروءة بمظهر مختلف + شارة النوع)
+// ✔ رسم محتوى مودال التنبيهات
 function renderNotifications() {
     const el = document.getElementById('notificationsContent');
     if (!el) return;
@@ -2325,7 +2342,6 @@ function renderNotifications() {
 
     let html = '';
 
-    // ✔ ملخص سريع: عدد غير المقروءة والمقروءة
     html += `<div class="notif-summary">
         <div class="notif-sum-card overdue-card">
             <span class="sum-label">${translate('unreadNotifications')}</span>
@@ -2337,7 +2353,6 @@ function renderNotifications() {
         </div>
     </div>`;
 
-    // ✔ دالة رسم عنصر تنبيه واحد (مع شارة حق/التزام)
     const renderItem = (i) => {
         const nid = getNotificationId(i);
         const cls = i.read ? 'notif-item read' : (i.overdue ? 'notif-item overdue' : 'notif-item upcoming');
@@ -2370,19 +2385,420 @@ function renderNotifications() {
         </div>`;
     };
 
-    // ✔ غير المقروءة أولاً (الأهم)
     if (unread.length) {
         html += `<div class="notif-group-title unread-title"><i class="fas fa-bell"></i> ${translate('unreadNotifications')} <span class="count-pill">${unread.length}</span></div>`;
         html += unread.map(renderItem).join('');
     }
 
-    // ✔ المقروءة ثانياً (باهتة)
     if (read.length) {
         html += `<div class="notif-group-title read-title"><i class="fas fa-check-circle"></i> ${translate('readNotifications')} <span class="count-pill">${read.length}</span></div>`;
         html += read.map(renderItem).join('');
     }
 
     el.innerHTML = html;
+}
+
+// =============================================================
+// 12.6 🎯 GOALS — نظام الأهداف المالية
+// =============================================================
+
+// متغيرات الحالة
+let selectedGoalType = null;
+let editGoalMode = null;
+
+// ✔ تسميات وأيقونات أنواع الأهداف
+const GOAL_TYPE_LABELS = {
+    saving: () => translate('goalTypeSavingLabel'),
+    repayment: () => translate('goalTypeRepaymentLabel'),
+    collection: () => translate('goalTypeCollectionLabel'),
+    monthly: () => translate('goalTypeMonthlyLabel')
+};
+
+const GOAL_TYPE_ICONS = {
+    saving: 'fa-piggy-bank',
+    repayment: 'fa-hand-holding-usd',
+    collection: 'fa-hand-holding-heart',
+    monthly: 'fa-calendar-check'
+};
+
+// فتح مودال إدارة الأهداف
+function openGoalsModal() {
+    openLayer('goals');
+}
+
+// فتح مودال إضافة هدف جديد
+function openAddGoalModal() {
+    editGoalMode = null;
+    selectedGoalType = null;
+    document.getElementById('goalTypeStep').style.display = 'block';
+    document.getElementById('goalDetailsStep').style.display = 'none';
+    document.getElementById('goalName').value = '';
+    document.getElementById('goalAmount').value = '';
+    document.getElementById('goalDate').value = '';
+    const titleEl = document.getElementById('addGoalTitle');
+    if (titleEl) titleEl.textContent = translate('addGoalTitle');
+    // إلغاء تحديد أزرار النوع
+    document.querySelectorAll('.goal-type-btn').forEach(btn => btn.classList.remove('selected'));
+    openLayer('addGoal');
+}
+
+// اختيار نوع الهدف
+function selectGoalType(type) {
+    selectedGoalType = type;
+    // تمييز الزر المحدد
+    document.querySelectorAll('.goal-type-btn').forEach(btn => btn.classList.remove('selected'));
+    if (event && event.target) {
+        const btn = event.target.closest('.goal-type-btn');
+        if (btn) btn.classList.add('selected');
+    }
+
+    // الانتقال لخطوة التفاصيل بعد تأخير بسيط
+    setTimeout(() => {
+        document.getElementById('goalTypeStep').style.display = 'none';
+        document.getElementById('goalDetailsStep').style.display = 'block';
+        // عرض شارة النوع
+        const badge = document.getElementById('goalTypeBadge');
+        badge.className = type;
+        badge.innerHTML = `<i class="fas ${GOAL_TYPE_ICONS[type]}"></i> ${GOAL_TYPE_LABELS[type]()}`;
+    }, 250);
+}
+
+// الرجوع لاختيار النوع
+function backToGoalTypeStep() {
+    document.getElementById('goalDetailsStep').style.display = 'none';
+    document.getElementById('goalTypeStep').style.display = 'block';
+}
+
+// حفظ الهدف (إضافة أو تعديل)
+async function saveGoal() {
+    const name = document.getElementById('goalName').value.trim();
+    const amount = document.getElementById('goalAmount').value;
+    const date = document.getElementById('goalDate').value;
+
+    if (!selectedGoalType) return toastMsg(translate('fillRequired'), "error");
+    if (!name || !amount || !date) return toastMsg(translate('fillRequired'), "error");
+
+    const targetAmount = parseAmount(amount);
+    if (targetAmount === 0) return toastMsg(translate('amountMustBePositive'), "error");
+
+    if (editGoalMode !== null) {
+        // تعديل هدف موجود
+        const data = { ...db.goals[editGoalMode] };
+        data.الاسم = name;
+        data.النوع = selectedGoalType;
+        data.المبلغ_المستهدف = getFormattedAmount(targetAmount);
+        data.التاريخ_المستهدف = date;
+
+        try {
+            await saveData('goals', data);
+            await loadGoals();
+            toastMsg(translate('goalEdited'), "success");
+            closeLayer('addGoal');
+            renderGoalsCard();
+            renderGoalsList();
+            updateGoalsBadge();
+        } catch (err) {
+            toastMsg(translate('saveFailed'), "error");
+            console.error(err);
+        }
+    } else {
+        // إضافة هدف جديد
+        const data = {
+            clientId: `goal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            النوع: selectedGoalType,
+            الاسم: name,
+            المبلغ_المستهدف: getFormattedAmount(targetAmount),
+            التاريخ_المستهدف: date,
+            تاريخ_الإنشاء: getLocalDateString(),
+            الحالة: 'نشط'
+        };
+
+        try {
+            await saveData('goals', data);
+            await loadGoals();
+            toastMsg(translate('goalSaved'), "success");
+            closeLayer('addGoal');
+            renderGoalsCard();
+            renderGoalsList();
+            updateGoalsBadge();
+        } catch (err) {
+            toastMsg(translate('saveFailed'), "error");
+            console.error(err);
+        }
+    }
+}
+
+// تعديل هدف
+function editGoal(index) {
+    const goal = db.goals[index];
+    if (!goal) return;
+
+    editGoalMode = index;
+    selectedGoalType = goal.النوع;
+
+    const titleEl = document.getElementById('addGoalTitle');
+    if (titleEl) titleEl.textContent = translate('editGoalTitle');
+
+    document.getElementById('goalTypeStep').style.display = 'none';
+    document.getElementById('goalDetailsStep').style.display = 'block';
+
+    // تعبئة الحقول
+    document.getElementById('goalName').value = goal.الاسم;
+    document.getElementById('goalAmount').value = parseAmount(goal.المبلغ_المستهدف).toLocaleString('en-US');
+    document.getElementById('goalDate').value = goal.التاريخ_المستهدف;
+
+    // عرض شارة النوع
+    const badge = document.getElementById('goalTypeBadge');
+    badge.className = goal.النوع;
+    badge.innerHTML = `<i class="fas ${GOAL_TYPE_ICONS[goal.النوع]}"></i> ${GOAL_TYPE_LABELS[goal.النوع]()}`;
+
+    openLayer('addGoal');
+}
+
+// حذف هدف
+async function deleteGoal(index) {
+    const goal = db.goals[index];
+    if (!goal) return;
+
+    if (!confirm(translate('confirmDeleteGoal'))) return;
+
+    try {
+        await deleteFromDB('goals', goal.clientId);
+        await loadGoals();
+        toastMsg(translate('goalDeleted'), "success");
+        renderGoalsCard();
+        renderGoalsList();
+        updateGoalsBadge();
+    } catch (err) {
+        toastMsg(translate('deleteFailed'), "error");
+        console.error(err);
+    }
+}
+
+// تحميل الأهداف من قاعدة البيانات
+async function loadGoals() {
+    db.goals = await loadStoreData('goals');
+}
+
+// حساب تقدم هدف معين
+function calculateGoalProgress(goal) {
+    const target = parseAmount(goal.المبلغ_المستهدف);
+    if (target <= 0) return { current: 0, target, percent: 0 };
+
+    let current = 0;
+
+    switch (goal.النوع) {
+        case 'saving':
+            // الهدف: الوصول لرصيد معين
+            current = currentBalance;
+            break;
+        case 'repayment':
+            // الهدف: سداد الالتزامات
+            const paidDebt = db.deb.reduce((sum, d) => sum + parseAmount(d.المبلغ_المخصوم_للرصيد || 0), 0);
+            current = paidDebt;
+            break;
+        case 'collection':
+            // الهدف: تحصيل الحقوق
+            const collected = db.rig.reduce((sum, r) => sum + parseAmount(r.المبلغ_المضاف_للرصيد || 0), 0);
+            current = collected;
+            break;
+        case 'monthly':
+            // الهدف: توفير مبلغ شهرياً (دخل الشهر - مصروفات الشهر)
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            let monthIncome = 0;
+            let monthExpense = 0;
+
+            db.inc.forEach(i => {
+                const d = new Date(i.التاريخ);
+                if (!isNaN(d) && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    monthIncome += parseAmount(i.المبلغ);
+                }
+            });
+
+            db.exp.forEach(e => {
+                const d = new Date(e.التاريخ);
+                if (!isNaN(d) && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    monthExpense += parseAmount(e.المبلغ);
+                }
+            });
+
+            current = monthIncome - monthExpense;
+            break;
+    }
+
+    // حساب النسبة المئوية
+    let percent = (current / target) * 100;
+    if (percent < 0) percent = 0;
+    if (percent > 100) percent = 100;
+
+    return { current, target, percent: Math.round(percent) };
+}
+
+// تحديد فئة لون شريط التقدم
+function getProgressClass(percent) {
+    if (percent >= 100) return 'progress-complete';
+    if (percent >= 70) return 'progress-high';
+    if (percent >= 30) return 'progress-mid';
+    return 'progress-low';
+}
+
+function getPercentClass(percent) {
+    if (percent >= 100) return 'complete';
+    if (percent >= 70) return 'high';
+    if (percent >= 30) return 'mid';
+    return 'low';
+}
+
+// حساب الأيام المتبقية
+function getDaysRemaining(goal) {
+    const target = new Date(goal.التاريخ_المستهدف);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+    return diff;
+}
+
+// تحديث شارة عدد الأهداف
+function updateGoalsBadge() {
+    const badge = document.getElementById('goalsBadge');
+    const sidebarCount = document.getElementById('sidebarGoalsCount');
+    const activeGoals = db.goals.filter(g => g.الحالة === 'نشط').length;
+
+    if (badge) {
+        badge.textContent = activeGoals;
+        badge.style.display = activeGoals > 0 ? 'flex' : 'none';
+    }
+    if (sidebarCount) {
+        sidebarCount.textContent = activeGoals > 0 ? `(${activeGoals})` : '';
+    }
+}
+
+// رسم بطاقة الأهداف في الصفحة الرئيسية (هدف واحد فقط)
+function renderGoalsCard() {
+    const el = document.getElementById('goalsCardSummary');
+    if (!el) return;
+
+    if (!db.goals || db.goals.length === 0) {
+        el.innerHTML = `
+            <div class="goals-empty">
+                <i class="fas fa-bullseye"></i>
+                <p>${translate('noGoalsYet')}</p>
+                <small>${translate('noGoalsHint')}</small>
+            </div>
+        `;
+        return;
+    }
+
+    // عرض أول هدف نشط فقط
+    const activeGoal = db.goals.find(g => g.الحالة === 'نشط') || db.goals[0];
+    const progress = calculateGoalProgress(activeGoal);
+    const progressClass = getProgressClass(progress.percent);
+    const percentClass = getPercentClass(progress.percent);
+    const isComplete = progress.percent >= 100;
+
+    el.innerHTML = `
+        <div class="goal-item ${isComplete ? 'goal-celebration' : ''}">
+            <div class="goal-item-header">
+                <span class="goal-item-name">${activeGoal.الاسم}</span>
+                <span class="goal-item-type ${activeGoal.النوع}">${GOAL_TYPE_LABELS[activeGoal.النوع]()}</span>
+            </div>
+            <div class="goal-progress-bar">
+                <div class="goal-progress-fill ${progressClass}" style="width: 0%;" data-width="${progress.percent}%"></div>
+            </div>
+            <div class="goal-item-stats">
+                <span class="goal-amount">${formatCurrency(progress.current)} / ${formatCurrency(progress.target)}</span>
+                <span class="goal-percent ${percentClass}">${isComplete ? '🎉 ' : ''}${progress.percent}%</span>
+            </div>
+        </div>
+    `;
+
+    // تحريك شريط التقدم بعد الرسم
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            const fill = el.querySelector('.goal-progress-fill');
+            if (fill) fill.style.width = fill.dataset.width;
+        }, 100);
+    });
+}
+
+// رسم قائمة الأهداف في المودال
+function renderGoalsList() {
+    const el = document.getElementById('goalsList');
+    if (!el) return;
+
+    if (!db.goals || db.goals.length === 0) {
+        el.innerHTML = `
+            <div class="goals-empty">
+                <i class="fas fa-bullseye"></i>
+                <p>${translate('noGoalsYet')}</p>
+                <small>${translate('noGoalsHint')}</small>
+            </div>
+        `;
+        return;
+    }
+
+    el.innerHTML = db.goals.map((goal, index) => {
+        const progress = calculateGoalProgress(goal);
+        const progressClass = getProgressClass(progress.percent);
+        const percentClass = getPercentClass(progress.percent);
+        const isComplete = progress.percent >= 100;
+        const daysRemaining = getDaysRemaining(goal);
+        const isOverdue = daysRemaining < 0 && !isComplete;
+
+        return `
+            <div class="goal-list-item ${isComplete ? 'completed' : ''}">
+                <div class="goal-list-header">
+                    <span class="goal-list-name">${goal.الاسم}</span>
+                    <div class="goal-list-actions">
+                        <button class="goal-edit-btn" onclick="editGoal(${index})" title="${translate('edit')}"><i class="fas fa-edit"></i></button>
+                        <button class="goal-delete-btn" onclick="deleteGoal(${index})" title="${translate('delete')}"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <span class="goal-item-type ${goal.النوع}">${GOAL_TYPE_LABELS[goal.النوع]()}</span>
+                <div class="goal-progress-bar">
+                    <div class="goal-progress-fill ${progressClass}" style="width: 0%;" data-width="${progress.percent}%"></div>
+                </div>
+                <div class="goal-item-stats">
+                    <span class="goal-amount">${formatCurrency(progress.current)} / ${formatCurrency(progress.target)}</span>
+                    <span class="goal-percent ${percentClass}">${isComplete ? '🎉 ' : ''}${progress.percent}%</span>
+                </div>
+                <div class="goal-list-meta">
+                    <span class="goal-deadline ${isOverdue ? 'overdue' : ''}">
+                        <i class="far fa-clock"></i>
+                        ${isOverdue ? translate('goalOverdue') : `${daysRemaining} ${translate('daysRemaining')}`}
+                    </span>
+                    ${isComplete ? `<span class="goal-complete-badge"><i class="fas fa-check"></i> ${translate('goalCompleted')}</span>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // تحريك أشرطة التقدم
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            el.querySelectorAll('.goal-progress-fill').forEach(fill => {
+                fill.style.width = fill.dataset.width;
+            });
+        }, 100);
+    });
+}
+
+// طي/فتح ملخص الإحصائيات
+function toggleStatsSummary() {
+    const collapsible = document.getElementById('statsCollapsible');
+    const icon = document.getElementById('statsToggleIcon');
+
+    if (collapsible.classList.contains('open')) {
+        collapsible.classList.remove('open');
+        icon.classList.remove('open');
+    } else {
+        collapsible.classList.add('open');
+        icon.classList.add('open');
+    }
 }
 
 // =============================================================
@@ -2456,7 +2872,7 @@ function resetAllData() {
         req.onsuccess = () => {
             done++;
             if (done === STORE_NAMES.length) {
-                db.exp = db.rig = db.deb = db.inc = [];
+                db.exp = db.rig = db.deb = db.inc = db.goals = [];
                 db.bal = { clientId: 1, amount: 0, changes: [] };
                 saveData('bal', db.bal).then(() => {
                     loadAllData().then(() => {
@@ -2536,14 +2952,16 @@ function initDB() {
 
         req.onerror = (e) => { console.error("IDB error:", e.target.error); reject(e.target.error); };
 
+        // 🎯 جديد: إضافة stores الجديدة فقط دون حذف الموجودة (لحفظ البيانات)
         req.onupgradeneeded = (e) => {
             IDB_connection = e.target.result;
             STORE_NAMES.forEach(sn => {
-                if (IDB_connection.objectStoreNames.contains(sn)) IDB_connection.deleteObjectStore(sn);
-                const kp = (sn === 'bal') ? 'clientId' : 'id';
-                const auto = (sn !== 'bal');
-                const store = IDB_connection.createObjectStore(sn, { keyPath: kp, autoIncrement: auto });
-                if (sn === 'bal') store.add({ clientId: 1, amount: 0, changes: [] });
+                if (!IDB_connection.objectStoreNames.contains(sn)) {
+                    const kp = (sn === 'bal') ? 'clientId' : 'id';
+                    const auto = (sn !== 'bal');
+                    const store = IDB_connection.createObjectStore(sn, { keyPath: kp, autoIncrement: auto });
+                    if (sn === 'bal') store.add({ clientId: 1, amount: 0, changes: [] });
+                }
             });
         };
 
@@ -2602,12 +3020,13 @@ function loadStoreData(storeName) {
 }
 
 async function loadAllData() {
-    const [exp, rig, deb, bal, inc] = await Promise.all([
+    const [exp, rig, deb, bal, inc, goals] = await Promise.all([
         loadStoreData('exp'),
         loadStoreData('rig'),
         loadStoreData('deb'),
         loadStoreData('bal'),
-        loadStoreData('inc')
+        loadStoreData('inc'),
+        loadStoreData('goals') // 🎯 جديد: تحميل الأهداف
     ]);
 
     db.exp = exp;
@@ -2615,10 +3034,15 @@ async function loadAllData() {
     db.deb = deb;
     db.bal = bal;
     db.inc = inc;
+    db.goals = goals; // 🎯 جديد
     currentBalance = parseAmount(db.bal.amount || 0);
 
-    // 🔔 جديد: تحديث شارة الجرس بعد كل تحميل للبيانات
+    // 🔔 تحديث شارة الجرس
     updateNotificationBadge();
+
+    // 🎯 جديد: تحديث بطاقة الأهداف
+    renderGoalsCard();
+    updateGoalsBadge();
 }
 
 // =============================================================
@@ -2667,8 +3091,12 @@ window.onload = () => {
     updateStats();
     updateDriveUI();
 
-    // 🔔 جديد: تحديث شارة الجرس عند بدء التشغيل
+    // 🔔 تحديث شارة الجرس عند بدء التشغيل
     updateNotificationBadge();
+
+    // 🎯 جديد: تحديث بطاقة الأهداف عند بدء التشغيل
+    renderGoalsCard();
+    updateGoalsBadge();
 
     setTimeout(() => {
         initGapi();
