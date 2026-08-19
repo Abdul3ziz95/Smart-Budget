@@ -289,7 +289,7 @@ if (lang === 'ar' || lang === 'ur') {
  }
  updateBalanceDisplay();
  updateStats();
- // ✔ إعادة بناء الفلاتر والسجلات المفتوحة فوراً (✔✔✔ مع فحص آمن يمنع الانهيار)
+ // ✔ إعادة بناء الفلاتر والسجلات المفتوحة فوراً (مع فحص آمن يمنع الانهيار)
  const logModal = document.getElementById('logModal');
  if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
  const balanceLogModal = document.getElementById('balanceLogModal');
@@ -440,7 +440,6 @@ if (typeof gapi === 'undefined') {
      gapi.load('client', async () => {
          try {
              await gapi.client.init({
-                 apiKey: '',
                  discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
              });
              console.log('Google API loaded');
@@ -1418,7 +1417,7 @@ const statusSelect = document.getElementById('dStatus');
 const entityInput = document.getElementById('dEntity');
 if (!container) return;
 container.innerHTML = '';
- const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
+ const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍ رواتب', '💡 كهرباء', '💧 ماء'];
  if (entityTypes.includes(type)) {
      if (entityInput) {
          entityInput.style.display = 'block';
@@ -1980,6 +1979,7 @@ const items = [];
  (db.deb || []).forEach(d => {
      const remaining = d.المتبقي_للالتزام !== undefined
          ? parseAmount(d.المتبقي_للالتزام)
+         // ✔✔✔ أُضيف 'Paid' فقط لدعم الحالة المخزنة بالإنجليزية
          : ((d.الحالة === 'مدفوع' || d.الحالة === 'مدفوع بالكامل' || d.الحالة === 'Fully Paid' || d.الحالة === 'Paid')
              ? 0 : parseAmount(d.المبلغ || 0));
      if (remaining <= 0) return;
