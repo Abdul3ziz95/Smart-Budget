@@ -170,6 +170,14 @@
 <span class="cal-icon">📅</span>
 </div>
 <span class="field-hint" data-i18n="dueDateHint">تاريخ الاستحقاق المتوقع</span>
+<!-- ⏱️ جديد: اختيار وقت التنبيه -->
+<select id="rNotifTiming">
+<option value="" data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
+<option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
+<option value="24" data-i18n="notif24Hours">⏱️ قبل 24 ساعة</option>
+<option value="168" data-i18n="notif7Days">⏱️ قبل 7 أيام</option>
+</select>
+<span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
 <input id="rDesc" type="text" data-i18n-placeholder="additionalNotes" placeholder="📝 ملاحظات إضافية"/>
 <button class="action" onclick="addRight()" data-i18n="saveRight">حفظ الحق</button>
 <button class="secondary" onclick="openLog('rig')"><i class="fas fa-list" style="margin-left:6px;"></i><span data-i18n="rightsLog">سجل الحقوق</span></button>
@@ -211,6 +219,14 @@
 <input id="dDueDate" type="date"/>
 <span class="cal-icon">📅</span>
 </div>
+<!-- ⏱️ جديد: اختيار وقت التنبيه -->
+<select id="dNotifTiming">
+<option value="" data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
+<option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
+<option value="24" data-i18n="notif24Hours">⏱️ قبل 24 ساعة</option>
+<option value="168" data-i18n="notif7Days">⏱️ قبل 7 أيام</option>
+</select>
+<span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
 <input id="dDesc" type="text" data-i18n-placeholder="descriptionNotes" placeholder="📝 وصف / ملاحظة"/>
 <button class="action" onclick="addDebt()" data-i18n="saveDebt">حفظ الالتزام</button>
 <button class="secondary" onclick="openLog('deb')"><i class="fas fa-list" style="margin-left:6px;"></i><span data-i18n="debtsLog">سجل الالتزامات</span></button>
@@ -308,14 +324,16 @@
 </div>
 </div>
 
-<!-- ===== MODAL: NOTIFICATIONS (🔔 جديد) ===== -->
+<!-- ===== MODAL: NOTIFICATIONS (🔔 بدون شريط التوقيت) ===== -->
 <div class="modal" id="notificationsModal">
 <header>
 <button onclick="closeLayer('notifications')">✕</button>
 <span class="title"><i class="fas fa-bell" style="margin-left:8px;color:var(--warning);"></i> <span data-i18n="notificationsTitle">التنبيهات المالية</span></span>
 <span class="header-spacer"></span>
 </header>
-<div class="modal-content" id="notificationsContent"></div>
+<div class="modal-content">
+<div id="notificationsContent"></div>
+</div>
 </div>
 
 <!-- ===== MODAL: IMAGE SOURCE ===== -->

@@ -277,7 +277,13 @@
  "clickToRead": "اضغط لعرض التفاصيل وتعليم كمقروء",
  "rightLabel": "حق لك",
  "debtLabel": "التزام عليك",
- "backToNotifications": "رجوع إلى التنبيهات"
+ "backToNotifications": "رجوع إلى التنبيهات",
+ "upcomingItems": "قادمة 📅",
+ "notifTimingPlaceholder": "⏱️ التنبيه قبل الاستحقاق (اختياري)",
+ "notif1Hour": "⏱️ قبل ساعة",
+ "notif24Hours": "⏱️ قبل 24 ساعة",
+ "notif7Days": "⏱️ قبل 7 أيام",
+ "notifTimingHint": "الافتراضي: قبل 7 أيام"
 },
  "en": {
  "appTitle": "Smart Budget | Smart Budget",
@@ -557,7 +563,13 @@
  "clickToRead": "Tap to view details & mark as read",
  "rightLabel": "Right (Receivable)",
  "debtLabel": "Obligation (Payable)",
- "backToNotifications": "Back to Notifications"
+ "backToNotifications": "Back to Notifications",
+ "upcomingItems": "Upcoming 📅",
+ "notifTimingPlaceholder": "⏱️ Notify before due date (optional)",
+ "notif1Hour": "⏱️ 1 Hour before",
+ "notif24Hours": "⏱️ 24 Hours before",
+ "notif7Days": "⏱️ 7 Days before",
+ "notifTimingHint": "Default: 7 days before"
 },
  "ur": {
  "appTitle": "سمارٹ بجٹ | Smart Budget",
@@ -639,7 +651,7 @@
  "debtTuition": "🎓 ٹیوشن فیس",
  "debtMedical": "🏥 واجب الادا طبی اخراجات",
  "debtCarFinance": "🚗 گاڑی کی مالیات",
- "debtFamily": "👨‍👩‍👧 خاندانی ذمہ داریاں",
+ "debtFamily": "👨‍👩‍ خاندانی ذمہ داریاں",
  "debtSubscriptions": "📅 بار بار سبسکرپشنز",
  "debtSalaries": "👨‍ تنخواہیں",
  "debtOther": "📦 دیگر",
@@ -834,9 +846,15 @@
  "unreadNotifications": "غیر پڑھی گئی 🔔",
  "readNotifications": "پڑھی گئی ✓",
  "readNotification": "پڑھا گیا",
- "clickToRead": "تفصیلات دیکھنے اور پڑھا ہوا نشان کرنے کے لیے کلک کریں",
+ "clickToRead": "تفصیلات دیکھنے کے لیے کلک کریں",
  "rightLabel": "آپ کا حق",
  "debtLabel": "آپ کی ذمہ داری",
- "backToNotifications": "اطلاعات پر واپس"
+ "backToNotifications": "اطلاعات پر واپس",
+ "upcomingItems": "آنے والی 📅",
+ "notifTimingPlaceholder": "⏱️ میعاد سے پہلے اطلاع (اختیاری)",
+ "notif1Hour": "⏱️ 1 گھنٹہ پہلے",
+ "notif24Hours": "⏱️ 24 گھنٹے پہلے",
+ "notif7Days": "⏱️ 7 دن پہلے",
+ "notifTimingHint": "پہلے سے طے شدہ: 7 دن پہلے"
 }
 }

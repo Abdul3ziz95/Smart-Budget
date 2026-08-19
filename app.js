@@ -107,6 +107,7 @@ function _visualOpen(layerName, data = {}) {
         } else if (layerName === 'language') {
             updateLanguageModalCheckmarks();
         } else if (layerName === 'notifications') { // 🔔 جديد
+            cleanupExpiredReads(); // ✔ تنظيف المقروءة المنتهية فور الفتح
             renderNotifications();
         }
     } else if (layer.type === 'menu') {
@@ -1195,8 +1196,8 @@ function formatDateTime(dateString) {
 function clearFields() {
     ['iAmount', 'iDesc', 'iType', 'iDate',
         'eAmount', 'eDesc', 'eType', 'eDate',
-        'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate',
-        'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate'
+        'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate', 'rNotifTiming', // 🔔 جديد
+        'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate', 'dNotifTiming' // 🔔 جديد
     ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
     clearSelectedImage();
@@ -1488,6 +1489,10 @@ async function addRight() {
     data.الوصف = rDesc.value || '—';
     data.المبلغ_المدفوع = getFormattedAmount(paid);
 
+    // 🔔 جديد: حفظ وقت التنبيه المختار لهذه المعاملة
+    const rNotifTiming = document.getElementById('rNotifTiming');
+    data.وقت_التنبيه = rNotifTiming.value || '168'; // الافتراضي: 7 أيام
+
     const remaining = total - paid;
     data.المتبقي = getFormattedAmount(remaining);
 
@@ -1621,6 +1626,10 @@ async function addDebt() {
     } else {
         data.الجهة = '—';
     }
+
+    // 🔔 جديد: حفظ وقت التنبيه المختار لهذه المعاملة
+    const dNotifTiming = document.getElementById('dNotifTiming');
+    data.وقت_التنبيه = dNotifTiming.value || '168'; // الافتراضي: 7 أيام
 
     let paidAmount = 0;
     let oldPaid = isEditing ? parseAmount(oldData.المبلغ_المخصوم_للرصيد || 0) : 0;
@@ -2004,6 +2013,9 @@ function editTransaction() {
             updateRightFields(data.النوع, data);
             const paidInput = document.getElementById('rPaidAmount');
             if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع || 0).toLocaleString('en-US');
+            // 🔔 جديد: تعبئة حقل وقت التنبيه عند التعديل
+            const rTiming = document.getElementById('rNotifTiming');
+            if (rTiming) rTiming.value = data.وقت_التنبيه || '168';
         } else if (type === 'deb') {
             document.getElementById('dType').value = data.النوع;
             document.getElementById('dDueDate').value = data.تاريخ_الاستحقاق || '';
@@ -2035,6 +2047,9 @@ function editTransaction() {
                     if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع_جزئياً).toLocaleString('en-US');
                 }
             }
+            // 🔔 جديد: تعبئة حقل وقت التنبيه عند التعديل
+            const dTiming = document.getElementById('dNotifTiming');
+            if (dTiming) dTiming.value = data.وقت_التنبيه || '168';
         }
 
         const indicatorMap = { inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
@@ -2076,10 +2091,11 @@ async function deleteTransaction() {
 }
 
 // =============================================================
-// 12.5 🔔 NOTIFICATIONS — التنبيهات المالية (نظام مقروء/غير مقروء)
+// 12.5 🔔 NOTIFICATIONS — نظام التنبيهات المتقدم
+//      (وقت تنبيه لكل معاملة + حذف المقروء بعد 24 ساعة)
 // =============================================================
 
-// ✔ تخزين التنبيهات المقروءة في localStorage
+// 📖 تخزين التنبيهات المقروءة مع وقت القراءة
 function getReadNotifications() {
     try {
         const list = JSON.parse(localStorage.getItem('readNotifications') || '[]');
@@ -2093,19 +2109,30 @@ function saveReadNotifications(list) {
     localStorage.setItem('readNotifications', JSON.stringify(list));
 }
 
+// ✔ تنظيف التنبيهات المقروءة التي مر عليها أكثر من 24 ساعة
+function cleanupExpiredReads() {
+    const readList = getReadNotifications();
+    const now = Date.now();
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+    const filtered = readList.filter(item => (now - item.readAt) < TWENTY_FOUR_HOURS);
+
+    if (filtered.length !== readList.length) {
+        saveReadNotifications(filtered);
+    }
+    return filtered;
+}
+
 // ✔ معرف فريد لكل تنبيه (نوع + clientId + تاريخ الاستحقاق)
 function getNotificationId(item) {
     return `${item.type}|${item.id}|${item.date}`;
 }
 
-// ✔ جمع جميع الاستحقاقات المتأخرة والقادمة خلال 7 أيام (مع تحديد المقروءة)
+// ✔ جمع الاستحقاقات بناءً على وقت التنبيه المخزن لكل معاملة
 function getUpcomingItems() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const next7 = new Date(today);
-    next7.setDate(today.getDate() + 7);
-
-    const readList = getReadNotifications();
+    const now = new Date();
+    const readList = cleanupExpiredReads();
+    const readIds = readList.map(r => r.id);
     const items = [];
 
     // --- الحقوق المستحقة (لك) ---
@@ -2113,9 +2140,15 @@ function getUpcomingItems() {
         const remaining = parseAmount(r.المتبقي || 0);
         if (remaining <= 0) return;
         if (!r.تاريخ_الاستحقاق) return;
+
         const due = new Date(r.تاريخ_الاستحقاق);
         if (isNaN(due)) return;
-        if (due <= next7) {
+
+        // ✔ استخدام وقت التنبيه المخزن لهذه المعاملة تحديداً
+        const timingHours = parseAmount(r.وقت_التنبيه) || 168;
+        const notifyFrom = new Date(due.getTime() - timingHours * 60 * 60 * 1000);
+
+        if (now >= notifyFrom) {
             const item = {
                 type: 'right',
                 id: r.clientId || r.id || '',
@@ -2123,9 +2156,9 @@ function getUpcomingItems() {
                 entity: r.الجهة,
                 amount: remaining,
                 date: r.تاريخ_الاستحقاق,
-                overdue: due < today
+                overdue: due < now
             };
-            item.read = readList.includes(getNotificationId(item));
+            item.read = readIds.includes(getNotificationId(item));
             items.push(item);
         }
     });
@@ -2138,9 +2171,15 @@ function getUpcomingItems() {
                 ? 0 : parseAmount(d.المبلغ || 0));
         if (remaining <= 0) return;
         if (!d.تاريخ_الاستحقاق) return;
+
         const due = new Date(d.تاريخ_الاستحقاق);
         if (isNaN(due)) return;
-        if (due <= next7) {
+
+        // ✔ استخدام وقت التنبيه المخزن لهذه المعاملة تحديداً
+        const timingHours = parseAmount(d.وقت_التنبيه) || 168;
+        const notifyFrom = new Date(due.getTime() - timingHours * 60 * 60 * 1000);
+
+        if (now >= notifyFrom) {
             const item = {
                 type: 'debt',
                 id: d.clientId || d.id || '',
@@ -2148,9 +2187,9 @@ function getUpcomingItems() {
                 entity: d.الجهة,
                 amount: remaining,
                 date: d.تاريخ_الاستحقاق,
-                overdue: due < today
+                overdue: due < now
             };
-            item.read = readList.includes(getNotificationId(item));
+            item.read = readIds.includes(getNotificationId(item));
             items.push(item);
         }
     });
@@ -2163,7 +2202,7 @@ function getUnreadCount() {
     return getUpcomingItems().filter(i => !i.read).length;
 }
 
-// ✔ تحديث رقم الشارة على زر الجرس (عدد غير المقروءة فقط)
+// ✔ تحديث رقم الشارة على زر الجرس
 function updateNotificationBadge() {
     const badge = document.getElementById('notifBadge');
     if (!badge) return;
@@ -2186,8 +2225,8 @@ function viewNotification(id) {
     // تعليم كمقروء إذا لم يكن مقروءاً
     if (!item.read) {
         const readList = getReadNotifications();
-        if (!readList.includes(id)) {
-            readList.push(id);
+        if (!readList.find(r => r.id === id)) {
+            readList.push({ id: id, readAt: Date.now() });
             saveReadNotifications(readList);
         }
         updateNotificationBadge(); // ✔ ينقص العداد بمقدار 1
