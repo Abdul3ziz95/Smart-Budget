@@ -185,7 +185,10 @@ console.error('Error loading translations:', err);
 translations = { ar: {}, en: {}, ur: {} };
 });
 }
-// ✔✔✔ ترجمة عناوين حقول البيانات (النوع، المبلغ...) حسب لغة التطبيق
+// =============================================================
+// ✔✔✔ ترجمة البيانات المخزنة (عناوين الحقول + القيم) عند العرض فقط
+//     التخزين يبقى بالعربية دائماً — العرض فقط يتغير مع اللغة
+// =============================================================
 const FIELD_LABELS = {
 'النوع': { ar: 'النوع', en: 'Type', ur: 'قسم' },
 'الفئة': { ar: 'الفئة', en: 'Category', ur: 'زمرہ' },
@@ -229,19 +232,20 @@ if (s === '24') return translate('notif24Hours');
 if (s === '168') return translate('notif7Days');
 return s;
 }
-// ✔✔✔ جديد: ترجمة القيم المخزنة بالعربية (الفئات/الأنواع) عند العرض فقط — التخزين لا يتغير
+// ✔✔✔ خريطة الفئات/الأنواع المخزنة بالعربية → مفاتيح الترجمة
 const VALUE_I18N = {
 'راتب': 'incomeSalary', 'عمل حر': 'incomeFreelance', 'تجارة': 'incomeBusiness', 'استثمار': 'incomeInvestment', 'عمولة': 'incomeCommission', 'هدية': 'incomeGift', 'مكافأة': 'incomeBonus', 'الضمان الاجتماعي': 'incomeSocialSecurity', 'المعاش التقاعدي': 'incomePension', 'دخل آخر': 'incomeOther',
 'طعام': 'expenseFood', 'مواصلات': 'expenseTransport', 'وقود': 'expenseFuel', 'مقاهي': 'expenseCafe', 'رعاية شخصية': 'expensePersonalCare', 'أجهزة إلكترونية': 'expenseElectronics', 'صحة': 'expenseHealth', 'ترفيه': 'expenseEntertainment', 'تسوق': 'expenseShopping', 'تعليم': 'expenseEducation', 'صيانة وإصلاح': 'expenseMaintenance', 'أخرى': 'expenseOther',
 'بيع آجل': 'rightCreditSale', 'سلفة': 'rightLoan', 'إيجار مستحق': 'rightRentDue', 'شراكة': 'rightPartnership', 'حق آخر': 'rightOther',
 'إيجار': 'debtRent', 'كهرباء': 'debtElectricity', 'ماء': 'debtWater', 'فواتير الخدمات': 'debtUtilities', 'الاتصالات والإنترنت': 'debtInternet', 'قروض وتمويل': 'debtLoans', 'دين شخصي': 'debtPersonal', 'مشتريات بالتقسيط': 'debtInstallments', 'رسوم تعليمية': 'debtTuition', 'مصاريف طبية مستحقة': 'debtMedical', 'تمويل السيارة': 'debtCarFinance', 'التزامات عائلية': 'debtFamily', 'اشتراكات دورية': 'debtSubscriptions', 'رواتب': 'debtSalaries'
 };
+// ✔ ترجمة القيمة المخزنة عند العرض فقط (إن لم توجد تُرجع كما هي)
 function translateStoredValue(val) {
 if (!val || typeof val !== 'string') return val || '';
 const key = VALUE_I18N[val.trim()];
 return key ? translate(key) : val;
 }
-// ✔ تنسيق قيمة الحقل حسب نوعه (حالة / توقيت / تاريخ / مبلغ / قيمة مخزنة)
+// ✔ تنسيق قيمة الحقل حسب نوعه (حالة / توقيت / تاريخ / مبلغ / فئة مخزنة)
 function formatFieldValue(key, val) {
 if (key === 'الحالة') return translateStatusValue(val);
 if (key === 'وقت_التنبيه') return translateTimingValue(val);
@@ -249,6 +253,10 @@ if ((key === 'تاريخ_الاستحقاق' || key === 'التاريخ') && /^\
 const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
 return isAmt ? formatCurrency(val, true) : translateStoredValue(val);
 }
+// =============================================================
+// ✔✔✔ تطبيق الترجمة + إعادة رسم كل الشاشات المفتوحة فوراً
+//     (بدون تحديث الصفحة وبدون الانتقال لقسم آخر)
+// =============================================================
 function applyTranslations(lang) {
 if (!translations[lang]) {
 lang = 'ar';
@@ -281,7 +289,7 @@ if (lang === 'ar' || lang === 'ur') {
  }
  updateBalanceDisplay();
  updateStats();
- // ✔ إعادة بناء الفلاتر عند تغيير اللغة (✔✔✔ مع فحص آمن يمنع الانهيار)
+ // ✔ إعادة بناء الفلاتر والسجلات المفتوحة فوراً (✔✔✔ مع فحص آمن يمنع الانهيار)
  const logModal = document.getElementById('logModal');
  if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
  const balanceLogModal = document.getElementById('balanceLogModal');
@@ -290,9 +298,27 @@ if (lang === 'ar' || lang === 'ur') {
  if (driveBackupModal && driveBackupModal.style.display === 'flex') renderDriveBackupList();
  const currencyModal = document.getElementById('currencyModal');
  if (currencyModal && currencyModal.style.display === 'flex') renderCurrencyList();
- // 🔔 جديد: إعادة رسم التنبيهات عند تغيير اللغة
  const notificationsModal = document.getElementById('notificationsModal');
  if (notificationsModal && notificationsModal.style.display === 'flex') renderNotifications();
+ // ✔✔✔ جديد: إعادة رسم شاشة التفاصيل فوراً عند تغيير اللغة
+ const detailModal = document.getElementById('detailModal');
+ if (detailModal && detailModal.style.display === 'flex' && editMode) {
+     const currentItem = db[editMode.type] ? db[editMode.type][editMode.index] : null;
+     if (currentItem) _renderDetailContent(currentItem, editMode.type);
+ }
+ // ✔✔✔ جديد: إعادة بناء الحقول الديناميكية المترجمة (المبلغ المحصل...) إن كانت ظاهرة
+ const rDyn = document.getElementById('rDynamicFields');
+ if (rDyn && rDyn.innerHTML.trim() !== '') {
+     const rType = document.getElementById('rType');
+     const rCur = (editMode && editMode.type === 'rig') ? db.rig[editMode.index] : null;
+     updateRightFields(rType ? rType.value : '', rCur);
+ }
+ const dDyn = document.getElementById('dDynamicFields');
+ if (dDyn && dDyn.innerHTML.trim() !== '') {
+     const dType = document.getElementById('dType');
+     const dCur = (editMode && editMode.type === 'deb') ? db.deb[editMode.index] : null;
+     updateDebtFields(dType ? dType.value : '', dCur);
+ }
  updateLanguageModalCheckmarks();
  localStorage.setItem('appLang', lang);
  currentLang = lang;
@@ -413,8 +439,8 @@ if (typeof gapi === 'undefined') {
  try {
      gapi.load('client', async () => {
          try {
-             // ✔✔✔ تم حذف apiKey الفارغ فقط
              await gapi.client.init({
+                 apiKey: '',
                  discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
              });
              console.log('Google API loaded');
@@ -703,7 +729,7 @@ if (n && n > max) max = n;
 return max + 1;
 }
 // ✔ الترتيب الصحيح: من النسخة رقم 1 حتى آخر نسخة
-// ✔✔✔ تم إصلاح اللغة الثابتة 'ar' + إزالة كلمة "رقم" غير المترجمة فقط
+// ✔✔✔ تم إصلاح اللغة الثابتة 'ar' + إزالة كلمة "رقم" غير المترجمة
 function renderDriveBackupList() {
 const container = document.getElementById('driveBackupList');
 const countEl = document.getElementById('driveBackupCount');
@@ -994,7 +1020,7 @@ setTimeout(() => {
 // =============================================================
 // 8.  FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
 // =============================================================
-// ✔✔✔ تم إصلاح أخطاء الكتابة فقط (cod e / s ymbol / المسافات) — نفس العملات كما هي
+// ✔✔✔ تم إصلاح أخطاء الكتابة (cod e / s ymbol / المسافات) — نفس العملات كما هي
 const ARABIC_CURRENCIES = [
 { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
 { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
@@ -1019,10 +1045,10 @@ const ARABIC_CURRENCIES = [
 { code: 'DJF', symbol: 'ف.ج', flag: '🇩🇯', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
 { code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
 { code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
-{ code: 'USD', symbol: '$', flag: '🇺', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
+{ code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
 { code: 'EUR', symbol: '€', flag: '🇪🇺', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
 { code: 'BDT', symbol: '৳', flag: '🇧🇩', name: { ar: 'التاكا البنغلاديشي', en: 'Bangladeshi Taka', ur: 'بنگلادیشی ٹاکا' } },
-{ code: 'INR', symbol: '₹', flag: '🇮', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
+{ code: 'INR', symbol: '₹', flag: '🇮🇳', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
 { code: 'PKR', symbol: '₨', flag: '🇵🇰', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
 { code: 'PHP', symbol: '₱', flag: '🇵🇭', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
 { code: 'CNY', symbol: '¥', flag: '🇨🇳', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
@@ -1099,7 +1125,7 @@ else if (num < 0) colorClass = 'balance-negative';
 else colorClass = 'balance-zero';
 return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
 }
-// ✔✔✔ تم إصلاح اللغة الثابتة 'ar' فقط → لغة التطبيق الحالية
+// ✔✔✔ تم إصلاح اللغة الثابتة 'ar' → لغة التطبيق الحالية
 function formatDateTime(dateString) {
 if (!dateString) return '—';
 const locale = (currentLang === 'ur') ? 'ur-PK' : (currentLang || 'ar');
@@ -1646,7 +1672,7 @@ bar.innerHTML = `
     <div class="log-stat-chip"><span class="stat-label">${translate('totalAmountStat')}</span><span class="stat-value">${getFormattedAmount(total)}</span></div>
     <div class="log-stat-chip"><span class="stat-label">${titles[currentLog] || ''}</span><span class="stat-value">${translateStoredValue(topName)} (${getFormattedAmount(topVal)})</span></div>`;
 }
-// ✔✔✔ تفاصيل المعاملة: عناوين الحقول والقيم المخزنة تُعرض مترجمة حسب لغة التطبيق
+// ✔✔✔ تفاصيل المعاملة: العناوين والقيم تُعرض مترجمة حسب لغة التطبيق
 function _renderDetailContent(o, type) {
 const el = document.getElementById('detailContent');
 if (!el) return;
@@ -1707,7 +1733,6 @@ let filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCas
          borderColor = 'var(--danger)';
          amountColor = 'var(--danger)';
      } else if (isRig) {
-         // ✔ نفس المنطق القديم لكن عبر matchStatus لتدعم القيم الإنجليزية أيضاً
          const st = i.الحالة || '';
          if (matchStatus(st, 'paid')) {
              borderColor = 'var(--success)';
@@ -1801,13 +1826,12 @@ const type = savedEdit.type;
          if (t) t.value = data.الفئة;
          if (d) d.value = data.الوصف;
          if (dt) dt.value = data.التاريخ;
+         const imgName = document.getElementById('eImgName');
          if (data.صورة) {
-             const imgName = document.getElementById('eImgName');
              if (imgName) imgName.textContent = '📎 ' + translate('imageAttached');
              selectedImageFile = data.صورة;
          } else {
              selectedImageFile = null;
-             const imgName = document.getElementById('eImgName');
              if (imgName) imgName.textContent = '';
          }
      } else if (type === 'rig') {
@@ -1956,7 +1980,6 @@ const items = [];
  (db.deb || []).forEach(d => {
      const remaining = d.المتبقي_للالتزام !== undefined
          ? parseAmount(d.المتبقي_للالتزام)
-         // ✔✔✔ أُضيف 'Paid' فقط لدعم الحالة المخزنة بالإنجليزية
          : ((d.الحالة === 'مدفوع' || d.الحالة === 'مدفوع بالكامل' || d.الحالة === 'Fully Paid' || d.الحالة === 'Paid')
              ? 0 : parseAmount(d.المبلغ || 0));
      if (remaining <= 0) return;
@@ -2015,7 +2038,7 @@ if (!item.read) {
 // عرض شاشة التفاصيل الكاملة
 renderNotificationDetail(item);
 }
-// ✔✔✔ شاشة تفاصيل التنبيه: عناوين الحقول والقيم تُعرض مترجمة حسب لغة التطبيق
+// ✔✔✔ شاشة تفاصيل التنبيه: العناوين والقيم تُعرض مترجمة حسب لغة التطبيق
 function renderNotificationDetail(item) {
 const el = document.getElementById('notificationsContent');
 if (!el) return;
@@ -2396,10 +2419,10 @@ loadTranslations().then(() => {
  updateDriveUI();
  // 🔔 جديد: تحديث شارة الجرس عند بدء التشغيل
  updateNotificationBadge();
- // ✔✔✔ تم حذف restoreDriveState() من هنا (تُستدعى داخل initGapi فقط — كان استدعاءً مزدوجاً)
  setTimeout(() => {
      initGapi();
      initGis();
+     restoreDriveState();
  }, 1000);
 };
 console.log('ميزانيتك الذكية جاهزة ✅');
