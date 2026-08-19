@@ -1,9 +1,10 @@
 // =============================================================
-// 0. GOOGLE DRIVE CONFIGURATION
+// 0.  GOOGLE DRIVE CONFIGURATION
 // =============================================================
 const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const APP_FOLDER_NAME = 'ميزانيتك الذكية';
+
 let tokenClient;
 let accessToken = null;
 let isDriveConnected = false;
@@ -16,12 +17,13 @@ const MAX_INIT_ATTEMPTS = 10;
 let tokenRefreshInterval = null;
 
 // =============================================================
-// 1. INDEXED DB SETUP (✔ v7 — ترقية آمنة + مخزن الأهداف)
+// 1.  INDEXED DB SETUP
 // =============================================================
 const IDB_NAME = "MySmartBudgetDB";
-const IDB_VERSION = 7;
-const STORE_NAMES = ["exp", "rig", "deb", "bal", "inc", "goals"];
-let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] }, inc: [], goals: [] };
+const IDB_VERSION = 6;
+const STORE_NAMES = ["exp", "rig", "deb", "bal", "inc"];
+
+let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: [] }, inc: [] };
 let IDB_connection = null;
 let currentBalance = 0;
 let balanceHidden = localStorage.getItem('balanceHidden') === 'true';
@@ -29,11 +31,13 @@ let currentLog = '',
     editMode = null,
     balanceActionType = null;
 let selectedImageFile = null;
+
+// ✔ حالة فلاتر السجلات وسجل الرصيد
 let logFilters = { cat: 'all', status: 'all', period: 'all' };
 let balanceFilters = { type: 'all' };
 
 // =============================================================
-// 2. NAVIGATION / LAYERS
+// 2.  NAVIGATION / LAYERS
 // =============================================================
 const LAYERS = {
     'sidebar': { elementId: 'appSidebar', type: 'menu' },
@@ -48,10 +52,9 @@ const LAYERS = {
     'driveBackup': { elementId: 'driveBackupModal', type: 'modal' },
     'exportName': { elementId: 'exportNameModal', type: 'modal' },
     'language': { elementId: 'languageModal', type: 'modal' },
-    'addGoal': { elementId: 'addGoalModal', type: 'modal' },
-    'goalDetail': { elementId: 'goalDetailModal', type: 'modal' },
-    'goalContribute': { elementId: 'goalContributeModal', type: 'modal' }
+    'notifications': { elementId: 'notificationsModal', type: 'modal' } // 🔔 جديد
 };
+
 let historyStack = [];
 
 function _visualOpen(layerName, data = {}) {
@@ -59,8 +62,10 @@ function _visualOpen(layerName, data = {}) {
     if (!layer) return;
     const el = document.getElementById(layer.elementId);
     if (!el) return;
+
     if (layer.type === 'modal') {
         el.style.display = 'flex';
+
         if (layerName === 'log') {
             currentLog = data.logType;
             buildLogFilters();
@@ -101,66 +106,8 @@ function _visualOpen(layerName, data = {}) {
             }
         } else if (layerName === 'language') {
             updateLanguageModalCheckmarks();
-        } else if (layerName === 'addGoal') {
-            // ✔ نافذة إضافة / تعديل هدف
-            const goalId = data.goalId || null;
-            goalEditMode = goalId;
-            const titleEl = document.getElementById('addGoalTitle');
-            const ind = document.getElementById('goalEditIndicator');
-            const initWrap = document.getElementById('goalInitialSavedWrap');
-            const editHint = document.getElementById('goalSavedEditHint');
-            ['goalName', 'goalTargetAmount', 'goalInitialSaved', 'goalTargetDate', 'goalNotes'].forEach(id => {
-                const f = document.getElementById(id); if (f) f.value = '';
-            });
-            const catSel = document.getElementById('goalCategory');
-            if (catSel) catSel.selectedIndex = 0;
-            if (goalId) {
-                const g = db.goals.find(x => x.clientId === goalId);
-                if (g) {
-                    document.getElementById('goalName').value = g.الاسم || '';
-                    if (catSel) catSel.value = g.الفئة || '';
-                    document.getElementById('goalTargetAmount').value = parseAmount(g.المبلغ_الهدف).toLocaleString('en-US');
-                    document.getElementById('goalTargetDate').value = g.تاريخ_الهدف || '';
-                    document.getElementById('goalNotes').value = (g.الوصف && g.الوصف !== '—') ? g.الوصف : '';
-                    if (titleEl) titleEl.textContent = translate('editGoal');
-                    if (ind) ind.style.display = 'inline-block';
-                    if (initWrap) initWrap.style.display = 'none';
-                    if (editHint) editHint.style.display = 'block';
-                }
-            } else {
-                if (titleEl) titleEl.textContent = translate('addGoal');
-                if (ind) ind.style.display = 'none';
-                if (initWrap) initWrap.style.display = 'block';
-                if (editHint) editHint.style.display = 'none';
-            }
-        } else if (layerName === 'goalDetail') {
-            // ✔ نافذة تفاصيل الهدف
-            goalDetailId = data.goalId;
-            renderGoalDetail();
-        } else if (layerName === 'goalContribute') {
-            // ✔ نافذة الإيداع / السحب من الهدف
-            goalContributeCtx = { goalId: data.goalId, type: data.type };
-            const g = db.goals.find(x => x.clientId === data.goalId);
-            if (g) {
-                const isDep = data.type === 'deposit';
-                const titleEl = document.getElementById('goalContributeTitle');
-                if (titleEl) titleEl.textContent = isDep ? translate('depositToGoal') : translate('withdrawFromGoal');
-                const info = goalSmartInfo(g);
-                const infoEl = document.getElementById('goalContributeInfo');
-                if (infoEl) infoEl.innerHTML = `
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                        <div class="goal-emoji-badge" style="width:42px;height:42px;min-width:42px;font-size:20px;background:${goalCategoryStyle(g.الفئة).grad}">${goalEmoji(g.الفئة)}</div>
-                        <div>
-                            <div style="font-weight:800">${g.الاسم}</div>
-                            <div style="font-size:.85em;color:#888">${translate('goalSavedAmount')}: ${formatCurrency(info.saved)} / ${formatCurrency(info.target)}</div>
-                        </div>
-                    </div>
-                    <span class="field-hint" style="margin:0">${isDep ? translate('executionNoteDeposit') : translate('executionNoteWithdraw')}${!isDep ? ' — ' + translate('availableToWithdraw') + ': ' + formatCurrency(info.saved) : ''}</span>`;
-                document.getElementById('goalContribAmount').value = '';
-                document.getElementById('goalContribNote').value = '';
-                const btn = document.getElementById('goalContributeBtn');
-                if (btn) btn.style.background = isDep ? 'var(--success)' : 'var(--danger)';
-            }
+        } else if (layerName === 'notifications') { // 🔔 جديد
+            renderNotifications();
         }
     } else if (layer.type === 'menu') {
         el.classList.add('open');
@@ -174,11 +121,10 @@ function _visualClose(layerName, clearEdit = true) {
     if (!layer) return;
     const el = document.getElementById(layer.elementId);
     if (!el) return;
+
     if (layer.type === 'modal') {
         el.style.display = 'none';
         if (clearEdit && (layerName === 'detail' || layerName === 'log')) editMode = null;
-        if (clearEdit && layerName === 'addGoal') goalEditMode = null;
-        if (clearEdit && layerName === 'goalDetail') goalDetailId = null;
     } else if (layer.type === 'menu') {
         el.classList.remove('open');
         const ov = document.querySelector(layerName === 'imageSource' ? '#imageSourceOverlay' : '.sidebar-overlay');
@@ -235,7 +181,7 @@ window.onpopstate = (e) => {
 };
 
 // =============================================================
-// 3. TRANSLATION SYSTEM (i18n)
+// 3.  TRANSLATION SYSTEM (i18n)
 // =============================================================
 let translations = {};
 let currentLang = localStorage.getItem('appLang') || 'ar';
@@ -262,6 +208,7 @@ function applyTranslations(lang) {
     }
     const t = translations[lang] || {};
     const html = document.documentElement;
+
     if (lang === 'ar' || lang === 'ur') {
         html.dir = 'rtl';
         html.lang = lang;
@@ -269,39 +216,38 @@ function applyTranslations(lang) {
         html.dir = 'ltr';
         html.lang = 'en';
     }
+
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (t[key] !== undefined) {
             el.textContent = t[key];
         }
     });
+
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.getAttribute('data-i18n-placeholder');
         if (t[key] !== undefined) {
             el.placeholder = t[key];
         }
     });
+
     const langLabel = document.getElementById('sidebarLanguageLabel');
     if (langLabel) {
         const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' };
         langLabel.textContent = langNames[lang] || '🇸🇦 العربية';
     }
+
     updateBalanceDisplay();
     updateStats();
+
+    // ✔ إعادة بناء الفلاتر عند تغيير اللغة
     if (document.getElementById('logModal').style.display === 'flex') { buildLogFilters(); renderLog(); }
     if (document.getElementById('balanceLogModal').style.display === 'flex') { buildBalanceFilters(); renderBalanceLog(); }
     if (document.getElementById('driveBackupModal').style.display === 'flex') renderDriveBackupList();
     if (document.getElementById('currencyModal').style.display === 'flex') renderCurrencyList();
-    // ✔ إعادة رسم الأهداف عند تغيير اللغة
-    const goalsSection = document.getElementById('goals');
-    if (goalsSection && goalsSection.classList.contains('active')) renderGoals();
-    renderOverviewGoals();
-    if (document.getElementById('goalDetailModal').style.display === 'flex') renderGoalDetail();
-    const agm = document.getElementById('addGoalModal');
-    if (agm && agm.style.display === 'flex') {
-        const gt = document.getElementById('addGoalTitle');
-        if (gt) gt.textContent = goalEditMode ? translate('editGoal') : translate('addGoal');
-    }
+    // 🔔 جديد: إعادة رسم التنبيهات عند تغيير اللغة
+    if (document.getElementById('notificationsModal').style.display === 'flex') renderNotifications();
+
     updateLanguageModalCheckmarks();
     localStorage.setItem('appLang', lang);
     currentLang = lang;
@@ -340,7 +286,7 @@ function updateLanguageModalCheckmarks() {
 }
 
 // =============================================================
-// 4. GOOGLE DRIVE API FUNCTIONS
+// 4.  GOOGLE DRIVE API FUNCTIONS
 // =============================================================
 function startTokenRefresh() {
     if (tokenRefreshInterval) {
@@ -371,6 +317,7 @@ function restoreDriveState() {
     const savedEmail = localStorage.getItem('drive_email');
     const savedFolderId = localStorage.getItem('drive_folder_id');
     const tokenExpiry = localStorage.getItem('drive_token_expiry');
+
     if (savedToken && savedEmail) {
         const now = Date.now();
         const expiry = parseInt(tokenExpiry) || 0;
@@ -423,11 +370,13 @@ function initGapi() {
         return;
     }
     gapiInitAttempts++;
+
     if (typeof gapi === 'undefined') {
         console.warn('gapi not loaded yet, retrying...');
         setTimeout(initGapi, 500);
         return;
     }
+
     try {
         gapi.load('client', async () => {
             try {
@@ -453,11 +402,13 @@ function initGis() {
         return;
     }
     gisInitAttempts++;
+
     if (typeof google === 'undefined' || !google.accounts) {
         console.warn('GIS not loaded yet, retrying...');
         setTimeout(initGis, 500);
         return;
     }
+
     try {
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
@@ -477,9 +428,11 @@ function initGis() {
                     }
                     return;
                 }
+
                 accessToken = resp.access_token;
                 localStorage.setItem('drive_token', accessToken);
                 localStorage.setItem('drive_token_expiry', Date.now() + 3600 * 1000);
+
                 try {
                     const userInfo = await fetch(
                         'https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
@@ -488,12 +441,15 @@ function initGis() {
                     const userData = await userInfo.json();
                     userEmail = userData.email || '';
                     localStorage.setItem('drive_email', userEmail);
+
                     await createAppFolder();
+
                     isDriveConnected = true;
                     updateDriveUI();
                     toastMsg(translate('driveConnected'), "success");
                     startTokenRefresh();
                     await loadBackupList();
+
                     if (document.getElementById('confirmBackupModal').style.display === 'flex') {
                         closeLayer('confirmBackup');
                     }
@@ -514,6 +470,7 @@ function initGis() {
 
 async function createAppFolder() {
     if (!accessToken) return;
+
     try {
         const searchResponse = await fetch(
             `https://www.googleapis.com/drive/v3/files?q=name='${APP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id)`, {
@@ -521,16 +478,19 @@ async function createAppFolder() {
         }
         );
         const result = await searchResponse.json();
+
         if (result.files && result.files.length > 0) {
             appFolderId = result.files[0].id;
             localStorage.setItem('drive_folder_id', appFolderId);
             console.log('Folder exists:', appFolderId);
             return;
         }
+
         const metadata = {
             name: APP_FOLDER_NAME,
             mimeType: 'application/vnd.google-apps.folder'
         };
+
         const createResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
             method: 'POST',
             headers: {
@@ -539,9 +499,11 @@ async function createAppFolder() {
             },
             body: JSON.stringify(metadata)
         });
+
         if (!createResponse.ok) {
             throw new Error(`Failed to create folder: ${createResponse.status}`);
         }
+
         const folderData = await createResponse.json();
         appFolderId = folderData.id;
         localStorage.setItem('drive_folder_id', appFolderId);
@@ -556,6 +518,7 @@ async function createAppFolder() {
 function handleDriveClick() {
     const savedToken = localStorage.getItem('drive_token');
     const tokenExpiry = localStorage.getItem('drive_token_expiry');
+
     if (savedToken && tokenExpiry) {
         const now = Date.now();
         const expiry = parseInt(tokenExpiry) || 0;
@@ -576,6 +539,7 @@ function handleDriveClick() {
 function handleBackupConfirm() {
     const savedToken = localStorage.getItem('drive_token');
     const tokenExpiry = localStorage.getItem('drive_token_expiry');
+
     if (savedToken && tokenExpiry) {
         const now = Date.now();
         const expiry = parseInt(tokenExpiry) || 0;
@@ -595,6 +559,7 @@ function handleBackupConfirm() {
             return;
         }
     }
+
     if (!tokenClient) {
         toastMsg(translate('loadingAuth'), "info");
         return;
@@ -606,6 +571,7 @@ function handleViewBackups() {
     closeLayer('confirmBackup');
     const savedToken = localStorage.getItem('drive_token');
     const tokenExpiry = localStorage.getItem('drive_token_expiry');
+
     if (savedToken && tokenExpiry) {
         const now = Date.now();
         const expiry = parseInt(tokenExpiry) || 0;
@@ -622,6 +588,7 @@ function handleViewBackups() {
             return;
         }
     }
+
     if (!tokenClient) {
         toastMsg(translate('loadingAuth'), "info");
         return;
@@ -639,12 +606,14 @@ function handleDriveBackup() {
 
 function signOut() {
     if (!confirm(translate('confirmSignOut'))) return;
+
     stopTokenRefresh();
     accessToken = null;
     localStorage.removeItem('drive_token');
     localStorage.removeItem('drive_email');
     localStorage.removeItem('drive_folder_id');
     localStorage.removeItem('drive_token_expiry');
+
     isDriveConnected = false;
     userEmail = '';
     appFolderId = null;
@@ -660,6 +629,7 @@ function updateDriveUI() {
     const email = document.getElementById('driveMenuEmail');
     const logoutBtn = document.getElementById('driveLogoutBtn');
     const modalStatus = document.getElementById('driveModalStatus');
+
     if (menuItem) {
         if (isDriveConnected) {
             menuItem.classList.add('connected');
@@ -681,6 +651,7 @@ function updateDriveUI() {
             if (logoutBtn) logoutBtn.style.display = 'none';
         }
     }
+
     if (modalStatus) {
         if (isDriveConnected) {
             modalStatus.className = 'status connected';
@@ -698,6 +669,7 @@ async function loadBackupList() {
         renderDriveBackupList();
         return;
     }
+
     try {
         const searchResponse = await fetch(
             `https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and trashed=false and (mimeType='application/json' or name contains '.json')&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
@@ -713,6 +685,7 @@ async function loadBackupList() {
     }
 }
 
+// ✔ استخراج رقم النسخة من بداية اسم الملف
 function parseBackupNumber(name) {
     const m = (name || '').match(/^(\d+)/);
     if (!m) return null;
@@ -720,6 +693,7 @@ function parseBackupNumber(name) {
     return isNaN(n) ? null : n;
 }
 
+// ✔ الرقم التسلسلي للنسخة القادمة (أكبر رقم + 1)
 function getNextBackupNumber() {
     let max = 0;
     (backupFiles || []).forEach(f => {
@@ -729,20 +703,24 @@ function getNextBackupNumber() {
     return max + 1;
 }
 
+// ✔ الترتيب الصحيح: من النسخة رقم 1 حتى آخر نسخة
 function renderDriveBackupList() {
     const container = document.getElementById('driveBackupList');
     const countEl = document.getElementById('driveBackupCount');
     if (!container) return;
+
     if (!isDriveConnected) {
         container.innerHTML = `<div class="drive-empty"><i class="fab fa-google-drive"></i><p>${translate('driveConnectPrompt')}</p></div>`;
         if (countEl) countEl.textContent = translate('backupCountLabel') + ' 0';
         return;
     }
+
     if (backupFiles.length === 0) {
         container.innerHTML = `<div class="drive-empty"><i class="fas fa-cloud-upload-alt"></i><p>${translate('noBackups')}</p><p style="font-size:0.85em;color:#888;">${translate('newBackupPrompt')}</p></div>`;
         if (countEl) countEl.textContent = translate('backupCountLabel') + ' 0';
         return;
     }
+
     const sortedByDate = [...backupFiles].sort((a, b) => new Date(a.createdTime) - new Date(b.createdTime));
     let fallback = 1;
     const filesWithNumbers = sortedByDate.map(file => {
@@ -750,7 +728,9 @@ function renderDriveBackupList() {
         return { ...file, number: parsed || fallback++ };
     });
     const displayFiles = filesWithNumbers.sort((a, b) => a.number - b.number);
+
     let tableHtml = `<table class="backup-table"><thead><tr><th>${translate('backupName')}</th><th>${translate('backupDate')}</th><th>${translate('backupSize')}</th><th style="text-align:left;">${translate('actions')}</th></tr></thead><tbody>`;
+
     displayFiles.forEach((file) => {
         const date = new Date(file.createdTime);
         const formattedDate = date.toLocaleString('ar', {
@@ -763,8 +743,10 @@ function renderDriveBackupList() {
         });
         const size = file.size ? (parseInt(file.size) / 1024).toFixed(1) + 'KB' : translate('unknown');
         const name = `${translate('backupCopy')} رقم ${file.number}`;
+
         tableHtml += `<tr><td class="file-name">${name}</td><td class="file-date">${formattedDate}</td><td class="file-size">${size}</td><td><div class="file-actions"><button class="restore-btn" onclick="restoreBackup('${file.id}')" title="${translate('restore')}"><i class="fas fa-download"></i></button><button class="delete-btn" onclick="deleteBackup('${file.id}')" title="${translate('delete')}"><i class="fas fa-trash"></i></button></div></td></tr>`;
     });
+
     tableHtml += `</tbody></table>`;
     container.innerHTML = tableHtml;
     if (countEl) countEl.textContent = translate('backupCountLabel') + ' ' + backupFiles.length;
@@ -775,12 +757,15 @@ function refreshBackupList() {
     toastMsg(translate('refreshingList'), "info");
 }
 
+// ✔ اسم الملف: رقم تسلسلي + التاريخ والوقت الحالي
 async function performBackup() {
     if (!accessToken || !appFolderId) {
         toastMsg(translate('driveNotConnected'), "error");
         return;
     }
+
     showLoading(translate('savingBackup'));
+
     try {
         const data = {
             exp: db.exp,
@@ -788,35 +773,41 @@ async function performBackup() {
             deb: db.deb,
             bal: db.bal,
             inc: db.inc,
-            goals: db.goals, // ✔ الأهداف ضمن النسخة الاحتياطية
             currency: currentCurrency,
             backupDate: new Date().toISOString()
         };
+
         const nextNumber = getNextBackupNumber();
         const numStr = String(nextNumber).padStart(3, '0');
         const now = new Date();
         const pad = n => String(n).padStart(2, '0');
         const dateTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
         const fileName = `${numStr}_${translate('backupFileNamePrefix')}_${dateTime}.json`;
+
         const jsonData = JSON.stringify(data, null, 2);
         const fileData = new Blob([jsonData], { type: 'application/json' });
+
         const metadata = {
             name: fileName,
             parents: [appFolderId],
             mimeType: 'application/json'
         };
+
         const form = new FormData();
         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
         form.append('file', fileData);
+
         const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${accessToken}` },
             body: form
         });
+
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Upload failed: ${response.status} - ${errorText}`);
         }
+
         hideLoading();
         toastMsg(translate('backupSaved'), "success");
         await loadBackupList();
@@ -833,23 +824,28 @@ async function performBackup() {
 
 async function restoreBackup(fileId) {
     if (!confirm(translate('confirmRestore'))) return;
+
     showLoading(translate('restoringData'));
+
     try {
         const response = await fetch(
             `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         }
         );
+
         if (!response.ok) {
             throw new Error(`Failed to download file: ${response.status}`);
         }
+
         const text = await response.text();
         const imported = JSON.parse(text);
+
         if (imported.bal && Array.isArray(imported.bal.changes)) {
             imported.bal.clientId = 1;
             await addDataToStore('bal', [imported.bal]);
         }
-        for (const sn of ['exp', 'rig', 'deb', 'inc', 'goals']) { // ✔ تشمل الأهداف
+        for (const sn of ['exp', 'rig', 'deb', 'inc']) {
             if (imported[sn] && Array.isArray(imported[sn])) {
                 await addDataToStore(sn, imported[sn]);
             }
@@ -860,6 +856,7 @@ async function restoreBackup(fileId) {
             const label = document.getElementById('sidebarCurrencyLabel');
             if (label) label.textContent = currentCurrency.symbol;
         }
+
         await loadAllData();
         hideLoading();
         updateStats();
@@ -876,6 +873,7 @@ async function restoreBackup(fileId) {
 
 async function deleteBackup(fileId) {
     if (!confirm(translate('confirmDeleteBackup'))) return;
+
     try {
         const response = await fetch(
             `https://www.googleapis.com/drive/v3/files/${fileId}`, {
@@ -883,9 +881,11 @@ async function deleteBackup(fileId) {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         }
         );
+
         if (!response.ok) {
             throw new Error(`Delete failed: ${response.status}`);
         }
+
         toastMsg(translate('backupDeleted'), "success");
         await loadBackupList();
         renderDriveBackupList();
@@ -896,7 +896,7 @@ async function deleteBackup(fileId) {
 }
 
 // =============================================================
-// 5. EXPORT / IMPORT
+// 5.  EXPORT / IMPORT
 // =============================================================
 function openExportNameModal() {
     openLayer('exportName');
@@ -909,19 +909,22 @@ function performExport() {
         return;
     }
     closeLayer('exportName');
+
     if (!IDB_connection) return toastMsg(translate('dbError'), "error");
+
     const data = {
         exp: db.exp,
         rig: db.rig,
         deb: db.deb,
         bal: db.bal,
         inc: db.inc,
-        goals: db.goals, // ✔ الأهداف ضمن التصدير
         currency: currentCurrency
     };
+
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
     a.href = url;
     a.download = `${fileName}.json`;
@@ -929,26 +932,31 @@ function performExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
     toastMsg(translate('exportSuccess'), "success");
 }
 
 async function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
+
     if (!confirm(translate('confirmImport'))) {
         event.target.value = null;
         return;
     }
+
     showLoading(translate('importingData'));
+
     const reader = new FileReader();
     reader.onload = async (e) => {
         try {
             const imported = JSON.parse(e.target.result);
+
             if (imported.bal && Array.isArray(imported.bal.changes)) {
                 imported.bal.clientId = 1;
                 await addDataToStore('bal', [imported.bal]);
             }
-            for (const sn of ['exp', 'rig', 'deb', 'inc', 'goals']) { // ✔ تشمل الأهداف
+            for (const sn of ['exp', 'rig', 'deb', 'inc']) {
                 if (imported[sn] && Array.isArray(imported[sn])) {
                     await addDataToStore(sn, imported[sn]);
                 }
@@ -959,6 +967,7 @@ async function importData(event) {
                 const label = document.getElementById('sidebarCurrencyLabel');
                 if (label) label.textContent = currentCurrency.symbol;
             }
+
             await loadAllData();
             hideLoading();
             updateStats();
@@ -979,6 +988,7 @@ async function addDataToStore(storeName, dataArray) {
     if (!IDB_connection) return;
     const tx = IDB_connection.transaction([storeName], 'readwrite');
     const store = tx.objectStore(storeName);
+
     for (const item of dataArray) {
         await new Promise(resolve => {
             if (storeName === 'bal') { store.put(item).onsuccess = resolve; } else {
@@ -992,7 +1002,7 @@ async function addDataToStore(storeName, dataArray) {
 }
 
 // =============================================================
-// 6. LOADING OVERLAY
+// 6.  LOADING OVERLAY
 // =============================================================
 function showLoading(message = translate('processing')) {
     const overlay = document.getElementById('loadingOverlay');
@@ -1007,28 +1017,34 @@ function hideLoading() {
 }
 
 // =============================================================
-// 7. TOAST NOTIFICATION
+// 7.  TOAST NOTIFICATION
 // =============================================================
 function toastMsg(message, type = "info") {
     const t = document.getElementById('toast');
     if (!t) return;
+
     t.className = 'toast ' + type;
+
     const iconMap = {
         success: 'fa-check-circle',
         error: 'fa-exclamation-circle',
         info: 'fa-info-circle'
     };
+
     t.innerHTML =
         `<span class="toast-icon ${type}"><i class="fas ${iconMap[type] || 'fa-info-circle'}"></i></span> ${message}`;
+
     t.classList.add('show');
+
     setTimeout(() => {
         t.classList.remove('show');
     }, 3500);
 }
 
 // =============================================================
-// 8. FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
+// 8.  FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
 // =============================================================
+// ✔ أسماء العملات بثلاث لغات
 const ARABIC_CURRENCIES = [
     { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
     { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
@@ -1061,9 +1077,11 @@ const ARABIC_CURRENCIES = [
     { code: 'PHP', symbol: '₱', flag: '🇵🇭', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
     { code: 'CNY', symbol: '¥', flag: '🇨🇳', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
 ];
+
 let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SAR')) ||
     ARABIC_CURRENCIES[0];
 
+// ✔ إرجاع اسم العملة بلغة التطبيق الحالية
 function getCurrencyName(c) {
     const lang = (c.name && c.name[currentLang]) ? currentLang : 'ar';
     return (c.name && c.name[lang]) || c.code;
@@ -1072,31 +1090,40 @@ function getCurrencyName(c) {
 function formatAmount(input) {
     let val = input.value.replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
     val = val.replace(/[^\d.]/g, '');
+
     const parts = val.split('.');
     if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+
     const intPart = parts[0];
     const decPart = parts[1] ? '.' + parts[1] : '';
+
     const num = parseFloat(intPart.replace(/,/g, ''));
     let formatted = isNaN(num) ? '' : num.toLocaleString('en-US');
+
     if (input.value.endsWith('.') && !decPart) formatted += '.';
+
     input.value = formatted + decPart;
 }
 
 function parseAmount(amount) {
     if (amount === null || amount === undefined) return 0;
     let str = String(amount).trim();
+
     let negative = false;
     if (str.charAt(0) === '-') {
         negative = true;
         str = str.substring(1);
     }
+
     str = str.replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
     str = str.replace(/٫/g, '.');
     str = str.replace(/٬/g, '');
     str = str.replace(/[،,\s]/g, '');
     str = str.replace(/[^\d.]/g, '');
+
     const parts = str.split('.');
     if (parts.length > 2) str = parts[0] + '.' + parts.slice(1).join('');
+
     const val = parseFloat(str);
     if (isNaN(val)) return 0;
     return negative ? -val : val;
@@ -1121,36 +1148,44 @@ function getLocalDateTimeString(date = new Date()) {
 function formatCurrency(amount, withColor = false) {
     const num = parseAmount(amount);
     const fmt = getFormattedAmount(num);
+
     let colorClass = '';
     if (withColor) {
         if (num > 0) colorClass = 'balance-positive';
         else if (num < 0) colorClass = 'balance-negative';
         else colorClass = 'balance-zero';
     }
+
     return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
 }
 
 function formatBalance(amount) {
     if (balanceHidden) return '<span class="hidden-balance">***</span>';
+
     const num = parseAmount(amount);
     const fmt = getFormattedAmount(num);
+
     let colorClass = '';
     if (num > 0) colorClass = 'balance-positive';
     else if (num < 0) colorClass = 'balance-negative';
     else colorClass = 'balance-zero';
+
     return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
 }
 
 function formatDateTime(dateString) {
     if (!dateString) return '—';
+
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
         const [y, m, d] = dateString.split('-').map(Number);
         const date = new Date(y, m - 1, d);
         if (isNaN(date)) return translate('invalidDate');
         return date.toLocaleDateString('ar', { numberingSystem: 'latn', year: 'numeric', month: 'short', day: 'numeric' });
     }
+
     const d = new Date(dateString);
     if (isNaN(d)) return translate('invalidDate');
+
     return d.toLocaleString('ar', {
         numberingSystem: 'latn', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric',
         minute: '2-digit', hour12: true
@@ -1163,36 +1198,39 @@ function clearFields() {
         'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate',
         'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate'
     ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
     clearSelectedImage();
+
     document.getElementById('rDynamicFields').innerHTML = '';
     document.getElementById('dDynamicFields').innerHTML = '';
+
     document.querySelectorAll('.edit-indicator').forEach(el => el.style.display = 'none');
     document.getElementById('dEntity').style.display = 'none';
 }
 
 // =============================================================
-// 9. TAB NAVIGATION
+// 9.  TAB NAVIGATION
 // =============================================================
 function openTab(id, keepEdit = false) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+
     document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.tab === id) {
             btn.classList.add('active');
         }
     });
+
     if (!keepEdit) {
         editMode = null;
         clearFields();
     }
+
     if (id === 'overview') updateStats();
-    if (id === 'goals') renderGoals(); // ✔ قسم الأهداف
+
     if (editMode) {
-        const indicatorMap = {
-            inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator',
-            deb: 'debEditIndicator'
-        };
+        const indicatorMap = { inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
         const ind = document.getElementById(indicatorMap[editMode.type]);
         if (ind) ind.style.display = 'inline-block';
     }
@@ -1217,23 +1255,30 @@ function toggleBalanceVisibility() {
 function updateBalanceDisplay() {
     const el = document.getElementById('currentBalanceDisplay');
     el.innerHTML = formatBalance(currentBalance);
+
     const act = document.getElementById('currentBalanceInAction');
     if (act) act.innerHTML = formatBalance(currentBalance);
+
     const icon = document.querySelector('#balanceVisibilityToggle i');
     if (icon) icon.className = balanceHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+
     if (document.getElementById('balanceLogModal').style.display === 'flex') renderBalanceLog();
 }
 
 async function processBalanceChange(amount, type, description, recordId = null, isEdit = false, oldAmount = 0) {
     if (!recordId) recordId = `bal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     const changeAmount = parseAmount(amount);
     let netChange = changeAmount;
-    // ✔ goal_deposit: الإيداع في الهدف يُخصم من الرصيد النقدي
-    if (['expense', 'debt_payment', 'withdraw', 'revert_expense_debt', 'goal_deposit'].includes(type)) netChange *= -1;
+
+    if (['expense', 'debt_payment', 'withdraw', 'revert_expense_debt'].includes(type)) netChange *= -1;
+
     let effectiveChange = netChange;
     if (isEdit) effectiveChange = netChange - oldAmount;
+
     currentBalance = parseAmount(currentBalance) + effectiveChange;
     db.bal.amount = currentBalance;
+
     const entry = {
         id: recordId,
         التاريخ: getLocalDateTimeString(),
@@ -1243,9 +1288,11 @@ async function processBalanceChange(amount, type, description, recordId = null, 
         القيمة_الصافية: netChange,
         الرصيد_بعد_العملية: currentBalance
     };
+
     const idx = db.bal.changes.findIndex(c => c.id === recordId);
     if (idx > -1) db.bal.changes[idx] = entry;
     else db.bal.changes.unshift(entry);
+
     try {
         await saveData('bal', db.bal);
         updateBalanceDisplay();
@@ -1261,40 +1308,52 @@ async function processBalanceChange(amount, type, description, recordId = null, 
 async function processBalanceAction() {
     const amt = document.getElementById('bAmount').value;
     const desc = document.getElementById('bDesc').value || (balanceActionType === 'deposit' ? translate('generalDeposit') : translate('generalWithdraw'));
+
     if (!amt) return toastMsg(translate('enterAmount'), "error");
+
     const ok = await processBalanceChange(amt, balanceActionType, desc, `manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+
     if (ok) {
         toastMsg(balanceActionType === 'deposit' ? translate('depositSuccess') : translate('withdrawSuccess'), "success");
         closeLayer('balanceAction');
     }
 }
 
+// ✔ سجل حركات الرصيد: بحث + فلتر نوع الحركة + شرائح الإحصائيات
 function renderBalanceLog() {
     const el = document.getElementById('balanceLogContent');
     const changes = db.bal.changes || [];
+
     const qEl = document.getElementById('balanceSearch');
     const q = qEl ? qEl.value.toLowerCase() : '';
+
     let list = changes;
     if (q) list = list.filter(i => String(i.النوع).toLowerCase().includes(q));
+
     if (balanceFilters.type === 'deposit') list = list.filter(i => i.القيمة_الصافية > 0);
     if (balanceFilters.type === 'withdraw') list = list.filter(i => i.القيمة_الصافية < 0);
+
     let dep = 0, wit = 0;
     list.forEach(i => { if (i.القيمة_الصافية > 0) dep += i.القيمة_الصافية; else if (i.القيمة_الصافية < 0) wit += Math.abs(i.القيمة_الصافية); });
+
     const bar = document.getElementById('balanceStatsBar');
     if (bar) bar.innerHTML = `
         <div class="log-stat-chip"><span class="stat-label">${translate('movementsCount')}</span><span class="stat-value">${list.length}</span></div>
         <div class="log-stat-chip"><span class="stat-label">${translate('totalDeposits')}</span><span class="stat-value" style="color:var(--success)">${getFormattedAmount(dep)}</span></div>
         <div class="log-stat-chip"><span class="stat-label">${translate('totalWithdrawals')}</span><span class="stat-value" style="color:var(--danger)">${getFormattedAmount(wit)}</span></div>`;
+
     if (!list.length) {
         el.innerHTML =
             `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>${translate('noBalanceLog')}</p>`;
         return;
     }
+
     el.innerHTML = list.map(i => {
         const isDep = i.القيمة_الصافية > 0;
         const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
         const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
         const displayAmount = (i.القيمة_الصافية < 0 ? '-' : '') + formatCurrency(Math.abs(i.المبلغ));
+
         return `<div class="list-item" style="border-right-color:${color};">
             <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;">
                 <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span>
@@ -1317,28 +1376,30 @@ async function addIncome() {
     const iType = document.getElementById('iType');
     const iDate = document.getElementById('iDate');
     const iDesc = document.getElementById('iDesc');
+
     if (!iAmount.value || !iType.value || !iDate.value) return toastMsg(translate('fillRequired'), "error");
+
     const isEditing = editMode && editMode.type === 'inc';
     const oldData = isEditing ? db.inc[editMode.index] : {};
     const oldAmount = isEditing ? parseAmount(oldData.المبلغ) : 0;
+
     const amount = parseAmount(iAmount.value);
     if (amount === 0) return toastMsg(translate('amountMustBePositive'), "error");
+
     const data = isEditing ? { ...oldData } : {};
     data.المبلغ = getFormattedAmount(amount);
     data.الفئة = iType.value;
     data.الوصف = iDesc.value || '—';
     data.التاريخ = iDate.value;
     data.clientId = isEditing ? oldData.clientId : `inc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     try {
         await saveData('inc', data);
         await processBalanceChange(amount, 'income', `${translate('incomeLogPrefix')}: ${data.الفئة} (${data.الوصف})`, data.clientId,
             isEditing, oldAmount);
         toastMsg(isEditing ? translate('incomeEdited') : translate('incomeSaved'), "success");
         postSaveCleanup(isEditing, 'inc');
-    } catch (err) {
-        toastMsg(translate('saveFailed'), "error");
-        console.error(err);
-    }
+    } catch (err) { toastMsg(translate('saveFailed'), "error"); console.error(err); }
 }
 
 // 11.2 EXPENSES
@@ -1347,18 +1408,23 @@ async function addExpense() {
     const eType = document.getElementById('eType');
     const eDate = document.getElementById('eDate');
     const eDesc = document.getElementById('eDesc');
+
     if (!eAmount.value || !eType.value || !eDate.value) return toastMsg(translate('fillRequired'), "error");
+
     const isEditing = editMode && editMode.type === 'exp';
     const oldData = isEditing ? db.exp[editMode.index] : {};
     const oldAmount = isEditing ? parseAmount(oldData.المبلغ) * -1 : 0;
+
     const amount = parseAmount(eAmount.value);
     if (amount === 0) return toastMsg(translate('amountMustBePositive'), "error");
+
     const data = isEditing ? { ...oldData } : {};
     data.المبلغ = getFormattedAmount(amount);
     data.الفئة = eType.value;
     data.الوصف = eDesc.value || '—';
     data.التاريخ = eDate.value;
     data.clientId = isEditing ? oldData.clientId : `exp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     const img = getSelectedImage();
     if (img && typeof img === 'string' && img.startsWith('data:image')) {
         data.صورة = img;
@@ -1368,26 +1434,26 @@ async function addExpense() {
         if (oldData.صورة) data.صورة = oldData.صورة;
         else delete data.صورة;
     }
+
     try {
         await saveData('exp', data);
         await processBalanceChange(amount, 'expense', `${translate('expenseLogPrefix')}: ${data.الفئة} (${data.الوصف})`, data.clientId,
             isEditing, oldAmount);
         toastMsg(isEditing ? translate('expenseEdited') : translate('expenseSaved'), "success");
         postSaveCleanup(isEditing, 'exp');
-    } catch (err) {
-        toastMsg(translate('saveFailed'), "error");
-        console.error(err);
-    }
+    } catch (err) { toastMsg(translate('saveFailed'), "error"); console.error(err); }
 }
 
 // 11.3 RIGHTS
 function updateRightFields(type, currentData = null) {
     const container = document.getElementById('rDynamicFields');
     container.innerHTML = '';
+
     let paidHtml = `
         <input id="rPaidAmount" type="text" placeholder="💰 ${translate('collectedAmount')}" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('en-US') : ''}" />
         <span class="field-hint">${translate('collectedAmountHint')}</span>
     `;
+
     container.innerHTML = paidHtml;
 }
 
@@ -1398,16 +1464,21 @@ async function addRight() {
     const rDueDate = document.getElementById('rDueDate');
     const rDesc = document.getElementById('rDesc');
     const rPaidAmount = document.getElementById('rPaidAmount');
+
     if (!rAmount.value || !rType.value || !rDueDate.value) return toastMsg(translate('fillRequired'), "error");
+
     const isEditing = editMode && editMode.type === 'rig';
     const oldData = isEditing ? db.rig[editMode.index] : {};
+
     const total = parseAmount(rAmount.value);
     if (total === 0) return toastMsg(translate('amountMustBePositive'), "error");
+
     const paid = parseAmount(rPaidAmount ? rPaidAmount.value : 0);
     if (paid > total) {
         toastMsg(translate('paidExceedsTotal'), "error");
         return;
     }
+
     const data = isEditing ? { ...oldData } : {};
     data.clientId = isEditing ? oldData.clientId : `rig-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     data.النوع = rType.value;
@@ -1416,25 +1487,26 @@ async function addRight() {
     data.تاريخ_الاستحقاق = rDueDate.value;
     data.الوصف = rDesc.value || '—';
     data.المبلغ_المدفوع = getFormattedAmount(paid);
+
     const remaining = total - paid;
     data.المتبقي = getFormattedAmount(remaining);
+
     let status = translate('statusUnpaid');
     if (remaining <= 0) status = translate('statusFullyPaid');
     else if (paid > 0) status = translate('statusPartiallyPaid');
     else status = translate('statusUnpaid');
     data.الحالة = status;
+
     data.المبلغ_المضاف_للرصيد = paid;
     const oldPaid = isEditing ? parseAmount(oldData.المبلغ_المضاف_للرصيد || 0) : 0;
+
     try {
         await saveData('rig', data);
         await processBalanceChange(paid, 'right_collection', `${translate('rightLogPrefix')}: ${data.النوع} (${data.الجهة})`, data.clientId,
             isEditing, oldPaid);
         toastMsg(isEditing ? translate('rightEdited') : translate('rightSaved'), "success");
         postSaveCleanup(isEditing, 'rig');
-    } catch (err) {
-        toastMsg(translate('saveFailed'), "error");
-        console.error(err);
-    }
+    } catch (err) { toastMsg(translate('saveFailed'), "error"); console.error(err); }
 }
 
 // 11.4 DEBTS
@@ -1443,8 +1515,11 @@ function updateDebtFields(type, currentData = null) {
     const amountInput = document.getElementById('dAmount');
     const statusSelect = document.getElementById('dStatus');
     const entityInput = document.getElementById('dEntity');
+
     container.innerHTML = '';
-    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍‍👧 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
+
+    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
+
     if (entityTypes.includes(type)) {
         entityInput.style.display = 'block';
         if (currentData && currentData.الجهة) {
@@ -1454,16 +1529,20 @@ function updateDebtFields(type, currentData = null) {
         entityInput.style.display = 'none';
         entityInput.value = '';
     }
+
     const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
+
     if (masterTypes.includes(type)) {
         amountInput.style.display = 'none';
         statusSelect.style.display = 'none';
         amountInput.value = '';
         statusSelect.value = '';
+
         let html = `
             <input id="dTotalAmount" type="text" placeholder="💵 ${translate('totalAmount')}" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_الكلي_للالتزام ? parseAmount(currentData.المبلغ_الكلي_للالتزام).toLocaleString('en-US') : ''}" />
             <span class="field-hint">${translate('totalAmountHint')}</span>
         `;
+
         if (type === '🏦 قروض وتمويل' || type === '🛒 مشتريات بالتقسيط' || type === '🚗 تمويل السيارة') {
             html += `
                 <input id="dInstallments" type="number" placeholder="${translate('totalInstallments')}" value="${currentData && currentData.عدد_الاقساط ? currentData.عدد_الاقساط : ''}" />
@@ -1474,19 +1553,23 @@ function updateDebtFields(type, currentData = null) {
                 <input id="dPaidAmount" type="text" placeholder="💰 ${translate('totalPaidSoFar')}" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.إجمالي_المدفوع ? parseAmount(currentData.إجمالي_المدفوع).toLocaleString('en-US') : ''}" />
             `;
         }
+
         container.innerHTML = html;
     } else {
         amountInput.style.display = 'block';
         statusSelect.style.display = 'block';
+
         if (currentData) {
             amountInput.value = parseAmount(currentData.المبلغ || 0).toLocaleString('en-US');
             statusSelect.value = currentData.الحالة || '';
         }
     }
+
     if (!masterTypes.includes(type)) {
         statusSelect.onchange = function () {
             const status = statusSelect.value;
             const partialPaidContainer = document.getElementById('dPartialPaidContainer');
+
             if (status === 'مدفوع جزئياً') {
                 if (!partialPaidContainer) {
                     const paidInput = document.createElement('div');
@@ -1501,7 +1584,9 @@ function updateDebtFields(type, currentData = null) {
                 if (partialPaidContainer) partialPaidContainer.remove();
             }
         };
+
         statusSelect.onchange();
+
         if (currentData && currentData.الحالة === 'مدفوع جزئياً' && currentData.المبلغ_المدفوع_جزئياً) {
             const paidInput = document.getElementById('dPartialPaidAmount');
             if (paidInput) paidInput.value = parseAmount(currentData.المبلغ_المدفوع_جزئياً).toLocaleString('en-US');
@@ -1516,41 +1601,57 @@ async function addDebt() {
     const dDueDate = document.getElementById('dDueDate');
     const dDesc = document.getElementById('dDesc');
     const dStatus = document.getElementById('dStatus');
+
     if (!dType.value || !dDueDate.value) return toastMsg(translate('fillRequired'), "error");
+
     const isEditing = editMode && editMode.type === 'deb';
     const oldData = isEditing ? db.deb[editMode.index] : {};
+
     const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
     const isMaster = masterTypes.includes(dType.value);
+
     const data = isEditing ? { ...oldData } : {};
     data.clientId = isEditing ? oldData.clientId : `deb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     data.النوع = dType.value;
     data.تاريخ_الاستحقاق = dDueDate.value;
     data.الوصف = dDesc.value || '—';
+
     if (dEntity.style.display !== 'none' && dEntity.value) {
         data.الجهة = dEntity.value;
     } else {
         data.الجهة = '—';
     }
+
     let paidAmount = 0;
     let oldPaid = isEditing ? parseAmount(oldData.المبلغ_المخصوم_للرصيد || 0) : 0;
+
     if (isMaster) {
         const totalInput = document.getElementById('dTotalAmount');
         if (!totalInput || !totalInput.value) return toastMsg(translate('enterTotalAmount'), "error");
+
         const total = parseAmount(totalInput.value);
         if (total === 0) return toastMsg(translate('amountMustBePositive'), "error");
+
         data.المبلغ_الكلي_للالتزام = getFormattedAmount(total);
+
         let totalPaid = 0;
         const isLoanOrInstallment = (dType.value === '🏦 قروض وتمويل' || dType.value === '🛒 مشتريات بالتقسيط' || dType.value === '🚗 تمويل السيارة');
+
         if (isLoanOrInstallment) {
             const installmentsInput = document.getElementById('dInstallments');
             const paidInstallmentsInput = document.getElementById('dPaidInstallments');
+
             if (!installmentsInput || !installmentsInput.value) return toastMsg(translate('enterInstallments'), "error");
+
             const installments = parseInt(installmentsInput.value) || 0;
             const paidInstallments = parseInt(paidInstallmentsInput ? paidInstallmentsInput.value : 0) || 0;
+
             if (installments <= 0) return toastMsg(translate('installmentsPositive'), "error");
             if (paidInstallments > installments) return toastMsg(translate('paidInstallmentsExceed'), "error");
+
             const installmentVal = total / installments;
             totalPaid = paidInstallments * installmentVal;
+
             data.عدد_الاقساط = installments;
             data.قيمة_القسط = getFormattedAmount(installmentVal);
             data.الأقساط_المدفوعة = paidInstallments;
@@ -1559,23 +1660,30 @@ async function addDebt() {
             if (paidInput) totalPaid = parseAmount(paidInput.value);
             if (totalPaid > total) return toastMsg(translate('paidExceedsTotalDebt'), "error");
         }
+
         data.إجمالي_المدفوع = getFormattedAmount(totalPaid);
         data.المتبقي_للالتزام = getFormattedAmount(total - totalPaid);
         data.المبلغ = '—';
         data.الحالة = (total - totalPaid) <= 0 ? translate('statusPaid') : translate('statusPartiallyPaid');
+
         paidAmount = totalPaid;
     } else {
         if (!dAmount.value || !dStatus.value) return toastMsg(translate('fillRequired'), "error");
+
         const amt = parseAmount(dAmount.value);
         if (amt === 0) return toastMsg(translate('amountMustBePositive'), "error");
+
         data.المبلغ = getFormattedAmount(amt);
         data.الحالة = dStatus.value;
+
         if (dStatus.value === 'مدفوع جزئياً') {
             const partialPaidInput = document.getElementById('dPartialPaidAmount');
             if (!partialPaidInput || !partialPaidInput.value) return toastMsg(translate('enterPartialPaid'), "error");
+
             const partialPaid = parseAmount(partialPaidInput.value);
             if (partialPaid <= 0) return toastMsg(translate('partialPaidPositive'), "error");
             if (partialPaid >= amt) return toastMsg(translate('partialPaidLessThanTotal'), "error");
+
             paidAmount = partialPaid;
             data.المبلغ_المدفوع_جزئياً = getFormattedAmount(partialPaid);
         } else if (dStatus.value === 'مدفوع' || dStatus.value === 'مدفوع بالكامل') {
@@ -1583,28 +1691,29 @@ async function addDebt() {
         } else {
             paidAmount = 0;
         }
+
         delete data.المبلغ_الكلي_للالتزام;
         delete data.إجمالي_المدفوع;
         delete data.المتبقي_للالتزام;
         delete data.عدد_الاقساط;
         delete data.قيمة_القسط;
         delete data.الأقساط_المدفوعة;
+
         if (dStatus.value !== 'مدفوع جزئياً') {
             delete data.المبلغ_المدفوع_جزئياً;
         }
     }
+
     data.المبلغ_المخصوم_للرصيد = paidAmount;
     const oldNetChange = isEditing ? -oldPaid : 0;
+
     try {
         await saveData('deb', data);
         await processBalanceChange(paidAmount, 'debt_payment', `${translate('debtLogPrefix')}: ${data.النوع} (${data.الجهة})`, data.clientId,
             isEditing, oldNetChange);
         toastMsg(isEditing ? translate('debtEdited') : translate('debtSaved'), "success");
         postSaveCleanup(isEditing, 'deb');
-    } catch (err) {
-        toastMsg(translate('saveFailed'), "error");
-        console.error(err);
-    }
+    } catch (err) { toastMsg(translate('saveFailed'), "error"); console.error(err); }
 }
 
 function postSaveCleanup(isEditing, type) {
@@ -1620,11 +1729,13 @@ function postSaveCleanup(isEditing, type) {
 // =============================================================
 // 12. DETAIL & LOG RENDERING + FILTERS
 // =============================================================
+// ✔ فلترة حسب الفترة الزمنية
 function inPeriod(dateStr, period) {
     if (period === 'all' || !dateStr) return true;
     const d = new Date(dateStr);
     if (isNaN(d)) return true;
     const now = new Date();
+
     if (period === 'today') return d.toDateString() === now.toDateString();
     if (period === 'week') { const w = new Date(now); w.setDate(now.getDate() - 7); return d >= w; }
     if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -1632,6 +1743,7 @@ function inPeriod(dateStr, period) {
     return true;
 }
 
+// ✔ مطابقة الحالة (تدعم العربي والإنجليزي)
 function matchStatus(st, f) {
     st = st || '';
     if (f === 'paid') return (/مدفوع بالكامل/.test(st) || /مدفوع$/.test(st) || /Fully Paid/.test(st) || /^Paid$/.test(st)) && !/جزئ|Partial/.test(st) && !/غير|Unpaid/.test(st);
@@ -1644,12 +1756,15 @@ function matchStatus(st, f) {
 function setLogFilter(kind, value) { logFilters[kind] = value; renderLog(); }
 function setBalanceFilter(kind, value) { balanceFilters[kind] = value; renderBalanceLog(); }
 
+// ✔ بناء قوائم الفلاتر حسب السجل الحالي واللغة
 function buildLogFilters() {
     const catSel = document.getElementById('logFilterCat');
     const statusSel = document.getElementById('logFilterStatus');
     const periodSel = document.getElementById('logFilterPeriod');
     if (!catSel || !statusSel || !periodSel) return;
+
     logFilters = { cat: 'all', status: 'all', period: 'all' };
+
     let catOptions = '';
     if (currentLog === 'inc' || currentLog === 'exp') {
         const src = document.getElementById(currentLog === 'inc' ? 'iType' : 'eType');
@@ -1660,11 +1775,14 @@ function buildLogFilters() {
         catOptions = Array.from(src.options).filter(o => o.value).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('');
         catSel.style.display = 'block';
     } else { catSel.style.display = 'none'; }
+
     catSel.innerHTML = `<option value="all">${translate('allCategories')}</option>` + catOptions;
+
     if (currentLog === 'rig' || currentLog === 'deb') {
         statusSel.style.display = 'block';
         statusSel.innerHTML = `<option value="all">${translate('allStatuses')}</option><option value="paid">${translate('statusPaid')}</option><option value="partial">${translate('statusPartiallyPaidShort')}</option><option value="unpaid">${translate('statusUnpaid')}</option><option value="late">${translate('statusOverdue')}</option>`;
     } else { statusSel.style.display = 'none'; }
+
     periodSel.innerHTML = `<option value="all">${translate('periodAll')}</option><option value="today">${translate('periodToday')}</option><option value="week">${translate('periodWeek')}</option><option value="month">${translate('periodMonth')}</option><option value="year">${translate('periodYear')}</option>`;
 }
 
@@ -1675,20 +1793,26 @@ function buildBalanceFilters() {
     typeSel.value = balanceFilters.type || 'all';
 }
 
+// ✔ شرائح إحصائيات السجلات (العدد + الإجمالي + الأعلى)
 function renderLogStats(list, field) {
     const bar = document.getElementById('logStatsBar');
     if (!bar) return;
+
     let total = 0;
     const byCat = {};
+
     list.forEach(i => {
         const v = (currentLog === 'deb') ? parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0) : parseAmount(i.المبلغ);
         total += v;
         const c = i[field] || '—';
         byCat[c] = (byCat[c] || 0) + v;
     });
+
     let topName = '—', topVal = 0;
     Object.entries(byCat).forEach(([n, v]) => { if (v > topVal) { topVal = v; topName = n; } });
+
     const titles = { inc: translate('topIncomeSource'), exp: translate('topExpenseCategory'), rig: translate('topRightsType'), deb: translate('topDebtsType') };
+
     bar.innerHTML = `
         <div class="log-stat-chip"><span class="stat-label">${translate('operationsCount')}</span><span class="stat-value">${list.length}</span></div>
         <div class="log-stat-chip"><span class="stat-label">${translate('totalAmountStat')}</span><span class="stat-value">${getFormattedAmount(total)}</span></div>
@@ -1697,43 +1821,56 @@ function renderLogStats(list, field) {
 
 function _renderDetailContent(o, type) {
     const el = document.getElementById('detailContent');
+
     let html = `<div class="card" style="border-top-color:var(--p);"><h3 style="color:var(--p);margin-top:0;"><i class="fas fa-info-circle" style="margin-left:5px;"></i> ${translate('details')}</h3>`;
+
     for (const [key, val] of Object.entries(o)) {
-        if (['id', 'clientId', 'صورة', 'المبلغ_المضاف_للرصيد', 'المبلغ_المخصوم_للرصيد', 'سجل_المساهمات'].includes(key)) continue;
-        if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '' && key !== 'الوصف'))
-            continue;
+        if (['id', 'clientId', 'صورة', 'المبلغ_المضاف_للرصيد', 'المبلغ_المخصوم_للرصيد'].includes(key)) continue;
+        if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '' && key !== 'الوصف')) continue;
+
         const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
         const display = isAmt ? formatCurrency(val, true) : val;
-        html += `<p style="margin:6px 0;"><strong>${key.replace(/_/g, ' ')}: </strong> <span>${display}</span></p>`;
+
+        html += `<p style="margin:6px 0;"><strong>${key.replace(/_/g, ' ')}:</strong> <span>${display}</span></p>`;
     }
     html += `</div>`;
+
     if (o.صورة && type === 'exp') {
         html += `<div class="card" style="border-top-color:var(--s);"><h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> ${translate('invoiceImage')}</h3><img src="${o.صورة}" alt="${translate('invoice')}" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" /></div>`;
     }
+
     html += `<div style="display:flex;gap:10px;margin-top:20px;"><button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> ${translate('edit')}</button><button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> ${translate('delete')}</button></div>`;
+
     el.innerHTML = html;
 }
 
+// ✔ السجلات: بحث + فلاتر (فئة/نوع + حالة + فترة) + إحصائيات
 function renderLog() {
     const el = document.getElementById('logContent');
     const items = db[currentLog] || [];
     const search = document.getElementById('search').value.toLowerCase();
     const field = (currentLog === 'inc' || currentLog === 'exp') ? 'الفئة' : 'النوع';
+
     let filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(search)));
+
     if (logFilters.cat !== 'all') filtered = filtered.filter(i => i[field] === logFilters.cat);
     if ((currentLog === 'rig' || currentLog === 'deb') && logFilters.status !== 'all') filtered = filtered.filter(i => matchStatus(i.الحالة, logFilters.status));
     if (logFilters.period !== 'all') filtered = filtered.filter(i => inPeriod(i.التاريخ || i.تاريخ_الاستحقاق, logFilters.period));
+
     renderLogStats(filtered, field);
+
     if (!filtered.length) {
         el.innerHTML =
             `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>${translate('noTransactions')}</p>`;
         return;
     }
+
     el.innerHTML = filtered.map(i => {
         const isInc = currentLog === 'inc';
         const isExp = currentLog === 'exp';
         const isRig = currentLog === 'rig';
         const isDeb = currentLog === 'deb';
+
         let amountVal = 0;
         let amountDisplay = '';
         let desc = i.الوصف || i.الفئة || i.النوع || '—';
@@ -1742,6 +1879,7 @@ function renderLog() {
         let statusBadge = '';
         let amountColor = 'var(--text-dark)';
         let entity = i.الجهة || '';
+
         if (isInc) {
             amountVal = parseAmount(i.المبلغ);
             amountDisplay = '+' + formatCurrency(amountVal);
@@ -1775,19 +1913,18 @@ function renderLog() {
             const st = i.الحالة || '';
             const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
             const isMaster = masterTypes.includes(i.النوع);
+
             if (isMaster) {
                 borderColor = 'var(--p)';
                 const rem = parseAmount(i.المتبقي_للالتزام || 0);
-                statusBadge =
-                    `<span style="font-size:0.8em;color:var(--p);">${translate('remaining')}: ${formatCurrency(rem)}</span>`;
+                statusBadge = `<span style="font-size:0.8em;color:var(--p);">${translate('remaining')}: ${formatCurrency(rem)}</span>`;
                 amountColor = 'var(--p)';
                 amountVal = parseAmount(i.المبلغ_الكلي_للالتزام);
                 amountDisplay = formatCurrency(amountVal);
             } else {
                 if (st === 'مدفوع' || st === 'مدفوع بالكامل') {
                     borderColor = 'var(--success)';
-                    statusBadge =
-                        `<span class="status-badge paid">${translate('statusPaid')}</span>`;
+                    statusBadge = `<span class="status-badge paid">${translate('statusPaid')}</span>`;
                 } else if (st === 'مدفوع جزئياً') {
                     borderColor = 'var(--warning)';
                     statusBadge = `<span class="status-badge partial">${translate('statusPartiallyPaidShort')}</span>`;
@@ -1803,10 +1940,11 @@ function renderLog() {
                 amountDisplay = formatCurrency(amountVal);
             }
         }
+
         const imgIcon = i.صورة ? '<i class="fas fa-camera" style="margin-left:5px;color:var(--p);"></i>' : '';
-        const entityDisplay = entity && entity !== '—' ?
-            `<span style="font-size:0.85em;color:#888;">${entity}</span>` : '';
+        const entityDisplay = entity && entity !== '—' ? `<span style="font-size:0.85em;color:#888;">${entity}</span>` : '';
         const itemId = i.clientId || i.id || `temp-${Date.now()}`;
+
         return `
             <div class="list-item" style="border-right-color:${borderColor};" onclick="showDetailById('${itemId}','${currentLog}')">
                 <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
@@ -1829,12 +1967,15 @@ function showDetailById(id, type) {
 
 function editTransaction() {
     if (!editMode) return;
+
     const type = editMode.type;
     const data = db[type][editMode.index];
     const tabMap = { inc: 'income', exp: 'expenses', rig: 'rights', deb: 'debts' };
     const tabId = tabMap[type];
+
     closeAllLayers();
     openTab(tabId, true);
+
     setTimeout(() => {
         if (type === 'inc') {
             document.getElementById('iAmount').value = parseAmount(data.المبلغ).toLocaleString('en-US');
@@ -1846,6 +1987,7 @@ function editTransaction() {
             document.getElementById('eType').value = data.الفئة;
             document.getElementById('eDesc').value = data.الوصف;
             document.getElementById('eDate').value = data.التاريخ;
+
             if (data.صورة) {
                 document.getElementById('eImgName').textContent = '📎 ' + translate('imageAttached');
                 selectedImageFile = data.صورة;
@@ -1866,6 +2008,7 @@ function editTransaction() {
             document.getElementById('dType').value = data.النوع;
             document.getElementById('dDueDate').value = data.تاريخ_الاستحقاق || '';
             document.getElementById('dDesc').value = data.الوصف;
+
             const entityInput = document.getElementById('dEntity');
             if (data.الجهة && data.الجهة !== '—') {
                 entityInput.value = data.الجهة;
@@ -1874,24 +2017,27 @@ function editTransaction() {
                 entityInput.value = '';
                 entityInput.style.display = 'none';
             }
+
             updateDebtFields(data.النوع, data);
+
             const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
             const isMaster = masterTypes.includes(data.النوع);
+
             if (!isMaster) {
                 document.getElementById('dAmount').value = parseAmount(data.المبلغ).toLocaleString('en-US');
                 document.getElementById('dStatus').value = data.الحالة || '';
+
                 const event = new Event('change');
                 document.getElementById('dStatus').dispatchEvent(event);
+
                 if (data.الحالة === 'مدفوع جزئياً' && data.المبلغ_المدفوع_جزئياً) {
                     const paidInput = document.getElementById('dPartialPaidAmount');
                     if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع_جزئياً).toLocaleString('en-US');
                 }
             }
         }
-        const indicatorMap = {
-            inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator',
-            deb: 'debEditIndicator'
-        };
+
+        const indicatorMap = { inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
         const ind = document.getElementById(indicatorMap[type]);
         if (ind) ind.style.display = 'inline-block';
     }, 100);
@@ -1900,11 +2046,14 @@ function editTransaction() {
 async function deleteTransaction() {
     if (!editMode) return;
     if (!confirm(translate('confirmDeleteTransaction'))) return;
+
     const type = editMode.type;
     const txn = db[type][editMode.index];
     const id = txn.id || txn.clientId;
+
     try {
         await deleteFromDB(type, id);
+
         if (txn.clientId) {
             const idx = db.bal.changes.findIndex(c => c.id === txn.clientId);
             if (idx > -1) {
@@ -1915,6 +2064,7 @@ async function deleteTransaction() {
                 await saveData('bal', db.bal);
             }
         }
+
         editMode = null;
         await loadAllData();
         toastMsg(translate('deletedSuccess'), "success");
@@ -1922,10 +2072,278 @@ async function deleteTransaction() {
         updateBalanceDisplay();
         closeAllLayers();
         openTab('overview');
-    } catch (err) {
-        toastMsg(translate('deleteFailed'), "error");
-        console.error(err);
+    } catch (err) { toastMsg(translate('deleteFailed'), "error"); console.error(err); }
+}
+
+// =============================================================
+// 12.5 🔔 NOTIFICATIONS — التنبيهات المالية (نظام مقروء/غير مقروء)
+// =============================================================
+
+// ✔ تخزين التنبيهات المقروءة في localStorage
+function getReadNotifications() {
+    try {
+        const list = JSON.parse(localStorage.getItem('readNotifications') || '[]');
+        return Array.isArray(list) ? list : [];
+    } catch (e) {
+        return [];
     }
+}
+
+function saveReadNotifications(list) {
+    localStorage.setItem('readNotifications', JSON.stringify(list));
+}
+
+// ✔ معرف فريد لكل تنبيه (نوع + clientId + تاريخ الاستحقاق)
+function getNotificationId(item) {
+    return `${item.type}|${item.id}|${item.date}`;
+}
+
+// ✔ جمع جميع الاستحقاقات المتأخرة والقادمة خلال 7 أيام (مع تحديد المقروءة)
+function getUpcomingItems() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const next7 = new Date(today);
+    next7.setDate(today.getDate() + 7);
+
+    const readList = getReadNotifications();
+    const items = [];
+
+    // --- الحقوق المستحقة (لك) ---
+    (db.rig || []).forEach(r => {
+        const remaining = parseAmount(r.المتبقي || 0);
+        if (remaining <= 0) return;
+        if (!r.تاريخ_الاستحقاق) return;
+        const due = new Date(r.تاريخ_الاستحقاق);
+        if (isNaN(due)) return;
+        if (due <= next7) {
+            const item = {
+                type: 'right',
+                id: r.clientId || r.id || '',
+                name: r.النوع,
+                entity: r.الجهة,
+                amount: remaining,
+                date: r.تاريخ_الاستحقاق,
+                overdue: due < today
+            };
+            item.read = readList.includes(getNotificationId(item));
+            items.push(item);
+        }
+    });
+
+    // --- الالتزامات المستحقة (عليك) ---
+    (db.deb || []).forEach(d => {
+        const remaining = d.المتبقي_للالتزام !== undefined
+            ? parseAmount(d.المتبقي_للالتزام)
+            : ((d.الحالة === 'مدفوع' || d.الحالة === 'مدفوع بالكامل' || d.الحالة === 'Fully Paid')
+                ? 0 : parseAmount(d.المبلغ || 0));
+        if (remaining <= 0) return;
+        if (!d.تاريخ_الاستحقاق) return;
+        const due = new Date(d.تاريخ_الاستحقاق);
+        if (isNaN(due)) return;
+        if (due <= next7) {
+            const item = {
+                type: 'debt',
+                id: d.clientId || d.id || '',
+                name: d.النوع,
+                entity: d.الجهة,
+                amount: remaining,
+                date: d.تاريخ_الاستحقاق,
+                overdue: due < today
+            };
+            item.read = readList.includes(getNotificationId(item));
+            items.push(item);
+        }
+    });
+
+    return items.sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+// ✔ عدد التنبيهات غير المقروءة فقط (للعداد على الجرس)
+function getUnreadCount() {
+    return getUpcomingItems().filter(i => !i.read).length;
+}
+
+// ✔ تحديث رقم الشارة على زر الجرس (عدد غير المقروءة فقط)
+function updateNotificationBadge() {
+    const badge = document.getElementById('notifBadge');
+    if (!badge) return;
+    const count = getUnreadCount();
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.style.display = count > 0 ? 'flex' : 'none';
+}
+
+// ✔ فتح مودال التنبيهات
+function openNotifications() {
+    openLayer('notifications');
+}
+
+// ✔ تعليم تنبيه محدد كمقروء عند عرض تفاصيله + فتح شاشة التفاصيل
+function viewNotification(id) {
+    const items = getUpcomingItems();
+    const item = items.find(i => getNotificationId(i) === id);
+    if (!item) return;
+
+    // تعليم كمقروء إذا لم يكن مقروءاً
+    if (!item.read) {
+        const readList = getReadNotifications();
+        if (!readList.includes(id)) {
+            readList.push(id);
+            saveReadNotifications(readList);
+        }
+        updateNotificationBadge(); // ✔ ينقص العداد بمقدار 1
+    }
+
+    // عرض شاشة التفاصيل الكاملة
+    renderNotificationDetail(item);
+}
+
+// ✔ شاشة عرض تفاصيل تنبيه واحد (مع زر رجوع)
+function renderNotificationDetail(item) {
+    const el = document.getElementById('notificationsContent');
+    if (!el) return;
+
+    // البحث عن العنصر الأصلي في db
+    let source = null;
+    if (item.type === 'right') {
+        source = db.rig.find(r => (r.clientId || r.id) === item.id);
+    } else {
+        source = db.deb.find(d => (d.clientId || d.id) === item.id);
+    }
+
+    const typeLabel = item.type === 'right' ? translate('rightLabel') : translate('debtLabel');
+    const typeColor = item.type === 'right' ? 'var(--success)' : 'var(--danger)';
+    const typeIcon = item.type === 'right' ? 'fa-hand-holding-usd' : 'fa-file-invoice-dollar';
+    const arrowIcon = item.type === 'right' ? 'fa-arrow-down' : 'fa-arrow-up';
+    const statusText = item.overdue ? translate('statusOverdue') : translate('upcomingItems');
+    const statusColor = item.overdue ? 'var(--danger)' : 'var(--warning)';
+
+    let html = `
+        <button class="secondary" onclick="renderNotifications()" style="margin-bottom:15px;">
+            <i class="fas fa-arrow-right" style="margin-left:6px;"></i> ${translate('backToNotifications')}
+        </button>
+
+        <div class="card" style="border-top-color:${typeColor};">
+            <div style="text-align:center;margin-bottom:18px;">
+                <span style="display:inline-block;background:${typeColor};color:#fff;padding:8px 24px;border-radius:24px;font-weight:800;font-size:1.05em;">
+                    <i class="fas ${typeIcon}" style="margin-left:8px;"></i> ${typeLabel}
+                </span>
+            </div>
+
+            <h3 style="color:${typeColor};margin-top:0;display:flex;align-items:center;gap:8px;">
+                <i class="fas ${typeIcon}"></i> ${item.name}
+            </h3>
+
+            <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;">
+                <span style="background:${statusColor};color:#fff;padding:4px 14px;border-radius:14px;font-size:0.85em;font-weight:700;">
+                    ${item.overdue ? '⚠️' : '📅'} ${statusText}
+                </span>
+                <span style="background:${typeColor};color:#fff;padding:4px 14px;border-radius:14px;font-size:0.85em;font-weight:700;">
+                    <i class="fas ${arrowIcon}" style="margin-left:4px;"></i> ${formatCurrency(item.amount)}
+                </span>
+            </div>
+    `;
+
+    // عرض جميع حقول العنصر الأصلي
+    if (source) {
+        html += `<div style="border-top:1px solid var(--border-color);padding-top:12px;margin-top:8px;">`;
+        for (const [key, val] of Object.entries(source)) {
+            if (['id', 'clientId', 'صورة', 'المبلغ_المضاف_للرصيد', 'المبلغ_المخصوم_للرصيد'].includes(key)) continue;
+            if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '' && key !== 'الوصف')) continue;
+
+            const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
+            const display = isAmt ? formatCurrency(val, true) : val;
+
+            html += `<p style="margin:8px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                <strong style="color:#666;">${key.replace(/_/g, ' ')}:</strong>
+                <span style="font-weight:600;">${display}</span>
+            </p>`;
+        }
+        html += `</div>`;
+    }
+
+    html += `</div>`;
+    el.innerHTML = html;
+}
+
+// ✔ رسم محتوى مودال التنبيهات (مقروءة + غير مقروءة بمظهر مختلف + شارة النوع)
+function renderNotifications() {
+    const el = document.getElementById('notificationsContent');
+    if (!el) return;
+
+    const items = getUpcomingItems();
+
+    if (!items.length) {
+        el.innerHTML = `<div class="notif-empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <p>${translate('noNotifications')}</p>
+            <small>${translate('noNotificationsHint')}</small>
+        </div>`;
+        return;
+    }
+
+    const unread = items.filter(i => !i.read);
+    const read = items.filter(i => i.read);
+
+    let html = '';
+
+    // ✔ ملخص سريع: عدد غير المقروءة والمقروءة
+    html += `<div class="notif-summary">
+        <div class="notif-sum-card overdue-card">
+            <span class="sum-label">${translate('unreadNotifications')}</span>
+            <span class="sum-value">${unread.length}</span>
+        </div>
+        <div class="notif-sum-card upcoming-card">
+            <span class="sum-label">${translate('readNotifications')}</span>
+            <span class="sum-value">${read.length}</span>
+        </div>
+    </div>`;
+
+    // ✔ دالة رسم عنصر تنبيه واحد (مع شارة حق/التزام)
+    const renderItem = (i) => {
+        const nid = getNotificationId(i);
+        const cls = i.read ? 'notif-item read' : (i.overdue ? 'notif-item overdue' : 'notif-item upcoming');
+        const icon = i.type === 'right' ? 'fa-hand-holding-usd' : 'fa-file-invoice-dollar';
+        const typeLabel = i.type === 'right' ? translate('rightLabel') : translate('debtLabel');
+        const typeColor = i.type === 'right' ? 'var(--success)' : 'var(--danger)';
+        const arrowIcon = i.type === 'right' ? 'fa-arrow-down' : 'fa-arrow-up';
+        const tag = i.overdue ? translate('statusOverdue') : translate('upcomingItems');
+        const readBadge = i.read
+            ? `<span class="notif-tag read-tag"><i class="fas fa-check"></i> ${translate('readNotification')}</span>`
+            : `<span class="notif-tag">${tag}</span>`;
+        const entity = (i.entity && i.entity !== '—')
+            ? `<span class="notif-entity"><i class="fas fa-user"></i> ${i.entity}</span>` : '';
+        const clickAttr = i.read ? '' : `onclick="viewNotification('${nid}')"`;
+
+        return `<div class="${cls}" ${clickAttr}>
+            <div class="notif-head">
+                <span class="notif-name"><i class="fas ${icon}"></i>${i.name}</span>
+                ${readBadge}
+            </div>
+            <span class="notif-type-badge" style="background:${typeColor};">
+                <i class="fas ${arrowIcon}"></i> ${typeLabel}
+            </span>
+            <div class="notif-body">
+                <span class="notif-amount">${formatCurrency(i.amount)}</span>
+                <span class="notif-date"><i class="far fa-clock"></i>${formatDateTime(i.date)}</span>
+            </div>
+            ${entity}
+            ${i.read ? '' : `<div class="notif-read-hint"><i class="fas fa-hand-pointer"></i> ${translate('clickToRead')}</div>`}
+        </div>`;
+    };
+
+    // ✔ غير المقروءة أولاً (الأهم)
+    if (unread.length) {
+        html += `<div class="notif-group-title unread-title"><i class="fas fa-bell"></i> ${translate('unreadNotifications')} <span class="count-pill">${unread.length}</span></div>`;
+        html += unread.map(renderItem).join('');
+    }
+
+    // ✔ المقروءة ثانياً (باهتة)
+    if (read.length) {
+        html += `<div class="notif-group-title read-title"><i class="fas fa-check-circle"></i> ${translate('readNotifications')} <span class="count-pill">${read.length}</span></div>`;
+        html += read.map(renderItem).join('');
+    }
+
+    el.innerHTML = html;
 }
 
 // =============================================================
@@ -1938,36 +2356,36 @@ function updateStats() {
         debTotal = 0,
         rigPaid = 0,
         debPaid = 0;
+
     db.inc.forEach(i => incTotal += parseAmount(i.المبلغ));
     db.exp.forEach(i => expTotal += parseAmount(i.المبلغ));
-    db.rig.forEach(i => {
-        rigTotal += parseAmount(i.المبلغ);
-        rigPaid += parseAmount(i.المبلغ_المضاف_للرصيد || 0);
-    });
-    db.deb.forEach(i => {
-        debTotal += parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0);
-        debPaid += parseAmount(i.المبلغ_المخصوم_للرصيد || 0);
-    });
+    db.rig.forEach(i => { rigTotal += parseAmount(i.المبلغ); rigPaid += parseAmount(i.المبلغ_المضاف_للرصيد || 0); });
+    db.deb.forEach(i => { debTotal += parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0); debPaid += parseAmount(i.المبلغ_المخصوم_للرصيد || 0); });
+
     document.getElementById('sIncTotal').innerHTML = '<span class="pulse-dot"></span>' + formatCurrency(incTotal, true);
     document.getElementById('sExpTotal').innerHTML = formatCurrency(expTotal, true);
     document.getElementById('sRigTotal').innerHTML = formatCurrency(rigTotal, rigTotal > 0);
     document.getElementById('sRigPaid').innerHTML = '<span class="pulse-dot"></span>' + formatCurrency(rigPaid, true);
     document.getElementById('sDebTotal').innerHTML = formatCurrency(debTotal, debTotal > 0);
     document.getElementById('sDebPaid').innerHTML = formatCurrency(debPaid, false);
-    renderOverviewGoals(); // ✔ بطاقة الأهداف في الرئيسية
 }
 
 // =============================================================
 // 14. OTHER FUNCTIONS (currency, reset, sidebar, etc.)
 // =============================================================
+// ✔ قائمة العملات بأسماء مترجمة + بحث متعدد اللغات
 function renderCurrencyList() {
     const list = document.getElementById('currencyList');
     const q = document.getElementById('currencySearch').value.toLowerCase();
+
     const filtered = ARABIC_CURRENCIES.filter(c =>
         getCurrencyName(c).toLowerCase().includes(q) || c.code.toLowerCase().includes(q) ||
         (c.name.ar || '').includes(q) || (c.name.en || '').toLowerCase().includes(q) || (c.name.ur || '').includes(q)
     );
-    list.innerHTML = filtered.map(c => `<button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')"> <span>${c.flag} <strong>${c.symbol}</strong> ${getCurrencyName(c)} (${c.code})</span> ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''} </button>`).join('');
+
+    list.innerHTML = filtered.map(c => `<button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
+        <span>${c.flag} <strong>${c.symbol}</strong> ${getCurrencyName(c)} (${c.code})</span> ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
+    </button>`).join('');
 }
 
 function setCurrency(code) {
@@ -1990,13 +2408,16 @@ function confirmResetData() {
 
 function resetAllData() {
     if (!IDB_connection) return toastMsg(translate('dbError'), "error");
+
     const tx = IDB_connection.transaction(STORE_NAMES, 'readwrite');
     let done = 0;
+
     STORE_NAMES.forEach(sn => {
         const req = tx.objectStore(sn).clear();
         req.onsuccess = () => {
-            done++; if (done === STORE_NAMES.length) {
-                db.exp = db.rig = db.deb = db.inc = db.goals = []; // ✔ الأهداف أيضاً
+            done++;
+            if (done === STORE_NAMES.length) {
+                db.exp = db.rig = db.deb = db.inc = [];
                 db.bal = { clientId: 1, amount: 0, changes: [] };
                 saveData('bal', db.bal).then(() => {
                     loadAllData().then(() => {
@@ -2019,12 +2440,10 @@ function openCurrencyModal() { openLayer('currency'); }
 function openAboutModal() { openLayer('about'); }
 function openBalanceActionModal(actionType) { openLayer('balanceAction', { actionType: actionType }); }
 function openBalanceLogModal() { openLayer('balanceLog'); }
-function openLog(type) {
-    currentLog = type;
-    openLayer('log', { logType: type });
-}
+function openLog(type) { currentLog = type; openLayer('log', { logType: type }); }
 function showImageSourceModal() { openLayer('imageSource'); }
 function closeImageSource() { closeLayer('imageSource'); }
+
 function openCameraInput() {
     closeImageSource();
     const input = document.getElementById('eImgCamera');
@@ -2032,6 +2451,7 @@ function openCameraInput() {
     input.setAttribute('capture', 'environment');
     input.click();
 }
+
 function openGalleryInput() {
     closeImageSource();
     const input = document.getElementById('eImgGallery');
@@ -2039,11 +2459,13 @@ function openGalleryInput() {
     input.removeAttribute('capture');
     input.click();
 }
+
 function handleImageSelect(input) {
     if (input.files && input.files.length > 0) {
         const file = input.files[0];
         selectedImageFile = file;
         document.getElementById('eImgName').textContent = `✅ ${file.name}`;
+
         const reader = new FileReader();
         reader.onload = function (e) {
             selectedImageFile = e.target.result;
@@ -2054,7 +2476,9 @@ function handleImageSelect(input) {
         selectedImageFile = null;
     }
 }
+
 function getSelectedImage() { return selectedImageFile; }
+
 function clearSelectedImage() {
     selectedImageFile = null;
     document.getElementById('eImgName').textContent = '';
@@ -2063,25 +2487,27 @@ function clearSelectedImage() {
 }
 
 // =============================================================
-// 16. INDEXED DB OPERATIONS (✔ ترقية آمنة بدون فقدان البيانات)
+// 16. INDEXED DB OPERATIONS
 // =============================================================
 function initDB() {
     return new Promise((resolve, reject) => {
         if (!window.indexedDB) { toastMsg(translate('indexedDBUnsupported'), "error"); return reject(new Error("IndexedDB not supported.")); }
+
         const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+
         req.onerror = (e) => { console.error("IDB error:", e.target.error); reject(e.target.error); };
+
         req.onupgradeneeded = (e) => {
             IDB_connection = e.target.result;
-            // ✔ إنشاء المخازن الناقصة فقط — يحافظ على بياناتك عند الترقية
             STORE_NAMES.forEach(sn => {
-                if (!IDB_connection.objectStoreNames.contains(sn)) {
-                    const kp = (sn === 'bal' || sn === 'goals') ? 'clientId' : 'id';
-                    const auto = !(sn === 'bal' || sn === 'goals');
-                    const store = IDB_connection.createObjectStore(sn, { keyPath: kp, autoIncrement: auto });
-                    if (sn === 'bal') store.add({ clientId: 1, amount: 0, changes: [] });
-                }
+                if (IDB_connection.objectStoreNames.contains(sn)) IDB_connection.deleteObjectStore(sn);
+                const kp = (sn === 'bal') ? 'clientId' : 'id';
+                const auto = (sn !== 'bal');
+                const store = IDB_connection.createObjectStore(sn, { keyPath: kp, autoIncrement: auto });
+                if (sn === 'bal') store.add({ clientId: 1, amount: 0, changes: [] });
             });
         };
+
         req.onsuccess = (e) => {
             IDB_connection = e.target.result;
             resolve(IDB_connection);
@@ -2092,6 +2518,7 @@ function initDB() {
         };
     });
 }
+
 initDB();
 
 function saveData(storeName, data) {
@@ -2119,9 +2546,11 @@ function deleteFromDB(storeName, id) {
 function loadStoreData(storeName) {
     return new Promise((resolve) => {
         if (!IDB_connection) return resolve(storeName === 'bal' ? { clientId: 1, amount: 0, changes: [] } : []);
+
         const tx = IDB_connection.transaction([storeName], "readonly");
         const store = tx.objectStore(storeName);
         const req = store.getAll();
+
         req.onsuccess = (e) => {
             if (storeName === 'bal') {
                 const res = e.target.result[0];
@@ -2134,21 +2563,23 @@ function loadStoreData(storeName) {
 }
 
 async function loadAllData() {
-    const [exp, rig, deb, bal, inc, goals] = await Promise.all([ // ✔ الأهداف
+    const [exp, rig, deb, bal, inc] = await Promise.all([
         loadStoreData('exp'),
         loadStoreData('rig'),
         loadStoreData('deb'),
         loadStoreData('bal'),
-        loadStoreData('inc'),
-        loadStoreData('goals')
+        loadStoreData('inc')
     ]);
+
     db.exp = exp;
     db.rig = rig;
     db.deb = deb;
     db.bal = bal;
     db.inc = inc;
-    db.goals = goals;
     currentBalance = parseAmount(db.bal.amount || 0);
+
+    // 🔔 جديد: تحديث شارة الجرس بعد كل تحميل للبيانات
+    updateNotificationBadge();
 }
 
 // =============================================================
@@ -2166,6 +2597,7 @@ function toggleDarkMode() {
     localStorage.setItem('darkMode', isDark);
     toastMsg(isDark ? translate('darkModeOn') : translate('darkModeOff'), "info");
 }
+
 loadDarkModePreference();
 
 // =============================================================
@@ -2178,400 +2610,32 @@ window.onload = () => {
     } else {
         historyStack.push(history.state);
     }
+
     loadTranslations().then(() => {
         applyTranslations(currentLang);
     });
+
     const now = getLocalDateString();
     ['eDate', 'rDueDate', 'dDueDate', 'iDate'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = now;
     });
+
     const currencyLabel = document.getElementById('sidebarCurrencyLabel');
     if (currencyLabel) currencyLabel.textContent = currentCurrency.symbol;
+
     updateBalanceDisplay();
     updateStats();
     updateDriveUI();
+
+    // 🔔 جديد: تحديث شارة الجرس عند بدء التشغيل
+    updateNotificationBadge();
+
     setTimeout(() => {
         initGapi();
         initGis();
         restoreDriveState();
     }, 1000);
 };
-
-// =============================================================
-// 19. GOALS — الأهداف الادخارية 🎯
-// =============================================================
-let goalEditMode = null;
-let goalDetailId = null;
-let goalContributeCtx = { goalId: null, type: 'deposit' };
-
-// ✔ ألوان وتدرجات فئات الأهداف (تتطابق مع includes لتعمل مع أي تعديل على الأسماء)
-function goalCategoryStyle(cat) {
-    if ((cat || '').includes('🏠')) return { color: '#6366f1', grad: 'linear-gradient(135deg,#6366f1,#8b5cf6)' };
-    if ((cat || '').includes('🚗')) return { color: '#f43f5e', grad: 'linear-gradient(135deg,#f43f5e,#fb923c)' };
-    if ((cat || '').includes('✈')) return { color: '#0ea5e9', grad: 'linear-gradient(135deg,#0ea5e9,#38bdf8)' };
-    if ((cat || '').includes('🛡')) return { color: '#10b981', grad: 'linear-gradient(135deg,#10b981,#34d399)' };
-    if ((cat || '').includes('💰')) return { color: '#f59e0b', grad: 'linear-gradient(135deg,#f59e0b,#fbbf24)' };
-    return { color: '#a855f7', grad: 'linear-gradient(135deg,#a855f7,#d8b4fe)' };
-}
-
-function goalEmoji(cat) {
-    if ((cat || '').includes('🏠')) return '🏠';
-    if ((cat || '').includes('🚗')) return '🚗';
-    if ((cat || '').includes('✈')) return '✈️';
-    if ((cat || '').includes('🛡')) return '🛡️';
-    if ((cat || '').includes('💰')) return '💰';
-    return '🎯';
-}
-
-// ✔ الحسابات الذكية للهدف: النسبة، المتبقي، الأيام، الشهري المطلوب، على المسار/متأخر
-function goalSmartInfo(g) {
-    const target = parseAmount(g.المبلغ_الهدف);
-    const saved = parseAmount(g.المبلغ_المدخر);
-    const remaining = Math.max(target - saved, 0);
-    const pct = target > 0 ? Math.min(100, Math.round((saved / target) * 100)) : 0;
-    const completed = target > 0 && saved >= target;
-    let daysLeft = null, monthlyNeeded = null, onTrack = null;
-    if (g.تاريخ_الهدف) {
-        const td = new Date(g.تاريخ_الهدف);
-        if (!isNaN(td)) {
-            const now = new Date();
-            daysLeft = Math.ceil((td - now) / 86400000);
-            if (!completed && remaining > 0 && daysLeft > 0) {
-                monthlyNeeded = remaining / Math.max(daysLeft / 30.44, 0.5);
-                const created = new Date(g.تاريخ_الإنشاء || now);
-                const totalSpan = Math.max(td - created, 1);
-                const elapsed = Math.min(Math.max(now - created, 0), totalSpan);
-                onTrack = pct >= ((elapsed / totalSpan) * 100) - 8;
-            }
-        }
-    }
-    return { target, saved, remaining, pct, completed, daysLeft, monthlyNeeded, onTrack };
-}
-
-function goalStatusBadge(info) {
-    if (info.completed) return `<span class="goal-status-badge st-done">${translate('goalStatusCompleted')}</span>`;
-    if (info.onTrack === true) return `<span class="goal-status-badge st-track">${translate('goalStatusOnTrack')}</span>`;
-    if (info.onTrack === false) return `<span class="goal-status-badge st-behind">${translate('goalStatusBehind')}</span>`;
-    return `<span class="goal-status-badge st-active">${translate('goalStatusActive')}</span>`;
-}
-
-// ✔ عرض قائمة الأهداف + شرائح الإحصائيات
-function renderGoals() {
-    const listEl = document.getElementById('goalsList');
-    const statsEl = document.getElementById('goalsStatsBar');
-    if (!listEl) return;
-    const goals = db.goals || [];
-    let totalSaved = 0, activeCount = 0, completedCount = 0;
-    const infos = goals.map(g => {
-        const info = goalSmartInfo(g);
-        totalSaved += info.saved;
-        if (info.completed) completedCount++; else activeCount++;
-        return { g, info };
-    });
-    if (statsEl) statsEl.innerHTML = `
-        <div class="goals-stat-chip"><span class="gs-value">${formatCurrency(totalSaved)}</span><span class="gs-label">${translate('totalSavedStat')}</span></div>
-        <div class="goals-stat-chip"><span class="gs-value">${activeCount}</span><span class="gs-label">${translate('activeGoalsStat')}</span></div>
-        <div class="goals-stat-chip"><span class="gs-value">${completedCount}</span><span class="gs-label">${translate('completedGoalsStat')}</span></div>`;
-    if (!goals.length) {
-        listEl.innerHTML = `<div class="goals-empty">
-            <i class="fas fa-bullseye"></i>
-            <p style="font-size:1.1em;color:var(--text-dark);font-weight:800">${translate('noGoalsYet')}</p>
-            <p>${translate('startFirstGoal')}</p>
-        </div>`;
-        return;
-    }
-    infos.sort((a, b) => (a.info.completed - b.info.completed) || (b.info.pct - a.info.pct));
-    listEl.innerHTML = infos.map(({ g, info }) => {
-        const style = goalCategoryStyle(g.الفئة);
-        let smartChips = '';
-        if (info.completed) {
-            smartChips = `<span class="goal-smart-chip done">🎉 ${translate('goalStatusCompleted')}</span>`;
-        } else {
-            if (info.daysLeft !== null) {
-                smartChips += info.daysLeft >= 0
-                    ? `<span class="goal-smart-chip">📅 ${info.daysLeft} ${translate('goalDaysLeft')}</span>`
-                    : `<span class="goal-smart-chip warn">⏰ ${translate('goalPastDue')}</span>`;
-            }
-            if (info.monthlyNeeded !== null) smartChips += `<span class="goal-smart-chip">💡 ${translate('goalMonthlyNeeded')}: ${formatCurrency(info.monthlyNeeded)}</span>`;
-        }
-        return `
-        <div class="goal-card ${info.completed ? 'completed' : ''}" style="--goal-grad:${style.grad}">
-            <div class="goal-card-top">
-                <div class="goal-emoji-badge" style="background:${style.grad}">${goalEmoji(g.الفئة)}</div>
-                <div class="goal-info">
-                    <div class="goal-name">${g.الاسم}</div>
-                    <div class="goal-cat-label">${g.الفئة}</div>
-                </div>
-                ${goalStatusBadge(info)}
-            </div>
-            <div class="goal-progress-row">
-                <div class="goal-progress-track"><div class="goal-progress-fill" style="width:${info.pct}%"></div></div>
-                <span class="goal-percent">${info.pct}%</span>
-            </div>
-            <div class="goal-amounts">
-                <div class="goal-amount-box"><span class="ga-label">${translate('goalSavedAmount')}</span><span class="ga-value">${formatCurrency(info.saved, true)}</span></div>
-                <div class="goal-amount-box"><span class="ga-label">${translate('goalTargetAmount')}</span><span class="ga-value">${formatCurrency(info.target)}</span></div>
-                <div class="goal-amount-box"><span class="ga-label">${translate('goalRemaining')}</span><span class="ga-value">${formatCurrency(info.remaining)}</span></div>
-            </div>
-            ${smartChips ? `<div class="goal-smart-row">${smartChips}</div>` : ''}
-            <div class="goal-actions">
-                <button class="goal-btn g-deposit" onclick="openGoalContribute('${g.clientId}','deposit')"><i class="fas fa-arrow-up"></i> ${translate('deposit')}</button>
-                <button class="goal-btn g-withdraw" onclick="openGoalContribute('${g.clientId}','withdraw')"><i class="fas fa-arrow-down"></i> ${translate('withdraw')}</button>
-                <button class="goal-btn g-details" onclick="openGoalDetail('${g.clientId}')"><i class="fas fa-chart-pie"></i> ${translate('details')}</button>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-// ✔ بطاقة الأهداف في الصفحة الرئيسية
-function renderOverviewGoals() {
-    const wrap = document.getElementById('goalsOverviewCard');
-    if (!wrap) return;
-    const goals = db.goals || [];
-    if (!goals.length) {
-        wrap.innerHTML = `
-        <div class="card goals-overview-card" onclick="openTabFromNav('goals')">
-            <div class="goals-overview-header">
-                <h3><i class="fas fa-bullseye" style="color:#a855f7"></i> ${translate('myGoalsTitle')}</h3>
-                <span class="goals-view-all">${translate('addGoal')} <i class="fas fa-plus"></i></span>
-            </div>
-            <div class="goals-teaser"><i class="fas fa-rocket"></i> ${translate('startFirstGoal')}</div>
-        </div>`;
-        return;
-    }
-    const infos = goals.map(g => ({ g, info: goalSmartInfo(g) }));
-    const totalSaved = infos.reduce((s, x) => s + x.info.saved, 0);
-    const completed = infos.filter(x => x.info.completed).length;
-    const top = infos.filter(x => !x.info.completed).sort((a, b) => b.info.pct - a.info.pct).slice(0, 2);
-    wrap.innerHTML = `
-    <div class="card goals-overview-card" onclick="openTabFromNav('goals')">
-        <div class="goals-overview-header">
-            <h3><i class="fas fa-bullseye" style="color:#a855f7"></i> ${translate('myGoalsTitle')}</h3>
-            <span class="goals-view-all">${translate('viewAll')} <i class="fas fa-arrow-left"></i></span>
-        </div>
-        ${top.map(({ g, info }) => `
-            <div class="goals-mini-item">
-                <div class="goals-mini-top">
-                    <span>${goalEmoji(g.الفئة)} ${g.الاسم}</span>
-                    <span style="color:var(--p)">${info.pct}%</span>
-                </div>
-                <div class="goals-mini-track"><div class="goals-mini-fill" style="width:${info.pct}%;background:${goalCategoryStyle(g.الفئة).grad}"></div></div>
-            </div>`).join('')}
-        <div class="goals-overview-footer">
-            <span>💰 ${translate('totalSavedStat')}: <strong>${formatCurrency(totalSaved)}</strong></span>
-            <span>${completed}/${goals.length} ${translate('completedGoalsStat')}</span>
-        </div>
-    </div>`;
-}
-
-// ✔ حفظ هدف جديد / تعديل هدف
-function openAddGoalModal() { openLayer('addGoal'); }
-
-async function saveGoal() {
-    const nameEl = document.getElementById('goalName');
-    const catEl = document.getElementById('goalCategory');
-    const targetEl = document.getElementById('goalTargetAmount');
-    const initSavedEl = document.getElementById('goalInitialSaved');
-    const dateEl = document.getElementById('goalTargetDate');
-    const notesEl = document.getElementById('goalNotes');
-    const name = nameEl.value.trim();
-    if (!name) return toastMsg(translate('emptyGoalName'), "error");
-    if (!catEl.value || !targetEl.value) return toastMsg(translate('fillRequired'), "error");
-    const target = parseAmount(targetEl.value);
-    if (target <= 0) return toastMsg(translate('amountMustBePositive'), "error");
-
-    if (goalEditMode) {
-        const goal = db.goals.find(g => g.clientId === goalEditMode);
-        if (!goal) return toastMsg(translate('notFound'), "error");
-        goal.الاسم = name;
-        goal.الفئة = catEl.value;
-        goal.المبلغ_الهدف = getFormattedAmount(target);
-        goal.تاريخ_الهدف = dateEl.value || '';
-        goal.الوصف = notesEl.value.trim() || '—';
-        try {
-            await saveData('goals', goal);
-            toastMsg(translate('goalEditedMsg'), "success");
-            closeLayer('addGoal');
-            await loadAllData();
-            renderGoals(); renderOverviewGoals(); updateBalanceDisplay();
-        } catch (e) { toastMsg(translate('saveFailed'), "error"); console.error(e); }
-        return;
-    }
-
-    const initialSaved = parseAmount(initSavedEl.value || 0);
-    if (initialSaved > target) return toastMsg(translate('goalInitialExceeds'), "error");
-    const goal = {
-        clientId: `goal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        الاسم: name,
-        الفئة: catEl.value,
-        المبلغ_الهدف: getFormattedAmount(target),
-        المبلغ_المدخر: getFormattedAmount(initialSaved),
-        تاريخ_الإنشاء: getLocalDateString(),
-        تاريخ_الهدف: dateEl.value || '',
-        الوصف: notesEl.value.trim() || '—',
-        سجل_المساهمات: []
-    };
-    try {
-        await saveData('goals', goal);
-        if (initialSaved > 0) {
-            await processBalanceChange(initialSaved, 'goal_deposit', `${translate('goalDepositPrefix')}: ${name}`, `goali-${goal.clientId}`);
-        }
-        toastMsg(translate('goalSavedMsg'), "success");
-        closeLayer('addGoal');
-        await loadAllData();
-        renderGoals(); renderOverviewGoals(); updateBalanceDisplay();
-    } catch (e) { toastMsg(translate('saveFailed'), "error"); console.error(e); }
-}
-
-// ✔ الإيداع والسحب من الهدف (متكامل مع الرصيد)
-function openGoalContribute(goalId, type) { openLayer('goalContribute', { goalId, type }); }
-
-async function processGoalContribution() {
-    const { goalId, type } = goalContributeCtx;
-    const goal = db.goals.find(g => g.clientId === goalId);
-    if (!goal) return toastMsg(translate('notFound'), "error");
-    const amount = parseAmount(document.getElementById('goalContribAmount').value);
-    if (amount <= 0) return toastMsg(translate('enterAmount'), "error");
-    const note = document.getElementById('goalContribNote').value.trim() || '—';
-    const saved = parseAmount(goal.المبلغ_المدخر);
-    const target = parseAmount(goal.المبلغ_الهدف);
-    if (type === 'withdraw' && amount > saved) return toastMsg(translate('goalWithdrawExceeds'), "error");
-    const newSaved = type === 'deposit' ? saved + amount : saved - amount;
-    const wasCompleted = target > 0 && saved >= target;
-    goal.المبلغ_المدخر = getFormattedAmount(newSaved);
-    if (!Array.isArray(goal.سجل_المساهمات)) goal.سجل_المساهمات = [];
-    goal.سجل_المساهمات.unshift({
-        التاريخ: getLocalDateTimeString(),
-        النوع: type === 'deposit' ? translate('goalDepositType') : translate('goalWithdrawType'),
-        المبلغ: getFormattedAmount(amount),
-        ملاحظة: note
-    });
-    try {
-        await saveData('goals', goal);
-        await processBalanceChange(amount, type === 'deposit' ? 'goal_deposit' : 'goal_withdraw',
-            `${type === 'deposit' ? translate('goalDepositPrefix') : translate('goalWithdrawPrefix')}: ${goal.الاسم}`,
-            `goalc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
-        await loadAllData();
-        if (target > 0 && newSaved >= target && !wasCompleted) {
-            toastMsg(translate('goalCompletedCongrats') + ` — ${goal.الاسم} 🏆`, "success");
-            launchConfetti();
-        } else {
-            toastMsg(type === 'deposit' ? translate('goalDepositSuccess') : translate('goalWithdrawSuccess'), "success");
-        }
-        closeLayer('goalContribute');
-        renderGoals(); renderOverviewGoals(); updateBalanceDisplay();
-        if (goalDetailId === goalId && document.getElementById('goalDetailModal').style.display === 'flex') renderGoalDetail();
-    } catch (e) { toastMsg(translate('saveFailed'), "error"); console.error(e); }
-}
-
-// ✔ تفاصيل الهدف: حلقة التقدم + المعلومات + سجل المساهمات
-function openGoalDetail(goalId) { openLayer('goalDetail', { goalId }); }
-
-function renderGoalDetail() {
-    const el = document.getElementById('goalDetailContent');
-    if (!el) return;
-    const goal = db.goals.find(g => g.clientId === goalDetailId);
-    if (!goal) { el.innerHTML = `<p style="text-align:center;color:#999">${translate('notFound')}</p>`; return; }
-    const info = goalSmartInfo(goal);
-    const style = goalCategoryStyle(goal.الفئة);
-    const contribs = Array.isArray(goal.سجل_المساهمات) ? goal.سجل_المساهمات : [];
-    let smartRow = '';
-    if (!info.completed && info.daysLeft !== null) {
-        smartRow += info.daysLeft >= 0
-            ? `<span class="goal-smart-chip">📅 ${info.daysLeft} ${translate('goalDaysLeft')}</span>`
-            : `<span class="goal-smart-chip warn">⏰ ${translate('goalPastDue')}</span>`;
-    }
-    if (info.monthlyNeeded !== null) smartRow += `<span class="goal-smart-chip">💡 ${translate('goalMonthlyNeeded')}: ${formatCurrency(info.monthlyNeeded)}</span>`;
-    el.innerHTML = `
-        <div class="goal-ring-wrap">
-            <div class="goal-ring" style="--pct:${info.pct};--goal-color:${style.color}">
-                <div class="ring-text">
-                    <span class="ring-pct">${info.pct}%</span>
-                    <span class="ring-sub">${translate('goalProgressTitle')}</span>
-                </div>
-            </div>
-        </div>
-        <div class="card" style="border-top-color:${style.color}">
-            <h3 style="color:${style.color};margin-top:0"><i class="fas fa-info-circle" style="margin-left:5px"></i> ${translate('details')}</h3>
-            <p style="margin:6px 0"><strong>${translate('goalNameLabel')}: </strong>${goal.الاسم}</p>
-            <p style="margin:6px 0"><strong>${translate('goalCategoryLabel')}: </strong>${goal.الفئة}</p>
-            <p style="margin:6px 0"><strong>${translate('goalSavedAmount')}: </strong>${formatCurrency(info.saved, true)}</p>
-            <p style="margin:6px 0"><strong>${translate('goalTargetAmount')}: </strong>${formatCurrency(info.target)}</p>
-            <p style="margin:6px 0"><strong>${translate('goalRemaining')}: </strong>${formatCurrency(info.remaining)}</p>
-            <p style="margin:6px 0"><strong>${translate('createdDate')}: </strong>${formatDateTime(goal.تاريخ_الإنشاء)}</p>
-            <p style="margin:6px 0"><strong>${translate('targetDate')}: </strong>${goal.تاريخ_الهدف ? formatDateTime(goal.تاريخ_الهدف) : translate('goalNoDate')}</p>
-            ${goal.الوصف && goal.الوصف !== '—' ? `<p style="margin:6px 0"><strong>${translate('goalNotesLabel')}: </strong>${goal.الوصف}</p>` : ''}
-            ${smartRow ? `<div class="goal-smart-row" style="margin-top:10px">${smartRow}</div>` : ''}
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-            <button class="action" style="margin-top:0;background:var(--success)" onclick="closeAndContribute('${goal.clientId}','deposit')"><i class="fas fa-arrow-up"></i> ${translate('depositToGoal')}</button>
-            <button class="action" style="margin-top:0;background:var(--danger)" onclick="closeAndContribute('${goal.clientId}','withdraw')"><i class="fas fa-arrow-down"></i> ${translate('withdrawFromGoal')}</button>
-        </div>
-        <div class="card" style="border-top-color:var(--s)">
-            <h3 style="color:var(--s);margin-top:0"><i class="fas fa-history" style="margin-left:5px"></i> ${translate('goalContributionsLog')}</h3>
-            ${contribs.length ? contribs.map(c => {
-        const isDep = c.النوع === translate('goalDepositType');
-        const color = isDep ? 'var(--success)' : 'var(--danger)';
-        return `<div class="list-item" style="border-right-color:${color};padding:12px">
-                    <div style="display:flex;justify-content:space-between;align-items:center;font-weight:700">
-                        <span><i class="fas ${isDep ? 'fa-arrow-up' : 'fa-arrow-down'}" style="color:${color};margin-left:6px"></i>${c.النوع}</span>
-                        <span style="color:${color}">${isDep ? '+' : '-'}${formatCurrency(parseAmount(c.المبلغ))}</span>
-                    </div>
-                    <div class="details"><span>${c.ملاحظة || '—'}</span><span>${formatDateTime(c.التاريخ)}</span></div>
-                </div>`;
-    }).join('') : `<p style="text-align:center;color:#999">${translate('noContributionsYet')}</p>`}
-        </div>
-        <div style="display:flex;gap:10px;margin-top:10px">
-            <button class="secondary" style="flex:1" onclick="editGoalFromDetail()"><i class="fas fa-edit"></i> ${translate('editGoal')}</button>
-            <button class="action" style="flex:1;margin-top:8px;background:var(--danger)" onclick="deleteGoalFromDetail()"><i class="fas fa-trash"></i> ${translate('delete')}</button>
-        </div>`;
-}
-
-function closeAndContribute(goalId, type) {
-    closeAllLayers();
-    openLayer('goalContribute', { goalId, type });
-}
-
-function editGoalFromDetail() {
-    const id = goalDetailId;
-    closeAllLayers();
-    openLayer('addGoal', { goalId: id });
-}
-
-// ✔ حذف الهدف مع إرجاع المدخر إلى الرصيد النقدي
-async function deleteGoalFromDetail() {
-    const goal = db.goals.find(g => g.clientId === goalDetailId);
-    if (!goal) return;
-    if (!confirm(translate('confirmDeleteGoal'))) return;
-    const saved = parseAmount(goal.المبلغ_المدخر);
-    try {
-        await deleteFromDB('goals', goal.clientId);
-        if (saved > 0) {
-            await processBalanceChange(saved, 'goal_withdraw', `${translate('goalWithdrawPrefix')}: ${goal.الاسم}`, `goald-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
-        }
-        await loadAllData();
-        toastMsg(translate('goalDeletedMsg'), "success");
-        closeAllLayers();
-        renderGoals(); renderOverviewGoals(); updateBalanceDisplay();
-    } catch (e) { toastMsg(translate('deleteFailed'), "error"); console.error(e); }
-}
-
-// ✔ احتفال كونفيتي عند اكتمال الهدف
-function launchConfetti() {
-    const colors = ['#6366f1', '#f43f5e', '#0ea5e9', '#10b981', '#f59e0b', '#a855f7', '#fbbf24'];
-    for (let i = 0; i < 60; i++) {
-        const p = document.createElement('div');
-        p.className = 'confetti-piece';
-        p.style.left = Math.random() * 100 + 'vw';
-        p.style.background = colors[Math.floor(Math.random() * colors.length)];
-        p.style.animationDuration = (1.8 + Math.random() * 1.6) + 's';
-        p.style.animationDelay = (Math.random() * 0.4) + 's';
-        p.style.border-radius = Math.random() > 0.5 ? '50%' : '2px';
-        p.style.width = p.style.height = (6 + Math.random() * 8) + 'px';
-        document.body.appendChild(p);
-        setTimeout(() => p.remove(), 4000);
-    }
-}
 
 console.log('ميزانيتك الذكية جاهزة ✅');
