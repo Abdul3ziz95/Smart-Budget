@@ -30,6 +30,9 @@ let selectedImageFile = null;
 let logFilters = { cat: 'all', status: 'all', period: 'all' };
 let balanceFilters = { type: 'all' };
 
+// ✔ مساعد آمن للوصول للعناصر (يمنع انهيار الكود عند غياب أي حقل)
+function el(id) { return document.getElementById(id); }
+
 // =============================================================
 // 2.  NAVIGATION / LAYERS
 // =============================================================
@@ -53,10 +56,10 @@ let historyStack = [];
 function _visualOpen(layerName, data = {}) {
     const layer = LAYERS[layerName];
     if (!layer) return;
-    const el = document.getElementById(layer.elementId);
-    if (!el) return;
+    const elem = el(layer.elementId);
+    if (!elem) return;
     if (layer.type === 'modal') {
-        el.style.display = 'flex';
+        elem.style.display = 'flex';
         if (layerName === 'log') {
             currentLog = data.logType;
             buildLogFilters();
@@ -69,18 +72,18 @@ function _visualOpen(layerName, data = {}) {
             _renderDetailContent(o, data.logType);
         } else if (layerName === 'balanceAction') {
             balanceActionType = data.actionType;
-            const titleEl = document.getElementById('actionModalTitle');
+            const titleEl = el('actionModalTitle');
             if (titleEl) titleEl.textContent = balanceActionType === 'deposit' ? translate('depositTitle') : translate('withdrawTitle');
-            const balanceEl = document.getElementById('currentBalanceInAction');
+            const balanceEl = el('currentBalanceInAction');
             if (balanceEl) balanceEl.innerHTML = formatCurrency(currentBalance);
-            const amountEl = document.getElementById('bAmount');
+            const amountEl = el('bAmount');
             if (amountEl) amountEl.value = '';
-            const descEl = document.getElementById('bDesc');
+            const descEl = el('bDesc');
             if (descEl) descEl.value = '';
-            const dateEl = document.getElementById('bDate');
+            const dateEl = el('bDate');
             if (dateEl) dateEl.value = getLocalDateTimeString();
         } else if (layerName === 'currency') {
-            const searchEl = document.getElementById('currencySearch');
+            const searchEl = el('currencySearch');
             if (searchEl) searchEl.value = '';
             renderCurrencyList();
         } else if (layerName === 'balanceLog') {
@@ -89,7 +92,7 @@ function _visualOpen(layerName, data = {}) {
         } else if (layerName === 'driveBackup') {
             renderDriveBackupList();
         } else if (layerName === 'exportName') {
-            const fileNameEl = document.getElementById('exportFileName');
+            const fileNameEl = el('exportFileName');
             if (fileNameEl) { fileNameEl.value = translate('defaultFileName'); fileNameEl.focus(); fileNameEl.select(); }
         } else if (layerName === 'language') {
             updateLanguageModalCheckmarks();
@@ -98,7 +101,7 @@ function _visualOpen(layerName, data = {}) {
             renderNotifications();
         }
     } else if (layer.type === 'menu') {
-        el.classList.add('open');
+        elem.classList.add('open');
         const ov = document.querySelector(layerName === 'imageSource' ? '#imageSourceOverlay' : '.sidebar-overlay');
         if (ov) ov.classList.add('open');
     }
@@ -107,13 +110,13 @@ function _visualOpen(layerName, data = {}) {
 function _visualClose(layerName, clearEdit = true) {
     const layer = LAYERS[layerName];
     if (!layer) return;
-    const el = document.getElementById(layer.elementId);
-    if (!el) return;
+    const elem = el(layer.elementId);
+    if (!elem) return;
     if (layer.type === 'modal') {
-        el.style.display = 'none';
+        elem.style.display = 'none';
         if (clearEdit && (layerName === 'detail' || layerName === 'log')) editMode = null;
     } else if (layer.type === 'menu') {
-        el.classList.remove('open');
+        elem.classList.remove('open');
         const ov = document.querySelector(layerName === 'imageSource' ? '#imageSourceOverlay' : '.sidebar-overlay');
         if (ov) ov.classList.remove('open');
     }
@@ -183,45 +186,97 @@ function loadTranslations() {
         });
 }
 
+// =============================================================
+// ✔✔✔ إصلاح الترجمة: قاموس ترجمة مفاتيح البيانات (النوع، المبلغ...)
+// =============================================================
+const FIELD_LABELS = {
+    'النوع': { ar: 'النوع', en: 'Type', ur: 'قسم' },
+    'الفئة': { ar: 'الفئة', en: 'Category', ur: 'زمرہ' },
+    'المبلغ': { ar: 'المبلغ', en: 'Amount', ur: 'رقم' },
+    'الجهة': { ar: 'الجهة', en: 'Entity', ur: 'فریق' },
+    'تاريخ_الاستحقاق': { ar: 'تاريخ الاستحقاق', en: 'Due Date', ur: 'تاریخِ ادائیگی' },
+    'التاريخ': { ar: 'التاريخ', en: 'Date', ur: 'تاریخ' },
+    'الوصف': { ar: 'الوصف', en: 'Description', ur: 'تفصیل' },
+    'المبلغ_المدفوع': { ar: 'المبلغ المدفوع', en: 'Paid Amount', ur: 'ادا شدہ رقم' },
+    'المبلغ_المدفوع_جزئياً': { ar: 'المدفوع جزئياً', en: 'Partially Paid Amount', ur: 'جزوی ادا شدہ رقم' },
+    'وقت_التنبيه': { ar: 'وقت التنبيه', en: 'Notification Timing', ur: 'اطلاع کا وقت' },
+    'المتبقي': { ar: 'المتبقي', en: 'Remaining', ur: 'باقی' },
+    'الحالة': { ar: 'الحالة', en: 'Status', ur: 'حیثیت' },
+    'المبلغ_الكلي_للالتزام': { ar: 'المبلغ الكلي', en: 'Total Amount', ur: 'کل رقم' },
+    'إجمالي_المدفوع': { ar: 'إجمالي المدفوع', en: 'Total Paid', ur: 'کل ادا شدہ' },
+    'المتبقي_للالتزام': { ar: 'المتبقي', en: 'Remaining', ur: 'باقی رقم' },
+    'عدد_الاقساط': { ar: 'عدد الأقساط', en: 'Total Installments', ur: 'اقساط کی تعداد' },
+    'قيمة_القسط': { ar: 'قيمة القسط', en: 'Installment Value', ur: 'قسط کی مالیت' },
+    'الأقساط_المدفوعة': { ar: 'الأقساط المدفوعة', en: 'Paid Installments', ur: 'ادا شدہ اقساط' }
+};
+
+function translateFieldLabel(key) {
+    const entry = FIELD_LABELS[key];
+    if (!entry) return key.replace(/_/g, ' ');
+    return entry[currentLang] || entry.ar;
+}
+
+// ✔ ترجمة قيم الحالة المخزنة بأي لغة → عرضها باللغة الحالية
+function translateStatusValue(val) {
+    if (!val || typeof val !== 'string') return val;
+    if (/مدفوع بالكامل|Fully Paid/.test(val)) return translate('statusFullyPaid');
+    if (/مدفوع جزئياً|Partially Paid/.test(val)) return translate('statusPartiallyPaid');
+    if (/غير مدفوع|Unpaid/.test(val)) return translate('statusUnpaid');
+    if (/متأخر|Overdue/.test(val)) return translate('statusOverdue');
+    if (/^مدفوع$|^Paid$/.test(val)) return translate('statusPaid');
+    return val;
+}
+
+// ✔ ترجمة قيمة وقت التنبيه (1 / 24 / 168)
+function translateTimingValue(val) {
+    const s = String(val);
+    if (s === '1') return translate('notif1Hour');
+    if (s === '24') return translate('notif24Hours');
+    if (s === '168') return translate('notif7Days');
+    return s;
+}
+
+// ✔ تنسيق قيمة الحقل حسب نوعه (حالة / تاريخ / توقيت / نص)
+function formatFieldValue(key, val) {
+    if (key === 'الحالة') return translateStatusValue(val);
+    if (key === 'وقت_التنبيه') return translateTimingValue(val);
+    if ((key === 'تاريخ_الاستحقاق' || key === 'التاريخ') && /^\d{4}-\d{2}-\d{2}$/.test(String(val))) return formatDateTime(val);
+    const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
+    return isAmt ? formatCurrency(val, true) : val;
+}
+
 function applyTranslations(lang) {
     if (!translations[lang]) lang = 'ar';
     const t = translations[lang] || {};
     const html = document.documentElement;
-    if (lang === 'ar' || lang === 'ur') {
-        html.dir = 'rtl';
-        html.lang = lang;
-    } else {
-        html.dir = 'ltr';
-        html.lang = 'en';
-    }
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (t[key] !== undefined) el.textContent = t[key];
+    if (lang === 'ar' || lang === 'ur') { html.dir = 'rtl'; html.lang = lang; }
+    else { html.dir = 'ltr'; html.lang = 'en'; }
+    document.querySelectorAll('[data-i18n]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n');
+        if (t[key] !== undefined) elem.textContent = t[key];
     });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if (t[key] !== undefined) el.placeholder = t[key];
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(elem => {
+        const key = elem.getAttribute('data-i18n-placeholder');
+        if (t[key] !== undefined) elem.placeholder = t[key];
     });
-    const langLabel = document.getElementById('sidebarLanguageLabel');
+    const langLabel = el('sidebarLanguageLabel');
     if (langLabel) {
         const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' };
-        langLabel.textContent = langNames[lang] || '🇸🇦 العربية';
+        langLabel.textContent = langNames[lang] || '🇸 العربية';
     }
     updateBalanceDisplay();
     updateStats();
-
-    // ✔ إعادة بناء الفلاتر عند تغيير اللغة — مع فحص الوجود
-    const logModal = document.getElementById('logModal');
+    // ✔ إعادة بناء الفلاتر عند تغيير اللغة — بفحص آمن
+    const logModal = el('logModal');
     if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
-    const balLogModal = document.getElementById('balanceLogModal');
+    const balLogModal = el('balanceLogModal');
     if (balLogModal && balLogModal.style.display === 'flex') { buildBalanceFilters(); renderBalanceLog(); }
-    const driveModal = document.getElementById('driveBackupModal');
+    const driveModal = el('driveBackupModal');
     if (driveModal && driveModal.style.display === 'flex') renderDriveBackupList();
-    const currModal = document.getElementById('currencyModal');
+    const currModal = el('currencyModal');
     if (currModal && currModal.style.display === 'flex') renderCurrencyList();
-    const notifModal = document.getElementById('notificationsModal');
+    const notifModal = el('notificationsModal');
     if (notifModal && notifModal.style.display === 'flex') renderNotifications();
-
     updateLanguageModalCheckmarks();
     localStorage.setItem('appLang', lang);
     currentLang = lang;
@@ -244,13 +299,9 @@ function setLanguage(lang) {
 function openLanguageModal() { openLayer('language'); }
 
 function updateLanguageModalCheckmarks() {
-    const checks = {
-        ar: document.getElementById('langCheckAr'),
-        en: document.getElementById('langCheckEn'),
-        ur: document.getElementById('langCheckUr')
-    };
-    for (const [lang, el] of Object.entries(checks)) {
-        if (el) el.style.display = (lang === currentLang) ? 'inline' : 'none';
+    const checks = { ar: el('langCheckAr'), en: el('langCheckEn'), ur: el('langCheckUr') };
+    for (const [lang, elem] of Object.entries(checks)) {
+        if (elem) elem.style.display = (lang === currentLang) ? 'inline' : 'none';
     }
 }
 
@@ -261,11 +312,8 @@ function startTokenRefresh() {
     if (tokenRefreshInterval) clearInterval(tokenRefreshInterval);
     tokenRefreshInterval = setInterval(async () => {
         if (isDriveConnected && accessToken) {
-            try {
-                if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
-            } catch (e) {
-                console.log('Token refresh failed, will retry later');
-            }
+            try { if (tokenClient) tokenClient.requestAccessToken({ prompt: '' }); }
+            catch (e) { console.log('Token refresh failed, will retry later'); }
         }
     }, 50 * 60 * 1000);
 }
@@ -289,18 +337,11 @@ function restoreDriveState() {
             isDriveConnected = true;
             updateDriveUI();
             startTokenRefresh();
-            setTimeout(() => {
-                if (accessToken) { loadBackupList(); verifyTokenValidity(); }
-            }, 1000);
+            setTimeout(() => { if (accessToken) { loadBackupList(); verifyTokenValidity(); } }, 1000);
         } else {
             console.log('Token expired, attempting to refresh...');
-            if (tokenClient) {
-                tokenClient.requestAccessToken({ prompt: '' });
-            } else {
-                setTimeout(() => {
-                    if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
-                }, 2000);
-            }
+            if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
+            else setTimeout(() => { if (tokenClient) tokenClient.requestAccessToken({ prompt: '' }); }, 2000);
         }
     }
 }
@@ -313,33 +354,23 @@ async function verifyTokenValidity() {
             console.log('Token invalid, attempting to refresh...');
             if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
         }
-    } catch (error) {
-        console.log('Token verification failed:', error);
-    }
+    } catch (error) { console.log('Token verification failed:', error); }
 }
 
 function initGapi() {
-    if (gapiInitAttempts >= MAX_INIT_ATTEMPTS) {
-        console.warn('GAPI init max attempts reached');
-        return;
-    }
+    if (gapiInitAttempts >= MAX_INIT_ATTEMPTS) { console.warn('GAPI init max attempts reached'); return; }
     gapiInitAttempts++;
-    if (typeof gapi === 'undefined') {
-        console.warn('gapi not loaded yet, retrying...');
-        setTimeout(initGapi, 500);
-        return;
-    }
+    if (typeof gapi === 'undefined') { console.warn('gapi not loaded yet, retrying...'); setTimeout(initGapi, 500); return; }
     try {
         gapi.load('client', async () => {
             try {
+                // ✔ تم حذف apiKey الفارغ الذي يسبب فشل التهيئة
                 await gapi.client.init({
                     discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
                 });
                 console.log('Google API loaded');
                 restoreDriveState();
-            } catch (error) {
-                console.error('Error loading GAPI client:', error);
-            }
+            } catch (error) { console.error('Error loading GAPI client:', error); }
         });
     } catch (error) {
         console.error('Error in GAPI init:', error);
@@ -348,16 +379,9 @@ function initGapi() {
 }
 
 function initGis() {
-    if (gisInitAttempts >= MAX_INIT_ATTEMPTS) {
-        console.warn('GIS init max attempts reached');
-        return;
-    }
+    if (gisInitAttempts >= MAX_INIT_ATTEMPTS) { console.warn('GIS init max attempts reached'); return; }
     gisInitAttempts++;
-    if (typeof google === 'undefined' || !google.accounts) {
-        console.warn('GIS not loaded yet, retrying...');
-        setTimeout(initGis, 500);
-        return;
-    }
+    if (typeof google === 'undefined' || !google.accounts) { console.warn('GIS not loaded yet, retrying...'); setTimeout(initGis, 500); return; }
     try {
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: CLIENT_ID,
@@ -367,9 +391,7 @@ function initGis() {
                     console.error('Auth error:', resp.error);
                     if (resp.error === 'access_denied' || resp.error === 'invalid_token') {
                         toastMsg(translate('sessionExpired'), "info");
-                        setTimeout(() => {
-                            if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
-                        }, 2000);
+                        setTimeout(() => { if (tokenClient) tokenClient.requestAccessToken({ prompt: '' }); }, 2000);
                     } else {
                         toastMsg(translate('loginFailed') + ': ' + resp.error, "error");
                     }
@@ -379,8 +401,7 @@ function initGis() {
                 localStorage.setItem('drive_token', accessToken);
                 localStorage.setItem('drive_token_expiry', Date.now() + 3600 * 1000);
                 try {
-                    const userInfo = await fetch(
-                        'https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+                    const userInfo = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
                         headers: { 'Authorization': `Bearer ${accessToken}` }
                     });
                     const userData = await userInfo.json();
@@ -392,10 +413,8 @@ function initGis() {
                     toastMsg(translate('driveConnected'), "success");
                     startTokenRefresh();
                     await loadBackupList();
-                    const confirmModal = document.getElementById('confirmBackupModal');
-                    if (confirmModal && confirmModal.style.display === 'flex') {
-                        closeLayer('confirmBackup');
-                    }
+                    const cbm = el('confirmBackupModal');
+                    if (cbm && cbm.style.display === 'flex') closeLayer('confirmBackup');
                     openLayer('driveBackup');
                 } catch (e) {
                     console.error('Error getting user info:', e);
@@ -428,10 +447,7 @@ async function createAppFolder() {
         const metadata = { name: APP_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' };
         const createResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(metadata)
         });
         if (!createResponse.ok) throw new Error(`Failed to create folder: ${createResponse.status}`);
@@ -538,12 +554,12 @@ function signOut() {
 }
 
 function updateDriveUI() {
-    const menuItem = document.getElementById('driveMenuItem');
-    const menuText = document.getElementById('driveMenuText');
-    const dot = document.getElementById('driveStatusDot');
-    const email = document.getElementById('driveMenuEmail');
-    const logoutBtn = document.getElementById('driveLogoutBtn');
-    const modalStatus = document.getElementById('driveModalStatus');
+    const menuItem = el('driveMenuItem');
+    const menuText = el('driveMenuText');
+    const dot = el('driveStatusDot');
+    const email = el('driveMenuEmail');
+    const logoutBtn = el('driveLogoutBtn');
+    const modalStatus = el('driveModalStatus');
     if (menuItem) {
         if (isDriveConnected) {
             menuItem.classList.add('connected');
@@ -571,11 +587,7 @@ function updateDriveUI() {
 }
 
 async function loadBackupList() {
-    if (!accessToken || !appFolderId) {
-        backupFiles = [];
-        renderDriveBackupList();
-        return;
-    }
+    if (!accessToken || !appFolderId) { backupFiles = []; renderDriveBackupList(); return; }
     try {
         const searchResponse = await fetch(
             `https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and trashed=false and (mimeType='application/json' or name contains '.json')&fields=files(id,name,size,createdTime)&orderBy=createdTime desc`, {
@@ -606,10 +618,10 @@ function getNextBackupNumber() {
     return max + 1;
 }
 
-// ✅ تم إصلاح: استخدام currentLang بدلاً من 'ar' + إزالة كلمة "رقم" غير المترجمة
+// ✔ تم إصلاح اللغة الثابتة 'ar' + إزالة كلمة "رقم" غير المترجمة
 function renderDriveBackupList() {
-    const container = document.getElementById('driveBackupList');
-    const countEl = document.getElementById('driveBackupCount');
+    const container = el('driveBackupList');
+    const countEl = el('driveBackupCount');
     if (!container) return;
     if (!isDriveConnected) {
         container.innerHTML = `<div class="drive-empty"><i class="fab fa-google-drive"></i><p>${translate('driveConnectPrompt')}</p></div>`;
@@ -621,6 +633,7 @@ function renderDriveBackupList() {
         if (countEl) countEl.textContent = translate('backupCountLabel') + ' 0';
         return;
     }
+    const locale = (currentLang === 'ur') ? 'ur-PK' : currentLang;
     const sortedByDate = [...backupFiles].sort((a, b) => new Date(a.createdTime) - new Date(b.createdTime));
     let fallback = 1;
     const filesWithNumbers = sortedByDate.map(file => {
@@ -631,10 +644,8 @@ function renderDriveBackupList() {
     let tableHtml = `<table class="backup-table"><thead><tr><th>${translate('backupName')}</th><th>${translate('backupDate')}</th><th>${translate('backupSize')}</th><th style="text-align:left;">${translate('actions')}</th></tr></thead><tbody>`;
     displayFiles.forEach((file) => {
         const date = new Date(file.createdTime);
-        const formattedDate = date.toLocaleString(currentLang, {
-            numberingSystem: 'latn',
-            year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit'
+        const formattedDate = date.toLocaleString(locale, {
+            numberingSystem: 'latn', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
         });
         const size = file.size ? (parseInt(file.size) / 1024).toFixed(1) + 'KB' : translate('unknown');
         const name = `${translate('backupCopy')} ${file.number}`;
@@ -651,10 +662,7 @@ function refreshBackupList() {
 }
 
 async function performBackup() {
-    if (!accessToken || !appFolderId) {
-        toastMsg(translate('driveNotConnected'), "error");
-        return;
-    }
+    if (!accessToken || !appFolderId) { toastMsg(translate('driveNotConnected'), "error"); return; }
     showLoading(translate('savingBackup'));
     try {
         const data = {
@@ -687,8 +695,8 @@ async function performBackup() {
         toastMsg(translate('backupSaved'), "success");
         await loadBackupList();
         renderDriveBackupList();
-        const driveModal = document.getElementById('driveBackupModal');
-        if (driveModal && driveModal.style.display !== 'flex') openLayer('driveBackup');
+        const dbm = el('driveBackupModal');
+        if (dbm && dbm.style.display !== 'flex') openLayer('driveBackup');
     } catch (error) {
         hideLoading();
         console.error('Error uploading backup:', error);
@@ -696,7 +704,7 @@ async function performBackup() {
     }
 }
 
-// ✅ تم إصلاح: مسح البيانات الحالية قبل الاستعادة
+// ✔✔✔ إصلاح الاستعادة: مسح البيانات الحالية أولاً (استبدال حقيقي كما تقول رسالة التأكيد)
 async function clearAllStores() {
     if (!IDB_connection) return;
     return new Promise((resolve, reject) => {
@@ -711,15 +719,14 @@ async function restoreBackup(fileId) {
     if (!confirm(translate('confirmRestore'))) return;
     showLoading(translate('restoringData'));
     try {
-        const response = await fetch(
-            `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
         if (!response.ok) throw new Error(`Failed to download file: ${response.status}`);
         const text = await response.text();
         const imported = JSON.parse(text);
 
-        // ✅ مسح البيانات الحالية أولاً ثم استعادة الجديدة
+        // ✔ امسح البيانات الحالية ثم استورد (استبدال كامل)
         await clearAllStores();
 
         if (imported.bal && Array.isArray(imported.bal.changes)) {
@@ -727,14 +734,12 @@ async function restoreBackup(fileId) {
             await addDataToStore('bal', [imported.bal]);
         }
         for (const sn of ['exp', 'rig', 'deb', 'inc']) {
-            if (imported[sn] && Array.isArray(imported[sn])) {
-                await addDataToStore(sn, imported[sn]);
-            }
+            if (imported[sn] && Array.isArray(imported[sn])) await addDataToStore(sn, imported[sn]);
         }
         if (imported.currency) {
             currentCurrency = imported.currency;
             localStorage.setItem('currencyCode', currentCurrency.code);
-            const label = document.getElementById('sidebarCurrencyLabel');
+            const label = el('sidebarCurrencyLabel');
             if (label) label.textContent = currentCurrency.symbol;
         }
         await loadAllData();
@@ -754,8 +759,7 @@ async function restoreBackup(fileId) {
 async function deleteBackup(fileId) {
     if (!confirm(translate('confirmDeleteBackup'))) return;
     try {
-        const response = await fetch(
-            `https://www.googleapis.com/drive/v3/files/${fileId}`, {
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${accessToken}` }
         });
@@ -775,7 +779,7 @@ async function deleteBackup(fileId) {
 function openExportNameModal() { openLayer('exportName'); }
 
 function performExport() {
-    const fileNameEl = document.getElementById('exportFileName');
+    const fileNameEl = el('exportFileName');
     const fileName = fileNameEl ? fileNameEl.value.trim() : '';
     if (!fileName) { toastMsg(translate('enterFileName'), "error"); return; }
     closeLayer('exportName');
@@ -794,36 +798,27 @@ function performExport() {
     toastMsg(translate('exportSuccess'), "success");
 }
 
-// ✅ تم إصلاح: مسح البيانات قبل الاستيراد
+// ✔ الاستيراد يبقى "إضافة" كما تقول رسالة التأكيد (بدون مسح)
 async function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
-    if (!confirm(translate('confirmImport'))) {
-        event.target.value = null;
-        return;
-    }
+    if (!confirm(translate('confirmImport'))) { event.target.value = null; return; }
     showLoading(translate('importingData'));
     const reader = new FileReader();
     reader.onload = async (e) => {
         try {
             const imported = JSON.parse(e.target.result);
-
-            // ✅ مسح البيانات الحالية أولاً
-            await clearAllStores();
-
             if (imported.bal && Array.isArray(imported.bal.changes)) {
                 imported.bal.clientId = 1;
                 await addDataToStore('bal', [imported.bal]);
             }
             for (const sn of ['exp', 'rig', 'deb', 'inc']) {
-                if (imported[sn] && Array.isArray(imported[sn])) {
-                    await addDataToStore(sn, imported[sn]);
-                }
+                if (imported[sn] && Array.isArray(imported[sn])) await addDataToStore(sn, imported[sn]);
             }
             if (imported.currency) {
                 currentCurrency = imported.currency;
                 localStorage.setItem('currencyCode', currentCurrency.code);
-                const label = document.getElementById('sidebarCurrencyLabel');
+                const label = el('sidebarCurrencyLabel');
                 if (label) label.textContent = currentCurrency.symbol;
             }
             await loadAllData();
@@ -848,9 +843,7 @@ async function addDataToStore(storeName, dataArray) {
     const store = tx.objectStore(storeName);
     for (const item of dataArray) {
         await new Promise(resolve => {
-            if (storeName === 'bal') {
-                store.put(item).onsuccess = resolve;
-            } else {
+            if (storeName === 'bal') { store.put(item).onsuccess = resolve; } else {
                 const toSave = { ...item };
                 delete toSave.id;
                 toSave.clientId = item.clientId || `${storeName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -863,15 +856,15 @@ async function addDataToStore(storeName, dataArray) {
 // =============================================================
 // 6.  LOADING OVERLAY
 // =============================================================
-function showLoading(message = translate('processing')) {
-    const overlay = document.getElementById('loadingOverlay');
-    const msg = document.getElementById('loadingMessage');
-    if (msg) msg.textContent = message;
+function showLoading(message) {
+    const overlay = el('loadingOverlay');
+    const msg = el('loadingMessage');
+    if (msg) msg.textContent = message || translate('processing');
     if (overlay) overlay.classList.add('show');
 }
 
 function hideLoading() {
-    const overlay = document.getElementById('loadingOverlay');
+    const overlay = el('loadingOverlay');
     if (overlay) overlay.classList.remove('show');
 }
 
@@ -879,14 +872,10 @@ function hideLoading() {
 // 7.  TOAST NOTIFICATION
 // =============================================================
 function toastMsg(message, type = "info") {
-    const t = document.getElementById('toast');
+    const t = el('toast');
     if (!t) return;
     t.className = 'toast ' + type;
-    const iconMap = {
-        success: 'fa-check-circle',
-        error: 'fa-exclamation-circle',
-        info: 'fa-info-circle'
-    };
+    const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
     t.innerHTML = `<span class="toast-icon ${type}"><i class="fas ${iconMap[type] || 'fa-info-circle'}"></i></span> ${message}`;
     t.classList.add('show');
     setTimeout(() => { t.classList.remove('show'); }, 3500);
@@ -895,12 +884,12 @@ function toastMsg(message, type = "info") {
 // =============================================================
 // 8.  FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
 // =============================================================
-// ✅ تم إصلاح جميع الأخطاء الإملائية والمسافات في ARABIC_CURRENCIES
+// ✔✔✔ تم إصلاح جميع أخطاء الكتابة (cod e / s ymbol / مسافات)
 const ARABIC_CURRENCIES = [
     { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
     { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
     { code: 'AED', symbol: 'د.إ', flag: '🇦🇪', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
-    { code: 'QAR', symbol: 'ر.ق', flag: '🇶🇦', name: { ar: 'الريال القطري', en: 'Qatari Riyal', ur: 'قطری ریال' } },
+    { code: 'QAR', symbol: 'ر.ق', flag: '🇶', name: { ar: 'الريال القطري', en: 'Qatari Riyal', ur: 'قطری ریال' } },
     { code: 'KWD', symbol: 'د.ك', flag: '🇰🇼', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
     { code: 'BHD', symbol: 'د.ب', flag: '🇧🇭', name: { ar: 'الدينار البحريني', en: 'Bahraini Dinar', ur: 'بحرینی دینار' } },
     { code: 'OMR', symbol: 'ر.ع', flag: '🇴🇲', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
@@ -912,16 +901,16 @@ const ARABIC_CURRENCIES = [
     { code: 'ILS', symbol: '₪', flag: '🇵🇸', name: { ar: 'الشيكل الفلسطيني', en: 'Israeli Shekel', ur: 'اسرائیلی شیکل' } },
     { code: 'EGP', symbol: 'ج.م', flag: '🇪🇬', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
     { code: 'LYD', symbol: 'ل.د', flag: '🇱🇾', name: { ar: 'الدينار الليبي', en: 'Libyan Dinar', ur: 'لیبیائی دینار' } },
-    { code: 'TND', symbol: 'د.ت', flag: '🇹🇳', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
+    { code: 'TND', symbol: 'د.ت', flag: '🇹', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
     { code: 'DZD', symbol: 'دج', flag: '🇩🇿', name: { ar: 'الدينار الجزائري', en: 'Algerian Dinar', ur: 'الجزائری دینار' } },
-    { code: 'MAD', symbol: 'د.م', flag: '🇲🇦', name: { ar: 'الدرهم المغربي', en: 'Moroccan Dirham', ur: 'مراکشی درہم' } },
+    { code: 'MAD', symbol: 'د.م', flag: '🇲', name: { ar: 'الدرهم المغربي', en: 'Moroccan Dirham', ur: 'مراکشی درہم' } },
     { code: 'MRU', symbol: 'أ.م', flag: '🇲🇷', name: { ar: 'الأوقية الموريتانية', en: 'Mauritanian Ouguiya', ur: 'موریطانی اوگوئیا' } },
     { code: 'SOS', symbol: 'ش.ص', flag: '🇸🇴', name: { ar: 'الشلن الصومالي', en: 'Somali Shilling', ur: 'صومالی شلنگ' } },
     { code: 'DJF', symbol: 'ف.ج', flag: '🇩🇯', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
     { code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
     { code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
     { code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
-    { code: 'EUR', symbol: '€', flag: '🇪🇺', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
+    { code: 'EUR', symbol: '€', flag: '🇪', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
     { code: 'BDT', symbol: '৳', flag: '🇧🇩', name: { ar: 'التاكا البنغلاديشي', en: 'Bangladeshi Taka', ur: 'بنگلادیشی ٹاکا' } },
     { code: 'INR', symbol: '₹', flag: '🇮🇳', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
     { code: 'PKR', symbol: '₨', flag: '🇵🇰', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
@@ -937,6 +926,7 @@ function getCurrencyName(c) {
 }
 
 function formatAmount(input) {
+    if (!input) return;
     let val = input.value.replace(/[٠-٩]/g, d => String.fromCharCode(d.charCodeAt(0) - 1632 + 48));
     val = val.replace(/[^\d.]/g, '');
     const parts = val.split('.');
@@ -1005,10 +995,10 @@ function formatBalance(amount) {
     return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
 }
 
-// ✅ تم إصلاح: استخدام currentLang بدلاً من 'ar'
+// ✔ تم إصلاح اللغة الثابتة 'ar' → تستخدم لغة التطبيق الحالية
 function formatDateTime(dateString) {
     if (!dateString) return '—';
-    const locale = currentLang || 'ar';
+    const locale = (currentLang === 'ur') ? 'ur-PK' : (currentLang || 'ar');
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
         const [y, m, d] = dateString.split('-').map(Number);
         const date = new Date(y, m - 1, d);
@@ -1018,25 +1008,26 @@ function formatDateTime(dateString) {
     const d = new Date(dateString);
     if (isNaN(d)) return translate('invalidDate');
     return d.toLocaleString(locale, {
-        numberingSystem: 'latn', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric',
-        minute: '2-digit', hour12: true
+        numberingSystem: 'latn', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
     });
 }
 
-// ✅ تم إصلاح: فحص وجود العناصر قبل الوصول إليها
+// ✔ فحص آمن لجميع الحقول (لا ينهار عند غياب أي حقل)
 function clearFields() {
     ['iAmount', 'iDesc', 'iType', 'iDate',
      'eAmount', 'eDesc', 'eType', 'eDate',
      'rAmount', 'rDesc', 'rType', 'rEntity', 'rDueDate', 'rNotifTiming',
      'dType', 'dAmount', 'dDesc', 'dStatus', 'dEntity', 'dDueDate', 'dNotifTiming'
-    ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    ].forEach(id => { const elem = el(id); if (elem) elem.value = ''; });
     clearSelectedImage();
-    const rDyn = document.getElementById('rDynamicFields');
+    const rDyn = el('rDynamicFields');
     if (rDyn) rDyn.innerHTML = '';
-    const dDyn = document.getElementById('dDynamicFields');
+    const dDyn = el('dDynamicFields');
     if (dDyn) dDyn.innerHTML = '';
-    document.querySelectorAll('.edit-indicator').forEach(el => el.style.display = 'none');
-    const dEntity = document.getElementById('dEntity');
+    const dPartial = el('dPartialPaidContainer');
+    if (dPartial) dPartial.remove();
+    document.querySelectorAll('.edit-indicator').forEach(elem => elem.style.display = 'none');
+    const dEntity = el('dEntity');
     if (dEntity) dEntity.style.display = 'none';
 }
 
@@ -1045,7 +1036,7 @@ function clearFields() {
 // =============================================================
 function openTab(id, keepEdit = false) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    const section = document.getElementById(id);
+    const section = el(id);
     if (section) section.classList.add('active');
     document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => {
         btn.classList.remove('active');
@@ -1055,14 +1046,14 @@ function openTab(id, keepEdit = false) {
     if (id === 'overview') updateStats();
     if (editMode) {
         const indicatorMap = { inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
-        const ind = document.getElementById(indicatorMap[editMode.type]);
+        const ind = el(indicatorMap[editMode.type]);
         if (ind) ind.style.display = 'inline-block';
     }
 }
 
 function openTabFromNav(tabId) {
-    const el = document.getElementById(tabId);
-    if (el && el.classList.contains('active')) return;
+    const elem = el(tabId);
+    if (!elem || elem.classList.contains('active')) return;
     closeAllLayers();
     openTab(tabId);
 }
@@ -1078,13 +1069,13 @@ function toggleBalanceVisibility() {
 }
 
 function updateBalanceDisplay() {
-    const el = document.getElementById('currentBalanceDisplay');
-    if (el) el.innerHTML = formatBalance(currentBalance);
-    const act = document.getElementById('currentBalanceInAction');
+    const elem = el('currentBalanceDisplay');
+    if (elem) elem.innerHTML = formatBalance(currentBalance);
+    const act = el('currentBalanceInAction');
     if (act) act.innerHTML = formatBalance(currentBalance);
     const icon = document.querySelector('#balanceVisibilityToggle i');
     if (icon) icon.className = balanceHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
-    const balLogModal = document.getElementById('balanceLogModal');
+    const balLogModal = el('balanceLogModal');
     if (balLogModal && balLogModal.style.display === 'flex') renderBalanceLog();
 }
 
@@ -1122,13 +1113,12 @@ async function processBalanceChange(amount, type, description, recordId = null, 
 }
 
 async function processBalanceAction() {
-    const amtEl = document.getElementById('bAmount');
-    const descEl = document.getElementById('bDesc');
+    const amtEl = el('bAmount');
+    const descEl = el('bDesc');
     const amt = amtEl ? amtEl.value : '';
-    const desc = descEl ? descEl.value : '';
-    const finalDesc = desc || (balanceActionType === 'deposit' ? translate('generalDeposit') : translate('generalWithdraw'));
+    const desc = (descEl && descEl.value) ? descEl.value : (balanceActionType === 'deposit' ? translate('generalDeposit') : translate('generalWithdraw'));
     if (!amt) return toastMsg(translate('enterAmount'), "error");
-    const ok = await processBalanceChange(amt, balanceActionType, finalDesc, `manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+    const ok = await processBalanceChange(amt, balanceActionType, desc, `manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
     if (ok) {
         toastMsg(balanceActionType === 'deposit' ? translate('depositSuccess') : translate('withdrawSuccess'), "success");
         closeLayer('balanceAction');
@@ -1136,30 +1126,27 @@ async function processBalanceAction() {
 }
 
 function renderBalanceLog() {
-    const el = document.getElementById('balanceLogContent');
-    if (!el) return;
+    const elem = el('balanceLogContent');
+    if (!elem) return;
     const changes = db.bal.changes || [];
-    const qEl = document.getElementById('balanceSearch');
+    const qEl = el('balanceSearch');
     const q = qEl ? qEl.value.toLowerCase() : '';
     let list = changes;
     if (q) list = list.filter(i => String(i.النوع).toLowerCase().includes(q));
     if (balanceFilters.type === 'deposit') list = list.filter(i => i.القيمة_الصافية > 0);
     if (balanceFilters.type === 'withdraw') list = list.filter(i => i.القيمة_الصافية < 0);
     let dep = 0, wit = 0;
-    list.forEach(i => {
-        if (i.القيمة_الصافية > 0) dep += i.القيمة_الصافية;
-        else if (i.القيمة_الصافية < 0) wit += Math.abs(i.القيمة_الصافية);
-    });
-    const bar = document.getElementById('balanceStatsBar');
+    list.forEach(i => { if (i.القيمة_الصافية > 0) dep += i.القيمة_الصافية; else if (i.القيمة_الصافية < 0) wit += Math.abs(i.القيمة_الصافية); });
+    const bar = el('balanceStatsBar');
     if (bar) bar.innerHTML = `
         <div class="log-stat-chip"><span class="stat-label">${translate('movementsCount')}</span><span class="stat-value">${list.length}</span></div>
         <div class="log-stat-chip"><span class="stat-label">${translate('totalDeposits')}</span><span class="stat-value" style="color:var(--success)">${getFormattedAmount(dep)}</span></div>
         <div class="log-stat-chip"><span class="stat-label">${translate('totalWithdrawals')}</span><span class="stat-value" style="color:var(--danger)">${getFormattedAmount(wit)}</span></div>`;
     if (!list.length) {
-        el.innerHTML = `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>${translate('noBalanceLog')}</p>`;
+        elem.innerHTML = `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>${translate('noBalanceLog')}</p>`;
         return;
     }
-    el.innerHTML = list.map(i => {
+    elem.innerHTML = list.map(i => {
         const isDep = i.القيمة_الصافية > 0;
         const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
         const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
@@ -1182,10 +1169,8 @@ function renderBalanceLog() {
 // =============================================================
 // 11.1 INCOME
 async function addIncome() {
-    const iAmount = document.getElementById('iAmount');
-    const iType = document.getElementById('iType');
-    const iDate = document.getElementById('iDate');
-    const iDesc = document.getElementById('iDesc');
+    const iAmount = el('iAmount'), iType = el('iType'), iDate = el('iDate'), iDesc = el('iDesc');
+    if (!iAmount || !iType || !iDate) return toastMsg(translate('fillRequired'), "error");
     if (!iAmount.value || !iType.value || !iDate.value) return toastMsg(translate('fillRequired'), "error");
     const isEditing = editMode && editMode.type === 'inc';
     const oldData = isEditing ? db.inc[editMode.index] : {};
@@ -1195,23 +1180,21 @@ async function addIncome() {
     const data = isEditing ? { ...oldData } : {};
     data.المبلغ = getFormattedAmount(amount);
     data.الفئة = iType.value;
-    data.الوصف = iDesc.value || '—';
+    data.الوصف = (iDesc && iDesc.value) ? iDesc.value : '—';
     data.التاريخ = iDate.value;
     data.clientId = isEditing ? oldData.clientId : `inc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     try {
         await saveData('inc', data);
         await processBalanceChange(amount, 'income', `${translate('incomeLogPrefix')}: ${data.الفئة} (${data.الوصف})`, data.clientId, isEditing, oldAmount);
         toastMsg(isEditing ? translate('incomeEdited') : translate('incomeSaved'), "success");
-        postSaveCleanup(isEditing, 'inc');
+        postSaveCleanup();
     } catch (err) { toastMsg(translate('saveFailed'), "error"); console.error(err); }
 }
 
 // 11.2 EXPENSES
 async function addExpense() {
-    const eAmount = document.getElementById('eAmount');
-    const eType = document.getElementById('eType');
-    const eDate = document.getElementById('eDate');
-    const eDesc = document.getElementById('eDesc');
+    const eAmount = el('eAmount'), eType = el('eType'), eDate = el('eDate'), eDesc = el('eDesc');
+    if (!eAmount || !eType || !eDate) return toastMsg(translate('fillRequired'), "error");
     if (!eAmount.value || !eType.value || !eDate.value) return toastMsg(translate('fillRequired'), "error");
     const isEditing = editMode && editMode.type === 'exp';
     const oldData = isEditing ? db.exp[editMode.index] : {};
@@ -1221,11 +1204,12 @@ async function addExpense() {
     const data = isEditing ? { ...oldData } : {};
     data.المبلغ = getFormattedAmount(amount);
     data.الفئة = eType.value;
-    data.الوصف = eDesc.value || '—';
+    data.الوصف = (eDesc && eDesc.value) ? eDesc.value : '—';
     data.التاريخ = eDate.value;
     data.clientId = isEditing ? oldData.clientId : `exp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const img = getSelectedImage();
-    if (img && typeof img === 'string' && img.startsWith('image')) {
+    // ✔✔✔ تم الإصلاح: الشرط الصحيح data:image (كان image فيفسد الحفظ)
+    if (img && typeof img === 'string' && img.startsWith('data:image')) {
         data.صورة = img;
     } else if (!isEditing) {
         delete data.صورة;
@@ -1237,29 +1221,23 @@ async function addExpense() {
         await saveData('exp', data);
         await processBalanceChange(amount, 'expense', `${translate('expenseLogPrefix')}: ${data.الفئة} (${data.الوصف})`, data.clientId, isEditing, oldAmount);
         toastMsg(isEditing ? translate('expenseEdited') : translate('expenseSaved'), "success");
-        postSaveCleanup(isEditing, 'exp');
+        postSaveCleanup();
     } catch (err) { toastMsg(translate('saveFailed'), "error"); console.error(err); }
 }
 
 // 11.3 RIGHTS
 function updateRightFields(type, currentData = null) {
-    const container = document.getElementById('rDynamicFields');
+    const container = el('rDynamicFields');
     if (!container) return;
-    container.innerHTML = '';
-    let paidHtml = `
+    container.innerHTML = `
         <input id="rPaidAmount" type="text" placeholder="💰 ${translate('collectedAmount')}" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('en-US') : ''}" />
         <span class="field-hint">${translate('collectedAmountHint')}</span>
     `;
-    container.innerHTML = paidHtml;
 }
 
 async function addRight() {
-    const rAmount = document.getElementById('rAmount');
-    const rType = document.getElementById('rType');
-    const rEntity = document.getElementById('rEntity');
-    const rDueDate = document.getElementById('rDueDate');
-    const rDesc = document.getElementById('rDesc');
-    const rPaidAmount = document.getElementById('rPaidAmount');
+    const rAmount = el('rAmount'), rType = el('rType'), rEntity = el('rEntity'), rDueDate = el('rDueDate'), rDesc = el('rDesc'), rPaidAmount = el('rPaidAmount');
+    if (!rAmount || !rType || !rDueDate) return toastMsg(translate('fillRequired'), "error");
     if (!rAmount.value || !rType.value || !rDueDate.value) return toastMsg(translate('fillRequired'), "error");
     const isEditing = editMode && editMode.type === 'rig';
     const oldData = isEditing ? db.rig[editMode.index] : {};
@@ -1271,15 +1249,15 @@ async function addRight() {
     data.clientId = isEditing ? oldData.clientId : `rig-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     data.النوع = rType.value;
     data.المبلغ = getFormattedAmount(total);
-    data.الجهة = rEntity.value || '—';
+    data.الجهة = (rEntity && rEntity.value) ? rEntity.value : '—';
     data.تاريخ_الاستحقاق = rDueDate.value;
-    data.الوصف = rDesc.value || '—';
+    data.الوصف = (rDesc && rDesc.value) ? rDesc.value : '—';
     data.المبلغ_المدفوع = getFormattedAmount(paid);
-    const rNotifTiming = document.getElementById('rNotifTiming');
+    const rNotifTiming = el('rNotifTiming');
     data.وقت_التنبيه = rNotifTiming ? (rNotifTiming.value || '168') : '168';
     const remaining = total - paid;
     data.المتبقي = getFormattedAmount(remaining);
-    let status = translate('statusUnpaid');
+    let status;
     if (remaining <= 0) status = translate('statusFullyPaid');
     else if (paid > 0) status = translate('statusPartiallyPaid');
     else status = translate('statusUnpaid');
@@ -1290,16 +1268,16 @@ async function addRight() {
         await saveData('rig', data);
         await processBalanceChange(paid, 'right_collection', `${translate('rightLogPrefix')}: ${data.النوع} (${data.الجهة})`, data.clientId, isEditing, oldPaid);
         toastMsg(isEditing ? translate('rightEdited') : translate('rightSaved'), "success");
-        postSaveCleanup(isEditing, 'rig');
+        postSaveCleanup();
     } catch (err) { toastMsg(translate('saveFailed'), "error"); console.error(err); }
 }
 
 // 11.4 DEBTS
 function updateDebtFields(type, currentData = null) {
-    const container = document.getElementById('dDynamicFields');
-    const amountInput = document.getElementById('dAmount');
-    const statusSelect = document.getElementById('dStatus');
-    const entityInput = document.getElementById('dEntity');
+    const container = el('dDynamicFields');
+    const amountInput = el('dAmount');
+    const statusSelect = el('dStatus');
+    const entityInput = el('dEntity');
     if (!container) return;
     container.innerHTML = '';
     const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
@@ -1344,7 +1322,7 @@ function updateDebtFields(type, currentData = null) {
     if (!masterTypes.includes(type) && statusSelect) {
         statusSelect.onchange = function () {
             const status = statusSelect.value;
-            const partialPaidContainer = document.getElementById('dPartialPaidContainer');
+            const partialPaidContainer = el('dPartialPaidContainer');
             if (status === 'مدفوع جزئياً') {
                 if (!partialPaidContainer) {
                     const paidInput = document.createElement('div');
@@ -1361,19 +1339,15 @@ function updateDebtFields(type, currentData = null) {
         };
         statusSelect.onchange();
         if (currentData && currentData.الحالة === 'مدفوع جزئياً' && currentData.المبلغ_المدفوع_جزئياً) {
-            const paidInput = document.getElementById('dPartialPaidAmount');
+            const paidInput = el('dPartialPaidAmount');
             if (paidInput) paidInput.value = parseAmount(currentData.المبلغ_المدفوع_جزئياً).toLocaleString('en-US');
         }
     }
 }
 
 async function addDebt() {
-    const dType = document.getElementById('dType');
-    const dAmount = document.getElementById('dAmount');
-    const dEntity = document.getElementById('dEntity');
-    const dDueDate = document.getElementById('dDueDate');
-    const dDesc = document.getElementById('dDesc');
-    const dStatus = document.getElementById('dStatus');
+    const dType = el('dType'), dAmount = el('dAmount'), dEntity = el('dEntity'), dDueDate = el('dDueDate'), dDesc = el('dDesc'), dStatus = el('dStatus');
+    if (!dType || !dDueDate) return toastMsg(translate('fillRequired'), "error");
     if (!dType.value || !dDueDate.value) return toastMsg(translate('fillRequired'), "error");
     const isEditing = editMode && editMode.type === 'deb';
     const oldData = isEditing ? db.deb[editMode.index] : {};
@@ -1383,18 +1357,15 @@ async function addDebt() {
     data.clientId = isEditing ? oldData.clientId : `deb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     data.النوع = dType.value;
     data.تاريخ_الاستحقاق = dDueDate.value;
-    data.الوصف = dDesc.value || '—';
-    if (dEntity && dEntity.style.display !== 'none' && dEntity.value) {
-        data.الجهة = dEntity.value;
-    } else {
-        data.الجهة = '—';
-    }
-    const dNotifTiming = document.getElementById('dNotifTiming');
+    data.الوصف = (dDesc && dDesc.value) ? dDesc.value : '—';
+    if (dEntity && dEntity.style.display !== 'none' && dEntity.value) data.الجهة = dEntity.value;
+    else data.الجهة = '—';
+    const dNotifTiming = el('dNotifTiming');
     data.وقت_التنبيه = dNotifTiming ? (dNotifTiming.value || '168') : '168';
     let paidAmount = 0;
-    let oldPaid = isEditing ? parseAmount(oldData.المبلغ_المخصوم_للرصيد || 0) : 0;
+    const oldPaid = isEditing ? parseAmount(oldData.المبلغ_المخصوم_للرصيد || 0) : 0;
     if (isMaster) {
-        const totalInput = document.getElementById('dTotalAmount');
+        const totalInput = el('dTotalAmount');
         if (!totalInput || !totalInput.value) return toastMsg(translate('enterTotalAmount'), "error");
         const total = parseAmount(totalInput.value);
         if (total === 0) return toastMsg(translate('amountMustBePositive'), "error");
@@ -1402,8 +1373,8 @@ async function addDebt() {
         let totalPaid = 0;
         const isLoanOrInstallment = (dType.value === '🏦 قروض وتمويل' || dType.value === '🛒 مشتريات بالتقسيط' || dType.value === '🚗 تمويل السيارة');
         if (isLoanOrInstallment) {
-            const installmentsInput = document.getElementById('dInstallments');
-            const paidInstallmentsInput = document.getElementById('dPaidInstallments');
+            const installmentsInput = el('dInstallments');
+            const paidInstallmentsInput = el('dPaidInstallments');
             if (!installmentsInput || !installmentsInput.value) return toastMsg(translate('enterInstallments'), "error");
             const installments = parseInt(installmentsInput.value) || 0;
             const paidInstallments = parseInt(paidInstallmentsInput ? paidInstallmentsInput.value : 0) || 0;
@@ -1415,7 +1386,7 @@ async function addDebt() {
             data.قيمة_القسط = getFormattedAmount(installmentVal);
             data.الأقساط_المدفوعة = paidInstallments;
         } else {
-            const paidInput = document.getElementById('dPaidAmount');
+            const paidInput = el('dPaidAmount');
             if (paidInput) totalPaid = parseAmount(paidInput.value);
             if (totalPaid > total) return toastMsg(translate('paidExceedsTotalDebt'), "error");
         }
@@ -1425,13 +1396,14 @@ async function addDebt() {
         data.الحالة = (total - totalPaid) <= 0 ? translate('statusPaid') : translate('statusPartiallyPaid');
         paidAmount = totalPaid;
     } else {
+        if (!dAmount || !dStatus) return toastMsg(translate('fillRequired'), "error");
         if (!dAmount.value || !dStatus.value) return toastMsg(translate('fillRequired'), "error");
         const amt = parseAmount(dAmount.value);
         if (amt === 0) return toastMsg(translate('amountMustBePositive'), "error");
         data.المبلغ = getFormattedAmount(amt);
         data.الحالة = dStatus.value;
         if (dStatus.value === 'مدفوع جزئياً') {
-            const partialPaidInput = document.getElementById('dPartialPaidAmount');
+            const partialPaidInput = el('dPartialPaidAmount');
             if (!partialPaidInput || !partialPaidInput.value) return toastMsg(translate('enterPartialPaid'), "error");
             const partialPaid = parseAmount(partialPaidInput.value);
             if (partialPaid <= 0) return toastMsg(translate('partialPaidPositive'), "error");
@@ -1457,18 +1429,18 @@ async function addDebt() {
         await saveData('deb', data);
         await processBalanceChange(paidAmount, 'debt_payment', `${translate('debtLogPrefix')}: ${data.النوع} (${data.الجهة})`, data.clientId, isEditing, oldNetChange);
         toastMsg(isEditing ? translate('debtEdited') : translate('debtSaved'), "success");
-        postSaveCleanup(isEditing, 'deb');
+        postSaveCleanup();
     } catch (err) { toastMsg(translate('saveFailed'), "error"); console.error(err); }
 }
 
-function postSaveCleanup(isEditing, type) {
+function postSaveCleanup() {
     closeAllLayers();
+    editMode = null;
+    clearFields();
     loadAllData().then(() => {
         updateStats();
         updateBalanceDisplay();
     });
-    editMode = null;
-    clearFields();
 }
 
 // =============================================================
@@ -1486,9 +1458,10 @@ function inPeriod(dateStr, period) {
     return true;
 }
 
+// ✔ مطابقة الحالة — تدعم العربي والإنجليزي والأردو المخزنة بأي لغة
 function matchStatus(st, f) {
     st = st || '';
-    if (f === 'paid') return (/مدفوع بالكامل/.test(st) || /مدفوع$/.test(st) || /Fully Paid/.test(st) || /^Paid$/.test(st)) && !/جزئ|Partial/.test(st) && !/غير|Unpaid/.test(st);
+    if (f === 'paid') return (/مدفوع بالكامل|Fully Paid/.test(st) || /مدفوع$/.test(st) || /^Paid$/.test(st)) && !/جزئ|Partial/.test(st) && !/غير|Unpaid/.test(st);
     if (f === 'partial') return /جزئياً|Partial/.test(st);
     if (f === 'unpaid') return /غير مدفوع|Unpaid/.test(st);
     if (f === 'late') return /متأخر|Overdue/.test(st);
@@ -1499,18 +1472,18 @@ function setLogFilter(kind, value) { logFilters[kind] = value; renderLog(); }
 function setBalanceFilter(kind, value) { balanceFilters[kind] = value; renderBalanceLog(); }
 
 function buildLogFilters() {
-    const catSel = document.getElementById('logFilterCat');
-    const statusSel = document.getElementById('logFilterStatus');
-    const periodSel = document.getElementById('logFilterPeriod');
+    const catSel = el('logFilterCat');
+    const statusSel = el('logFilterStatus');
+    const periodSel = el('logFilterPeriod');
     if (!catSel || !statusSel || !periodSel) return;
     logFilters = { cat: 'all', status: 'all', period: 'all' };
     let catOptions = '';
     if (currentLog === 'inc' || currentLog === 'exp') {
-        const src = document.getElementById(currentLog === 'inc' ? 'iType' : 'eType');
+        const src = el(currentLog === 'inc' ? 'iType' : 'eType');
         if (src) catOptions = Array.from(src.options).filter(o => o.value).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('');
         catSel.style.display = 'block';
     } else if (currentLog === 'rig' || currentLog === 'deb') {
-        const src = document.getElementById(currentLog === 'rig' ? 'rType' : 'dType');
+        const src = el(currentLog === 'rig' ? 'rType' : 'dType');
         if (src) catOptions = Array.from(src.options).filter(o => o.value).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('');
         catSel.style.display = 'block';
     } else { catSel.style.display = 'none'; }
@@ -1523,14 +1496,14 @@ function buildLogFilters() {
 }
 
 function buildBalanceFilters() {
-    const typeSel = document.getElementById('balanceFilterType');
+    const typeSel = el('balanceFilterType');
     if (!typeSel) return;
     typeSel.innerHTML = `<option value="all">${translate('allTypes')}</option><option value="deposit">${translate('deposit')}</option><option value="withdraw">${translate('withdraw')}</option>`;
     typeSel.value = balanceFilters.type || 'all';
 }
 
 function renderLogStats(list, field) {
-    const bar = document.getElementById('logStatsBar');
+    const bar = el('logStatsBar');
     if (!bar) return;
     let total = 0;
     const byCat = {};
@@ -1549,30 +1522,29 @@ function renderLogStats(list, field) {
         <div class="log-stat-chip"><span class="stat-label">${titles[currentLog] || ''}</span><span class="stat-value">${topName} (${getFormattedAmount(topVal)})</span></div>`;
 }
 
+// ✔✔✔ تم الإصلاح: عرض التفاصيل بمفاتيح مترجمة حسب لغة التطبيق
 function _renderDetailContent(o, type) {
-    const el = document.getElementById('detailContent');
-    if (!el) return;
+    const elem = el('detailContent');
+    if (!elem) return;
     let html = `<div class="card" style="border-top-color:var(--p);"><h3 style="color:var(--p);margin-top:0;"><i class="fas fa-info-circle" style="margin-left:5px;"></i> ${translate('details')}</h3>`;
     for (const [key, val] of Object.entries(o)) {
         if (['id', 'clientId', 'صورة', 'المبلغ_المضاف_للرصيد', 'المبلغ_المخصوم_للرصيد'].includes(key)) continue;
         if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '' && key !== 'الوصف')) continue;
-        const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
-        const display = isAmt ? formatCurrency(val, true) : val;
-        html += `<p style="margin:6px 0;"><strong>${key.replace(/_/g, ' ')}:</strong> <span>${display}</span></p>`;
+        html += `<p style="margin:6px 0;"><strong>${translateFieldLabel(key)}:</strong> <span>${formatFieldValue(key, val)}</span></p>`;
     }
     html += `</div>`;
     if (o.صورة && type === 'exp') {
         html += `<div class="card" style="border-top-color:var(--s);"><h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i> ${translate('invoiceImage')}</h3><img src="${o.صورة}" alt="${translate('invoice')}" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" /></div>`;
     }
     html += `<div style="display:flex;gap:10px;margin-top:20px;"><button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> ${translate('edit')}</button><button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> ${translate('delete')}</button></div>`;
-    el.innerHTML = html;
+    elem.innerHTML = html;
 }
 
 function renderLog() {
-    const el = document.getElementById('logContent');
-    if (!el) return;
+    const elem = el('logContent');
+    if (!elem) return;
     const items = db[currentLog] || [];
-    const searchEl = document.getElementById('search');
+    const searchEl = el('search');
     const search = searchEl ? searchEl.value.toLowerCase() : '';
     const field = (currentLog === 'inc' || currentLog === 'exp') ? 'الفئة' : 'النوع';
     let filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(search)));
@@ -1581,18 +1553,18 @@ function renderLog() {
     if (logFilters.period !== 'all') filtered = filtered.filter(i => inPeriod(i.التاريخ || i.تاريخ_الاستحقاق, logFilters.period));
     renderLogStats(filtered, field);
     if (!filtered.length) {
-        el.innerHTML = `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>${translate('noTransactions')}</p>`;
+        elem.innerHTML = `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:10px;"></i>${translate('noTransactions')}</p>`;
         return;
     }
-    el.innerHTML = filtered.map(i => {
+    elem.innerHTML = filtered.map(i => {
         const isInc = currentLog === 'inc';
         const isExp = currentLog === 'exp';
         const isRig = currentLog === 'rig';
         const isDeb = currentLog === 'deb';
         let amountVal = 0, amountDisplay = '', borderColor = 'var(--s)', statusBadge = '', amountColor = 'var(--text-dark)';
-        let desc = i.الوصف || i.الفئة || i.النوع || '—';
-        let date = formatDateTime(i.التاريخ || i.تاريخ_الاستحقاق);
-        let entity = i.الجهة || '';
+        const desc = i.الوصف || i.الفئة || i.النوع || '—';
+        const date = formatDateTime(i.التاريخ || i.تاريخ_الاستحقاق);
+        const entity = i.الجهة || '';
         if (isInc) {
             amountVal = parseAmount(i.المبلغ);
             amountDisplay = '+' + formatCurrency(amountVal);
@@ -1605,20 +1577,12 @@ function renderLog() {
             borderColor = 'var(--danger)';
             amountColor = 'var(--danger)';
         } else if (isRig) {
+            // ✔✔✔ تم الإصلاح: matchStatus يدعم القيم المخزنة بأي لغة
             const st = i.الحالة || '';
-            if (st.includes('كامل') || st === 'مدفوع بالكامل') {
-                borderColor = 'var(--success)';
-                statusBadge = `<span class="status-badge paid">${translate('statusPaid')}</span>`;
-            } else if (st.includes('جزئياً') || st === 'مدفوع جزئياً') {
-                borderColor = 'var(--warning)';
-                statusBadge = `<span class="status-badge partial">${translate('statusPartiallyPaidShort')}</span>`;
-            } else if (st === 'متأخر') {
-                borderColor = '#e67e22';
-                statusBadge = `<span class="status-badge late">${translate('statusOverdue')}</span>`;
-            } else {
-                borderColor = 'var(--danger)';
-                statusBadge = `<span class="status-badge unpaid">${translate('statusUnpaid')}</span>`;
-            }
+            if (matchStatus(st, 'paid')) { borderColor = 'var(--success)'; statusBadge = `<span class="status-badge paid">${translate('statusPaid')}</span>`; }
+            else if (matchStatus(st, 'partial')) { borderColor = 'var(--warning)'; statusBadge = `<span class="status-badge partial">${translate('statusPartiallyPaidShort')}</span>`; }
+            else if (matchStatus(st, 'late')) { borderColor = '#e67e22'; statusBadge = `<span class="status-badge late">${translate('statusOverdue')}</span>`; }
+            else { borderColor = 'var(--danger)'; statusBadge = `<span class="status-badge unpaid">${translate('statusUnpaid')}</span>`; }
             amountVal = parseAmount(i.المبلغ);
             amountDisplay = formatCurrency(amountVal);
             amountColor = 'var(--success)';
@@ -1634,19 +1598,10 @@ function renderLog() {
                 amountVal = parseAmount(i.المبلغ_الكلي_للالتزام);
                 amountDisplay = formatCurrency(amountVal);
             } else {
-                if (st === 'مدفوع' || st === 'مدفوع بالكامل') {
-                    borderColor = 'var(--success)';
-                    statusBadge = `<span class="status-badge paid">${translate('statusPaid')}</span>`;
-                } else if (st === 'مدفوع جزئياً') {
-                    borderColor = 'var(--warning)';
-                    statusBadge = `<span class="status-badge partial">${translate('statusPartiallyPaidShort')}</span>`;
-                } else if (st === 'متأخر') {
-                    borderColor = '#e67e22';
-                    statusBadge = `<span class="status-badge late">${translate('statusOverdue')}</span>`;
-                } else {
-                    borderColor = 'var(--danger)';
-                    statusBadge = `<span class="status-badge unpaid">${translate('statusUnpaid')}</span>`;
-                }
+                if (matchStatus(st, 'paid')) { borderColor = 'var(--success)'; statusBadge = `<span class="status-badge paid">${translate('statusPaid')}</span>`; }
+                else if (matchStatus(st, 'partial')) { borderColor = 'var(--warning)'; statusBadge = `<span class="status-badge partial">${translate('statusPartiallyPaidShort')}</span>`; }
+                else if (matchStatus(st, 'late')) { borderColor = '#e67e22'; statusBadge = `<span class="status-badge late">${translate('statusOverdue')}</span>`; }
+                else { borderColor = 'var(--danger)'; statusBadge = `<span class="status-badge unpaid">${translate('statusUnpaid')}</span>`; }
                 amountColor = borderColor;
                 amountVal = parseAmount(i.المبلغ);
                 amountDisplay = formatCurrency(amountVal);
@@ -1671,38 +1626,36 @@ function renderLog() {
     }).join('');
 }
 
-function showDetailById(id, type) {
-    openLayer('detail', { logType: type, id: id });
-}
+function showDetailById(id, type) { openLayer('detail', { logType: type, id: id }); }
 
+// ✔✔✔ إصلاح مشكلة "التعديل يحفظ معاملة جديدة"
+// السبب: closeAllLayers() كانت تمسح editMode قبل الوصول للفورم
+// الحل: نحفظ editMode ونستعيده بعد إغلاق الطبقات
 function editTransaction() {
     if (!editMode) return;
-    const type = editMode.type;
-    const data = db[type][editMode.index];
+    const savedEdit = { ...editMode };
+    const type = savedEdit.type;
+    const data = db[type][savedEdit.index];
+    if (!data) { toastMsg(translate('notFound'), "error"); return; }
     const tabMap = { inc: 'income', exp: 'expenses', rig: 'rights', deb: 'debts' };
     const tabId = tabMap[type];
     closeAllLayers();
+    editMode = savedEdit; // ✔ الاستعادة الفورية بعد المسح
     openTab(tabId, true);
     setTimeout(() => {
         if (type === 'inc') {
-            const iAmt = document.getElementById('iAmount');
-            const iType = document.getElementById('iType');
-            const iDesc = document.getElementById('iDesc');
-            const iDate = document.getElementById('iDate');
-            if (iAmt) iAmt.value = parseAmount(data.المبلغ).toLocaleString('en-US');
-            if (iType) iType.value = data.الفئة;
-            if (iDesc) iDesc.value = data.الوصف;
-            if (iDate) iDate.value = data.التاريخ;
+            const a = el('iAmount'), t = el('iType'), d = el('iDesc'), dt = el('iDate');
+            if (a) a.value = parseAmount(data.المبلغ).toLocaleString('en-US');
+            if (t) t.value = data.الفئة;
+            if (d) d.value = data.الوصف;
+            if (dt) dt.value = data.التاريخ;
         } else if (type === 'exp') {
-            const eAmt = document.getElementById('eAmount');
-            const eType = document.getElementById('eType');
-            const eDesc = document.getElementById('eDesc');
-            const eDate = document.getElementById('eDate');
-            if (eAmt) eAmt.value = parseAmount(data.المبلغ).toLocaleString('en-US');
-            if (eType) eType.value = data.الفئة;
-            if (eDesc) eDesc.value = data.الوصف;
-            if (eDate) eDate.value = data.التاريخ;
-            const imgName = document.getElementById('eImgName');
+            const a = el('eAmount'), t = el('eType'), d = el('eDesc'), dt = el('eDate');
+            if (a) a.value = parseAmount(data.المبلغ).toLocaleString('en-US');
+            if (t) t.value = data.الفئة;
+            if (d) d.value = data.الوصف;
+            if (dt) dt.value = data.التاريخ;
+            const imgName = el('eImgName');
             if (data.صورة) {
                 if (imgName) imgName.textContent = '📎 ' + translate('imageAttached');
                 selectedImageFile = data.صورة;
@@ -1711,60 +1664,46 @@ function editTransaction() {
                 if (imgName) imgName.textContent = '';
             }
         } else if (type === 'rig') {
-            const rType = document.getElementById('rType');
-            const rEntity = document.getElementById('rEntity');
-            const rAmount = document.getElementById('rAmount');
-            const rDueDate = document.getElementById('rDueDate');
-            const rDesc = document.getElementById('rDesc');
-            if (rType) rType.value = data.النوع;
-            if (rEntity) rEntity.value = data.الجهة || '';
-            if (rAmount) rAmount.value = parseAmount(data.المبلغ).toLocaleString('en-US');
-            if (rDueDate) rDueDate.value = data.تاريخ_الاستحقاق || '';
-            if (rDesc) rDesc.value = data.الوصف;
+            const t = el('rType'), en = el('rEntity'), a = el('rAmount'), dd = el('rDueDate'), dsc = el('rDesc');
+            if (t) t.value = data.النوع;
+            if (en) en.value = data.الجهة || '';
+            if (a) a.value = parseAmount(data.المبلغ).toLocaleString('en-US');
+            if (dd) dd.value = data.تاريخ_الاستحقاق || '';
+            if (dsc) dsc.value = data.الوصف;
             updateRightFields(data.النوع, data);
-            const paidInput = document.getElementById('rPaidAmount');
+            const paidInput = el('rPaidAmount');
             if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع || 0).toLocaleString('en-US');
-            const rTiming = document.getElementById('rNotifTiming');
+            const rTiming = el('rNotifTiming');
             if (rTiming) rTiming.value = data.وقت_التنبيه || '168';
         } else if (type === 'deb') {
-            const dType = document.getElementById('dType');
-            const dDueDate = document.getElementById('dDueDate');
-            const dDesc = document.getElementById('dDesc');
-            const entityInput = document.getElementById('dEntity');
-            if (dType) dType.value = data.النوع;
-            if (dDueDate) dDueDate.value = data.تاريخ_الاستحقاق || '';
-            if (dDesc) dDesc.value = data.الوصف;
+            const t = el('dType'), dd = el('dDueDate'), dsc = el('dDesc'), entityInput = el('dEntity');
+            if (t) t.value = data.النوع;
+            if (dd) dd.value = data.تاريخ_الاستحقاق || '';
+            if (dsc) dsc.value = data.الوصف;
             if (entityInput) {
-                if (data.الجهة && data.الجهة !== '—') {
-                    entityInput.value = data.الجهة;
-                    entityInput.style.display = 'block';
-                } else {
-                    entityInput.value = '';
-                    entityInput.style.display = 'none';
-                }
+                if (data.الجهة && data.الجهة !== '—') { entityInput.value = data.الجهة; entityInput.style.display = 'block'; }
+                else { entityInput.value = ''; entityInput.style.display = 'none'; }
             }
             updateDebtFields(data.النوع, data);
             const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
             const isMaster = masterTypes.includes(data.النوع);
             if (!isMaster) {
-                const dAmount = document.getElementById('dAmount');
-                const dStatus = document.getElementById('dStatus');
-                if (dAmount) dAmount.value = parseAmount(data.المبلغ).toLocaleString('en-US');
-                if (dStatus) {
-                    dStatus.value = data.الحالة || '';
-                    const event = new Event('change');
-                    dStatus.dispatchEvent(event);
+                const a = el('dAmount'), s = el('dStatus');
+                if (a) a.value = parseAmount(data.المبلغ).toLocaleString('en-US');
+                if (s) {
+                    s.value = data.الحالة || '';
+                    s.dispatchEvent(new Event('change'));
                     if (data.الحالة === 'مدفوع جزئياً' && data.المبلغ_المدفوع_جزئياً) {
-                        const paidInput = document.getElementById('dPartialPaidAmount');
+                        const paidInput = el('dPartialPaidAmount');
                         if (paidInput) paidInput.value = parseAmount(data.المبلغ_المدفوع_جزئياً).toLocaleString('en-US');
                     }
                 }
             }
-            const dTiming = document.getElementById('dNotifTiming');
+            const dTiming = el('dNotifTiming');
             if (dTiming) dTiming.value = data.وقت_التنبيه || '168';
         }
         const indicatorMap = { inc: 'incEditIndicator', exp: 'expEditIndicator', rig: 'rigEditIndicator', deb: 'debEditIndicator' };
-        const ind = document.getElementById(indicatorMap[type]);
+        const ind = el(indicatorMap[type]);
         if (ind) ind.style.display = 'inline-block';
     }, 100);
 }
@@ -1774,6 +1713,7 @@ async function deleteTransaction() {
     if (!confirm(translate('confirmDeleteTransaction'))) return;
     const type = editMode.type;
     const txn = db[type][editMode.index];
+    if (!txn) return;
     const id = txn.id || txn.clientId;
     try {
         await deleteFromDB(type, id);
@@ -1798,7 +1738,7 @@ async function deleteTransaction() {
 }
 
 // =============================================================
-// 12.5 NOTIFICATIONS
+// 12.5 🔔 NOTIFICATIONS
 // =============================================================
 function getReadNotifications() {
     try {
@@ -1807,9 +1747,7 @@ function getReadNotifications() {
     } catch (e) { return []; }
 }
 
-function saveReadNotifications(list) {
-    localStorage.setItem('readNotifications', JSON.stringify(list));
-}
+function saveReadNotifications(list) { localStorage.setItem('readNotifications', JSON.stringify(list)); }
 
 function cleanupExpiredReads() {
     const readList = getReadNotifications();
@@ -1820,9 +1758,7 @@ function cleanupExpiredReads() {
     return filtered;
 }
 
-function getNotificationId(item) {
-    return `${item.type}|${item.id}|${item.date}`;
-}
+function getNotificationId(item) { return `${item.type}|${item.id}|${item.date}`; }
 
 function getUpcomingItems() {
     const now = new Date();
@@ -1838,24 +1774,16 @@ function getUpcomingItems() {
         const timingHours = parseAmount(r.وقت_التنبيه) || 168;
         const notifyFrom = new Date(due.getTime() - timingHours * 60 * 60 * 1000);
         if (now >= notifyFrom) {
-            const item = {
-                type: 'right',
-                id: r.clientId || r.id || '',
-                name: r.النوع,
-                entity: r.الجهة,
-                amount: remaining,
-                date: r.تاريخ_الاستحقاق,
-                overdue: due < now
-            };
+            const item = { type: 'right', id: r.clientId || r.id || '', name: r.النوع, entity: r.الجهة, amount: remaining, date: r.تاريخ_الاستحقاق, overdue: due < now };
             item.read = readIds.includes(getNotificationId(item));
             items.push(item);
         }
     });
     (db.deb || []).forEach(d => {
+        // ✔✔✔ تم الإصلاح: دعم الحالة المخزنة بالإنجليزية (Paid / Fully Paid)
         const remaining = d.المتبقي_للالتزام !== undefined
             ? parseAmount(d.المتبقي_للالتزام)
-            : ((d.الحالة === 'مدفوع' || d.الحالة === 'مدفوع بالكامل' || d.الحالة === 'Fully Paid')
-                ? 0 : parseAmount(d.المبلغ || 0));
+            : (matchStatus(d.الحالة, 'paid') ? 0 : parseAmount(d.المبلغ || 0));
         if (remaining <= 0) return;
         if (!d.تاريخ_الاستحقاق) return;
         const due = new Date(d.تاريخ_الاستحقاق);
@@ -1863,15 +1791,7 @@ function getUpcomingItems() {
         const timingHours = parseAmount(d.وقت_التنبيه) || 168;
         const notifyFrom = new Date(due.getTime() - timingHours * 60 * 60 * 1000);
         if (now >= notifyFrom) {
-            const item = {
-                type: 'debt',
-                id: d.clientId || d.id || '',
-                name: d.النوع,
-                entity: d.الجهة,
-                amount: remaining,
-                date: d.تاريخ_الاستحقاق,
-                overdue: due < now
-            };
+            const item = { type: 'debt', id: d.clientId || d.id || '', name: d.النوع, entity: d.الجهة, amount: remaining, date: d.تاريخ_الاستحقاق, overdue: due < now };
             item.read = readIds.includes(getNotificationId(item));
             items.push(item);
         }
@@ -1879,12 +1799,10 @@ function getUpcomingItems() {
     return items.sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 
-function getUnreadCount() {
-    return getUpcomingItems().filter(i => !i.read).length;
-}
+function getUnreadCount() { return getUpcomingItems().filter(i => !i.read).length; }
 
 function updateNotificationBadge() {
-    const badge = document.getElementById('notifBadge');
+    const badge = el('notifBadge');
     if (!badge) return;
     const count = getUnreadCount();
     badge.textContent = count > 99 ? '99+' : count;
@@ -1908,9 +1826,10 @@ function viewNotification(id) {
     renderNotificationDetail(item);
 }
 
+// ✔✔✔ تم الإصلاح: تفاصيل التنبيه تُعرض مترجمة بالكامل حسب لغة التطبيق
 function renderNotificationDetail(item) {
-    const el = document.getElementById('notificationsContent');
-    if (!el) return;
+    const elem = el('notificationsContent');
+    if (!elem) return;
     let source = null;
     if (item.type === 'right') source = db.rig.find(r => (r.clientId || r.id) === item.id);
     else source = db.deb.find(d => (d.clientId || d.id) === item.id);
@@ -1947,25 +1866,23 @@ function renderNotificationDetail(item) {
         for (const [key, val] of Object.entries(source)) {
             if (['id', 'clientId', 'صورة', 'المبلغ_المضاف_للرصيد', 'المبلغ_المخصوم_للرصيد'].includes(key)) continue;
             if (val === null || val === undefined || (typeof val === 'string' && val.trim() === '' && key !== 'الوصف')) continue;
-            const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
-            const display = isAmt ? formatCurrency(val, true) : val;
             html += `<p style="margin:8px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
-                <strong style="color:#666;">${key.replace(/_/g, ' ')}:</strong>
-                <span style="font-weight:600;">${display}</span>
+                <strong style="color:#666;">${translateFieldLabel(key)}:</strong>
+                <span style="font-weight:600;">${formatFieldValue(key, val)}</span>
             </p>`;
         }
         html += `</div>`;
     }
     html += `</div>`;
-    el.innerHTML = html;
+    elem.innerHTML = html;
 }
 
 function renderNotifications() {
-    const el = document.getElementById('notificationsContent');
-    if (!el) return;
+    const elem = el('notificationsContent');
+    if (!elem) return;
     const items = getUpcomingItems();
     if (!items.length) {
-        el.innerHTML = `<div class="notif-empty-state">
+        elem.innerHTML = `<div class="notif-empty-state">
             <i class="fas fa-bell-slash"></i>
             <p>${translate('noNotifications')}</p>
             <small>${translate('noNotificationsHint')}</small>
@@ -1974,8 +1891,7 @@ function renderNotifications() {
     }
     const unread = items.filter(i => !i.read);
     const read = items.filter(i => i.read);
-    let html = '';
-    html += `<div class="notif-summary">
+    let html = `<div class="notif-summary">
         <div class="notif-sum-card overdue-card">
             <span class="sum-label">${translate('unreadNotifications')}</span>
             <span class="sum-value">${unread.length}</span>
@@ -1996,8 +1912,7 @@ function renderNotifications() {
         const readBadge = i.read
             ? `<span class="notif-tag read-tag"><i class="fas fa-check"></i> ${translate('readNotification')}</span>`
             : `<span class="notif-tag">${tag}</span>`;
-        const entity = (i.entity && i.entity !== '—')
-            ? `<span class="notif-entity"><i class="fas fa-user"></i> ${i.entity}</span>` : '';
+        const entity = (i.entity && i.entity !== '—') ? `<span class="notif-entity"><i class="fas fa-user"></i> ${i.entity}</span>` : '';
         const clickAttr = i.read ? '' : `onclick="viewNotification('${nid}')"`;
         return `<div class="${cls}" ${clickAttr}>
             <div class="notif-head">
@@ -2023,20 +1938,19 @@ function renderNotifications() {
         html += `<div class="notif-group-title read-title"><i class="fas fa-check-circle"></i> ${translate('readNotifications')} <span class="count-pill">${read.length}</span></div>`;
         html += read.map(renderItem).join('');
     }
-    el.innerHTML = html;
+    elem.innerHTML = html;
 }
 
 // =============================================================
 // 13. UPDATE STATS
 // =============================================================
-// ✅ تم إصلاح: فحص وجود العناصر
 function updateStats() {
     let incTotal = 0, expTotal = 0, rigTotal = 0, debTotal = 0, rigPaid = 0, debPaid = 0;
     db.inc.forEach(i => incTotal += parseAmount(i.المبلغ));
     db.exp.forEach(i => expTotal += parseAmount(i.المبلغ));
     db.rig.forEach(i => { rigTotal += parseAmount(i.المبلغ); rigPaid += parseAmount(i.المبلغ_المضاف_للرصيد || 0); });
     db.deb.forEach(i => { debTotal += parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0); debPaid += parseAmount(i.المبلغ_المخصوم_للرصيد || 0); });
-    const setHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+    const setHTML = (id, html) => { const elem = el(id); if (elem) elem.innerHTML = html; };
     setHTML('sIncTotal', '<span class="pulse-dot"></span>' + formatCurrency(incTotal, true));
     setHTML('sExpTotal', formatCurrency(expTotal, true));
     setHTML('sRigTotal', formatCurrency(rigTotal, rigTotal > 0));
@@ -2049,9 +1963,9 @@ function updateStats() {
 // 14. OTHER FUNCTIONS
 // =============================================================
 function renderCurrencyList() {
-    const list = document.getElementById('currencyList');
-    const searchEl = document.getElementById('currencySearch');
+    const list = el('currencyList');
     if (!list) return;
+    const searchEl = el('currencySearch');
     const q = searchEl ? searchEl.value.toLowerCase() : '';
     const filtered = ARABIC_CURRENCIES.filter(c =>
         getCurrencyName(c).toLowerCase().includes(q) || c.code.toLowerCase().includes(q) ||
@@ -2067,7 +1981,7 @@ function setCurrency(code) {
     if (sel) {
         currentCurrency = sel;
         localStorage.setItem('currencyCode', code);
-        const label = document.getElementById('sidebarCurrencyLabel');
+        const label = el('sidebarCurrencyLabel');
         if (label) label.textContent = sel.symbol;
         updateBalanceDisplay();
         updateStats();
@@ -2119,7 +2033,7 @@ function closeImageSource() { closeLayer('imageSource'); }
 
 function openCameraInput() {
     closeImageSource();
-    const input = document.getElementById('eImgCamera');
+    const input = el('eImgCamera');
     if (!input) return;
     input.value = null;
     input.setAttribute('capture', 'environment');
@@ -2128,26 +2042,24 @@ function openCameraInput() {
 
 function openGalleryInput() {
     closeImageSource();
-    const input = document.getElementById('eImgGallery');
+    const input = el('eImgGallery');
     if (!input) return;
     input.value = null;
     input.removeAttribute('capture');
     input.click();
 }
 
-// ✅ تم إصلاح: تعيين selectedImageFile مرة واحدة فقط (data URL)
+// ✔ تم الإصلاح: تعيين data URL فقط (كان يُعيَّن File ثم يُستبدل)
 function handleImageSelect(input) {
     if (input.files && input.files.length > 0) {
         const file = input.files[0];
-        const imgName = document.getElementById('eImgName');
+        const imgName = el('eImgName');
         if (imgName) imgName.textContent = `✅ ${file.name}`;
         const reader = new FileReader();
-        reader.onload = function (e) {
-            selectedImageFile = e.target.result;
-        };
+        reader.onload = function (e) { selectedImageFile = e.target.result; };
         reader.readAsDataURL(file);
     } else {
-        const imgName = document.getElementById('eImgName');
+        const imgName = el('eImgName');
         if (imgName) imgName.textContent = '';
         selectedImageFile = null;
     }
@@ -2157,11 +2069,11 @@ function getSelectedImage() { return selectedImageFile; }
 
 function clearSelectedImage() {
     selectedImageFile = null;
-    const imgName = document.getElementById('eImgName');
+    const imgName = el('eImgName');
     if (imgName) imgName.textContent = '';
-    const camInput = document.getElementById('eImgCamera');
+    const camInput = el('eImgCamera');
     if (camInput) camInput.value = null;
-    const galInput = document.getElementById('eImgGallery');
+    const galInput = el('eImgGallery');
     if (galInput) galInput.value = null;
 }
 
@@ -2170,10 +2082,7 @@ function clearSelectedImage() {
 // =============================================================
 function initDB() {
     return new Promise((resolve, reject) => {
-        if (!window.indexedDB) {
-            toastMsg(translate('indexedDBUnsupported'), "error");
-            return reject(new Error("IndexedDB not supported."));
-        }
+        if (!window.indexedDB) { toastMsg(translate('indexedDBUnsupported'), "error"); return reject(new Error("IndexedDB not supported.")); }
         const req = indexedDB.open(IDB_NAME, IDB_VERSION);
         req.onerror = (e) => { console.error("IDB error:", e.target.error); reject(e.target.error); };
         req.onupgradeneeded = (e) => {
@@ -2189,13 +2098,11 @@ function initDB() {
         req.onsuccess = (e) => {
             IDB_connection = e.target.result;
             resolve(IDB_connection);
-            loadAllData().then(() => {
-                updateStats();
-                updateBalanceDisplay();
-            });
+            loadAllData().then(() => { updateStats(); updateBalanceDisplay(); });
         };
     });
 }
+initDB();
 
 function saveData(storeName, data) {
     return new Promise((resolve, reject) => {
@@ -2238,17 +2145,9 @@ function loadStoreData(storeName) {
 
 async function loadAllData() {
     const [exp, rig, deb, bal, inc] = await Promise.all([
-        loadStoreData('exp'),
-        loadStoreData('rig'),
-        loadStoreData('deb'),
-        loadStoreData('bal'),
-        loadStoreData('inc')
+        loadStoreData('exp'), loadStoreData('rig'), loadStoreData('deb'), loadStoreData('bal'), loadStoreData('inc')
     ]);
-    db.exp = exp;
-    db.rig = rig;
-    db.deb = deb;
-    db.bal = bal;
-    db.inc = inc;
+    db.exp = exp; db.rig = rig; db.deb = deb; db.bal = bal; db.inc = inc;
     currentBalance = parseAmount(db.bal.amount || 0);
     updateNotificationBadge();
 }
@@ -2259,7 +2158,7 @@ async function loadAllData() {
 function loadDarkModePreference() {
     if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark-mode');
-        const toggle = document.getElementById('darkModeToggle');
+        const toggle = el('darkModeToggle');
         if (toggle) toggle.checked = true;
     }
 }
@@ -2269,10 +2168,12 @@ function toggleDarkMode() {
     localStorage.setItem('darkMode', isDark);
     toastMsg(isDark ? translate('darkModeOn') : translate('darkModeOff'), "info");
 }
+loadDarkModePreference();
 
 // =============================================================
 // 18. INITIALIZATION
-// ✅ تم إصلاح: نقل initDB() داخل window.onload + إزالة الاستدعاء المزدوج لـ restoreDriveState
+// ✔ تم الإصلاح: إزالة الاستدعاء المزدوج لـ restoreDriveState
+//    (تُستدعى داخل initGapi فقط بعد جاهزية المكتبة)
 // =============================================================
 window.onload = () => {
     if (!history.state || history.state.layer === undefined) {
@@ -2281,35 +2182,21 @@ window.onload = () => {
     } else {
         historyStack.push(history.state);
     }
-
-    // ✅ تهيئة قاعدة البيانات بعد تحميل DOM
-    initDB();
-
-    loadDarkModePreference();
-
-    loadTranslations().then(() => {
-        applyTranslations(currentLang);
-    });
-
+    loadTranslations().then(() => { applyTranslations(currentLang); });
     const now = getLocalDateString();
     ['eDate', 'rDueDate', 'dDueDate', 'iDate'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = now;
+        const elem = el(id);
+        if (elem) el.value = now;
     });
-
-    const currencyLabel = document.getElementById('sidebarCurrencyLabel');
+    const currencyLabel = el('sidebarCurrencyLabel');
     if (currencyLabel) currencyLabel.textContent = currentCurrency.symbol;
-
     updateBalanceDisplay();
     updateStats();
     updateDriveUI();
     updateNotificationBadge();
-
-    // ✅ restoreDriveState تُستدعى داخل initGapi فقط — لا استدعاء مزدوج
     setTimeout(() => {
         initGapi();
         initGis();
     }, 1000);
 };
-
 console.log('ميزانيتك الذكية جاهزة ✅');
