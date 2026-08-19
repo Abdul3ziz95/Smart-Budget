@@ -29,7 +29,7 @@ let selectedImageFile = null;
 let logFilters = { cat: 'all', status: 'all', period: 'all' };
 let balanceFilters = { type: 'all' };
 // =============================================================
-// 2. NAVIGATION / LAYERS
+// 2. NAVIGATION / LAYERS (+ ✔ مودالا الأهداف)
 // =============================================================
 const LAYERS = {
 'sidebar': { elementId: 'appSidebar', type: 'menu' },
@@ -68,29 +68,21 @@ const titleEl = document.getElementById('actionModalTitle');
 if (titleEl) titleEl.textContent = balanceActionType === 'deposit' ? translate('depositTitle') : translate('withdrawTitle');
 const balanceEl = document.getElementById('currentBalanceInAction');
 if (balanceEl) balanceEl.innerHTML = formatBalance(currentBalance);
-const amountEl = document.getElementById('bAmount');
-if (amountEl) amountEl.value = '';
-const descEl = document.getElementById('bDesc');
-if (descEl) descEl.value = '';
-const dateEl = document.getElementById('bDate');
-if (dateEl) dateEl.value = getLocalDateTimeString();
+const amountEl = document.getElementById('bAmount'); if (amountEl) amountEl.value = '';
+const descEl = document.getElementById('bDesc'); if (descEl) descEl.value = '';
+const dateEl = document.getElementById('bDate'); if (dateEl) dateEl.value = getLocalDateTimeString();
 } else if (layerName === 'currency') {
-const searchEl = document.getElementById('currencySearch');
-if (searchEl) searchEl.value = '';
+const searchEl = document.getElementById('currencySearch'); if (searchEl) searchEl.value = '';
 renderCurrencyList();
-} else if (layerName === 'balanceLog') {
-buildBalanceFilters();
-renderBalanceLog();
-} else if (layerName === 'driveBackup') {
-renderDriveBackupList();
-} else if (layerName === 'exportName') {
+} else if (layerName === 'balanceLog') { buildBalanceFilters(); renderBalanceLog(); }
+else if (layerName === 'driveBackup') { renderDriveBackupList(); }
+else if (layerName === 'exportName') {
 const fileNameEl = document.getElementById('exportFileName');
 if (fileNameEl) { fileNameEl.value = translate('defaultFileName'); fileNameEl.focus(); fileNameEl.select(); }
-} else if (layerName === 'language') {
-updateLanguageModalCheckmarks();
-} else if (layerName === 'goal') {
+} else if (layerName === 'language') { updateLanguageModalCheckmarks(); }
+else if (layerName === 'goal') {
 const gT = document.getElementById('gType'); if (gT) gT.value = '';
-['gName', 'gTarget', 'gSaved', 'gDeadline'].forEach(id => { const el2 = document.getElementById(id); if (el2) el2.value = ''; });
+['gName', 'gTarget', 'gSaved', 'gDeadline'].forEach(id => { const e2 = document.getElementById(id); if (e2) e2.value = ''; });
 const gn = document.getElementById('gName'); if (gn) gn.style.display = 'none';
 } else if (layerName === 'goalContribute') {
 const a = document.getElementById('gContributeAmount'); if (a) a.value = '';
@@ -173,10 +165,10 @@ const langLabel = document.getElementById('sidebarLanguageLabel');
 if (langLabel) { const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' }; langLabel.textContent = langNames[lang] || '🇸🇦 العربية'; }
 updateBalanceDisplay();
 updateStats();
-if (document.getElementById('logModal').style.display === 'flex') { buildLogFilters(); renderLog(); }
-if (document.getElementById('balanceLogModal').style.display === 'flex') { buildBalanceFilters(); renderBalanceLog(); }
-if (document.getElementById('driveBackupModal').style.display === 'flex') renderDriveBackupList();
-if (document.getElementById('currencyModal').style.display === 'flex') renderCurrencyList();
+if (document.getElementById('logModal') && document.getElementById('logModal').style.display === 'flex') { buildLogFilters(); renderLog(); }
+if (document.getElementById('balanceLogModal') && document.getElementById('balanceLogModal').style.display === 'flex') { buildBalanceFilters(); renderBalanceLog(); }
+if (document.getElementById('driveBackupModal') && document.getElementById('driveBackupModal').style.display === 'flex') renderDriveBackupList();
+if (document.getElementById('currencyModal') && document.getElementById('currencyModal').style.display === 'flex') renderCurrencyList();
 updateLanguageModalCheckmarks();
 localStorage.setItem('appLang', lang);
 currentLang = lang;
@@ -184,6 +176,10 @@ currentLang = lang;
 function translate(key) {
 if (!translations[currentLang] || translations[currentLang][key] === undefined) { return translations['ar']?.[key] || key; }
 return translations[currentLang][key];
+}
+/* ✔ زر الحذف: "حذف" فقط مع بديل احتياطي إن غاب المفتاح */
+function tDelete() {
+return (translations[currentLang] && translations[currentLang]['deleteTransaction']) || (translations['ar'] && translations['ar']['deleteTransaction']) || 'حذف';
 }
 function setLanguage(lang) {
 if (lang === currentLang) { closeLayer('language'); return; }
@@ -277,7 +273,7 @@ updateDriveUI();
 toastMsg(translate('driveConnected'), "success");
 startTokenRefresh();
 await loadBackupList();
-if (document.getElementById('confirmBackupModal').style.display === 'flex') { closeLayer('confirmBackup'); }
+if (document.getElementById('confirmBackupModal') && document.getElementById('confirmBackupModal').style.display === 'flex') { closeLayer('confirmBackup'); }
 openLayer('driveBackup');
 } catch (e) { console.error('Error getting user info:', e); userEmail = ''; toastMsg(translate('loginError'), "error"); }
 },
@@ -461,7 +457,7 @@ hideLoading();
 toastMsg(translate('backupSaved'), "success");
 await loadBackupList();
 renderDriveBackupList();
-if (document.getElementById('driveBackupModal').style.display !== 'flex') { openLayer('driveBackup'); }
+if (document.getElementById('driveBackupModal') && document.getElementById('driveBackupModal').style.display !== 'flex') { openLayer('driveBackup'); }
 } catch (error) {
 hideLoading();
 console.error('Error uploading backup:', error);
@@ -611,9 +607,9 @@ const ARABIC_CURRENCIES = [
 { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
 { code: 'AED', symbol: 'د.إ', flag: '🇦🇪', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
 { code: 'QAR', symbol: 'ر.ق', flag: '🇶🇦', name: { ar: 'الريال القطري', en: 'Qatari Riyal', ur: 'قطری ریال' } },
-{ code: 'KWD', symbol: 'د.ك', flag: '🇰🇼', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
+{ code: 'KWD', symbol: 'د.ك', flag: '🇰', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
 { code: 'BHD', symbol: 'د.ب', flag: '🇧🇭', name: { ar: 'الدينار البحريني', en: 'Bahraini Dinar', ur: 'بحرینی دینار' } },
-{ code: 'OMR', symbol: 'ر.ع', flag: '🇴', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
+{ code: 'OMR', symbol: 'ر.ع', flag: '🇴🇲', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
 { code: 'YER', symbol: 'ر.ي', flag: '🇾🇪', name: { ar: 'الريال اليمني', en: 'Yemeni Rial', ur: 'یمنی ریال' } },
 { code: 'IQD', symbol: 'ع.د', flag: '🇮🇶', name: { ar: 'الدينار العراقي', en: 'Iraqi Dinar', ur: 'عراقی دینار' } },
 { code: 'JOD', symbol: 'د.أ', flag: '🇯🇴', name: { ar: 'الدينار الأردني', en: 'Jordanian Dinar', ur: 'اردنی دینار' } },
@@ -622,20 +618,20 @@ const ARABIC_CURRENCIES = [
 { code: 'ILS', symbol: '₪', flag: '🇵🇸', name: { ar: 'الشيكل الفلسطيني', en: 'Israeli Shekel', ur: 'اسرائیلی شیکل' } },
 { code: 'EGP', symbol: 'ج.م', flag: '🇪🇬', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
 { code: 'LYD', symbol: 'ل.د', flag: '🇱🇾', name: { ar: 'الدينار الليبي', en: 'Libyan Dinar', ur: 'لیبیائی دینار' } },
-{ code: 'TND', symbol: 'د.ت', flag: '🇹🇳', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
+{ code: 'TND', symbol: 'د.ت', flag: '🇹', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
 { code: 'DZD', symbol: 'دج', flag: '🇩🇿', name: { ar: 'الدينار الجزائري', en: 'Algerian Dinar', ur: 'الجزائری دینار' } },
 { code: 'MAD', symbol: 'د.م', flag: '🇲🇦', name: { ar: 'الدرهم المغربي', en: 'Moroccan Dirham', ur: 'مراکشی درہم' } },
 { code: 'MRU', symbol: 'أ.م', flag: '🇲🇷', name: { ar: 'الأوقية الموريتانية', en: 'Mauritanian Ouguiya', ur: 'موریطانی اوگوئیا' } },
-{ code: 'SOS', symbol: 'ش.ص', flag: '🇸', name: { ar: 'الشلن الصومالي', en: 'Somali Shilling', ur: 'صومالی شلنگ' } },
+{ code: 'SOS', symbol: 'ش.ص', flag: '🇸🇴', name: { ar: 'الشلن الصومالي', en: 'Somali Shilling', ur: 'صومالی شلنگ' } },
 { code: 'DJF', symbol: 'ف.ج', flag: '🇩🇯', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
 { code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
 { code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
 { code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
-{ code: 'EUR', symbol: '€', flag: '🇪🇺', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
+{ code: 'EUR', symbol: '€', flag: '🇪', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
 { code: 'BDT', symbol: '৳', flag: '🇧🇩', name: { ar: 'التاكا البنغلاديشي', en: 'Bangladeshi Taka', ur: 'بنگلادیشی ٹاکا' } },
 { code: 'INR', symbol: '₹', flag: '🇮🇳', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
 { code: 'PKR', symbol: '₨', flag: '🇵🇰', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
-{ code: 'PHP', symbol: '₱', flag: '🇵🇭', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
+{ code: 'PHP', symbol: '₱', flag: '🇵', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
 { code: 'CNY', symbol: '¥', flag: '🇨🇳', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
 ];
 let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SAR')) || ARABIC_CURRENCIES[0];
@@ -730,7 +726,8 @@ const de = document.getElementById('dEntity'); if (de) de.style.display = 'none'
 // =============================================================
 function openTab(id, keepEdit = false) {
 document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-document.getElementById(id).classList.add('active');
+const sec = document.getElementById(id);
+if (sec) sec.classList.add('active');
 document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => {
 btn.classList.remove('active');
 if (btn.dataset.tab === id) { btn.classList.add('active'); }
@@ -744,7 +741,8 @@ if (ind) ind.style.display = 'inline-block';
 }
 }
 function openTabFromNav(tabId) {
-if (document.getElementById(tabId).classList.contains('active')) return;
+const sec = document.getElementById(tabId);
+if (!sec || sec.classList.contains('active')) return;
 closeAllLayers();
 openTab(tabId);
 }
@@ -764,7 +762,8 @@ const act = document.getElementById('currentBalanceInAction');
 if (act) act.innerHTML = formatBalance(currentBalance);
 const icon = document.querySelector('#balanceVisibilityToggle i');
 if (icon) icon.className = balanceHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
-if (document.getElementById('balanceLogModal').style.display === 'flex') renderBalanceLog();
+const blm = document.getElementById('balanceLogModal');
+if (blm && blm.style.display === 'flex') renderBalanceLog();
 }
 async function processBalanceChange(amount, type, description, recordId = null, isEdit = false, oldAmount = 0) {
 if (!recordId) recordId = `bal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -810,6 +809,7 @@ closeLayer('balanceAction');
 }
 function renderBalanceLog() {
 const el = document.getElementById('balanceLogContent');
+if (!el) return;
 const changes = db.bal.changes || [];
 const qEl = document.getElementById('balanceSearch');
 const q = qEl ? qEl.value.toLowerCase() : '';
@@ -893,11 +893,10 @@ postSaveCleanup(isEditing, 'exp');
 }
 function updateRightFields(type, currentData = null) {
 const container = document.getElementById('rDynamicFields');
-container.innerHTML = '';
-const paidHtml = `
+if (!container) return;
+container.innerHTML = `
 <input id="rPaidAmount" type="text" placeholder="💰 ${translate('collectedAmount')}" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*" value="${currentData && currentData.المبلغ_المدفوع ? parseAmount(currentData.المبلغ_المدفوع).toLocaleString('en-US') : ''}" />
 <span class="field-hint">${translate('collectedAmountHint')}</span>`;
-container.innerHTML = paidHtml;
 }
 async function addRight() {
 const rAmount = document.getElementById('rAmount');
@@ -941,6 +940,7 @@ const container = document.getElementById('dDynamicFields');
 const amountInput = document.getElementById('dAmount');
 const statusSelect = document.getElementById('dStatus');
 const entityInput = document.getElementById('dEntity');
+if (!container || !amountInput || !statusSelect || !entityInput) return;
 container.innerHTML = '';
 const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍👧 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
 if (entityTypes.includes(type)) {
@@ -1124,11 +1124,11 @@ logFilters = { cat: 'all', status: 'all', period: 'all' };
 let catOptions = '';
 if (currentLog === 'inc' || currentLog === 'exp') {
 const src = document.getElementById(currentLog === 'inc' ? 'iType' : 'eType');
-catOptions = Array.from(src.options).filter(o => o.value).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('');
+if (src) catOptions = Array.from(src.options).filter(o => o.value).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('');
 catSel.style.display = 'block';
 } else if (currentLog === 'rig' || currentLog === 'deb') {
 const src = document.getElementById(currentLog === 'rig' ? 'rType' : 'dType');
-catOptions = Array.from(src.options).filter(o => o.value).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('');
+if (src) catOptions = Array.from(src.options).filter(o => o.value).map(o => `<option value="${o.value}">${o.textContent}</option>`).join('');
 catSel.style.display = 'block';
 } else { catSel.style.display = 'none'; }
 catSel.innerHTML = `<option value="all">${translate('allCategories')}</option>` + catOptions;
@@ -1165,6 +1165,7 @@ bar.innerHTML = `
 }
 function _renderDetailContent(o, type) {
 const el = document.getElementById('detailContent');
+if (!el) return;
 let html = `<div class="card" style="border-top-color:var(--p);"><h3 style="color:var(--p);margin-top:0;"><i class="fas fa-info-circle" style="margin-left:5px;"></i>${translate('details')}</h3>`;
 for (const [key, val] of Object.entries(o)) {
 if (['id', 'clientId', 'صورة', 'المبلغ_المضاف_للرصيد', 'المبلغ_المخصوم_للرصيد'].includes(key)) continue;
@@ -1177,12 +1178,13 @@ html += `</div>`;
 if (o.صورة && type === 'exp') {
 html += `<div class="card" style="border-top-color:var(--s);"><h3 style="color:var(--s);margin-top:0;"><i class="fas fa-image" style="margin-left:5px;"></i>${translate('invoiceImage')}</h3><img src="${o.صورة}" alt="${translate('invoice')}" style="width:100%;border-radius:10px;margin-top:10px;box-shadow:var(--shadow-light);" /></div>`;
 }
-/* ✔ زر الحذف أصبح "حذف" فقط (deleteTransaction) */
-html += `<div style="display:flex;gap:10px;margin-top:20px;"><button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i>${translate('edit')}</button><button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i>${translate('deleteTransaction')}</button></div>`;
+/* ✔ زر الحذف: "حذف" فقط */
+html += `<div style="display:flex;gap:10px;margin-top:20px;"><button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i>${translate('edit')}</button><button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i>${tDelete()}</button></div>`;
 el.innerHTML = html;
 }
 function renderLog() {
 const el = document.getElementById('logContent');
+if (!el) return;
 const items = db[currentLog] || [];
 const searchEl = document.getElementById('search');
 const search = searchEl ? searchEl.value.toLowerCase() : '';
@@ -1264,7 +1266,7 @@ return `
 }).join('');
 }
 function showDetailById(id, type) { openLayer('detail', { logType: type, id: id }); }
-/* ✔✔✔ إصلاح علة التعديل: حفظ حالة التعديل واستعادتها بعد closeAllLayers */
+/* ✔✔✔ إصلاح علة التعديل نهائيًا */
 function editTransaction() {
 if (!editMode) return;
 const savedEditMode = { ...editMode };
@@ -1356,7 +1358,7 @@ openTab('overview');
 } catch (err) { toastMsg(translate('deleteFailed'), "error"); console.error(err); }
 }
 // =============================================================
-// 13. UPDATE STATS — ✔ التصميم الجديد + الفترة + الأهداف
+// 13. UPDATE STATS — ✔✔ يعمل مع الواجهتين القديمة والجديدة ✔✔
 // =============================================================
 let statsPeriod = localStorage.getItem('statsPeriod') || 'month';
 function setStatsPeriod(v) { statsPeriod = v; localStorage.setItem('statsPeriod', v); updateStats(); }
@@ -1367,6 +1369,22 @@ sel.innerHTML = [['all', translate('periodAll')], ['today', translate('periodTod
 sel.value = statsPeriod;
 }
 function updateStats() {
+/* ---- 1) الإجماليات الكلية (للواجهة القديمة إن وُجدت) ---- */
+let incAll = 0, expAll = 0, rigAll = 0, debAll = 0, rigPaidAll = 0, debPaidAll = 0;
+db.inc.forEach(i => incAll += parseAmount(i.المبلغ));
+db.exp.forEach(i => expAll += parseAmount(i.المبلغ));
+db.rig.forEach(i => { rigAll += parseAmount(i.المبلغ); rigPaidAll += parseAmount(i.المبلغ_المضاف_للرصيد || 0); });
+db.deb.forEach(i => { debAll += parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0); debPaidAll += parseAmount(i.المبلغ_المخصوم_للرصيد || 0); });
+const sI = document.getElementById('sIncTotal');
+if (sI) {
+sI.innerHTML = '<span class="pulse-dot"></span>' + formatCurrency(incAll, true);
+const sE = document.getElementById('sExpTotal'); if (sE) sE.innerHTML = formatCurrency(expAll, true);
+const sRT = document.getElementById('sRigTotal'); if (sRT) sRT.innerHTML = formatCurrency(rigAll, rigAll > 0);
+const sRP = document.getElementById('sRigPaid'); if (sRP) sRP.innerHTML = '<span class="pulse-dot"></span>' + formatCurrency(rigPaidAll, true);
+const sDT = document.getElementById('sDebTotal'); if (sDT) sDT.innerHTML = formatCurrency(debAll, debAll > 0);
+const sDP = document.getElementById('sDebPaid'); if (sDP) sDP.innerHTML = formatCurrency(debPaidAll, false);
+}
+/* ---- 2) التصميم الجديد (إن وجدت عناصره) ---- */
 buildStatsPeriodSelect();
 const p = statsPeriod;
 let incTotal = 0, expTotal = 0, rigTotal = 0, debTotal = 0, rigPaid = 0, debPaid = 0;
@@ -1374,6 +1392,8 @@ db.inc.forEach(i => { if (inPeriod(i.التاريخ, p)) incTotal += parseAmount
 db.exp.forEach(i => { if (inPeriod(i.التاريخ, p)) expTotal += parseAmount(i.المبلغ); });
 db.rig.forEach(i => { if (inPeriod(i.تاريخ_الاستحقاق || i.التاريخ, p)) { rigTotal += parseAmount(i.المبلغ); rigPaid += parseAmount(i.المبلغ_المضاف_للرصيد || 0); } });
 db.deb.forEach(i => { if (inPeriod(i.تاريخ_الاستحقاق || i.التاريخ, p)) { debTotal += parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0); debPaid += parseAmount(i.المبلغ_المخصوم_للرصيد || 0); } });
+const wrap = document.getElementById('statsCards');
+if (wrap) {
 const flow = incTotal + expTotal, obligations = rigTotal + debTotal;
 const cards = [
 { icon: 'fa-chart-line', color: '#2a9d8f', title: translate('totalIncome'), val: incTotal, base: flow },
@@ -1383,8 +1403,7 @@ const cards = [
 { icon: 'fa-credit-card', color: '#ef4444', title: translate('debtsPaid'), val: debPaid, base: debTotal },
 { icon: 'fa-file-invoice', color: '#f59e0b', title: translate('totalDebts'), val: debTotal, base: obligations }
 ];
-const wrap = document.getElementById('statsCards');
-if (wrap) wrap.innerHTML = cards.map(c => {
+wrap.innerHTML = cards.map(c => {
 const pct = c.base > 0 ? Math.min(100, Math.round(c.val / c.base * 100)) : 0;
 return `<div class="stat-row">
 <div class="stat-icon" style="background:${c.color}"><i class="fas ${c.icon}"></i></div>
@@ -1398,6 +1417,9 @@ return `<div class="stat-row">
 <span class="stat-sub">${translate('fromWord')} ${getFormattedAmount(c.base)} ${currentCurrency.symbol}</span>
 </div></div>`;
 }).join('');
+}
+const netEl = document.getElementById('netCard');
+if (netEl) {
 const net = (incTotal + rigPaid) - (expTotal + debPaid);
 const inflows = incTotal + rigPaid;
 const netPct = inflows > 0 ? Math.max(0, Math.min(100, Math.round(net / inflows * 100))) : 0;
@@ -1405,8 +1427,7 @@ let badge, bColor, bBg;
 if (net > 0) { badge = translate('netGood'); bColor = '#2a9d8f'; bBg = 'rgba(42,157,143,.15)'; }
 else if (net < 0) { badge = translate('netWeak'); bColor = '#ef476f'; bBg = 'rgba(239,71,111,.15)'; }
 else { badge = translate('netMedium'); bColor = '#b8860b'; bBg = 'rgba(251,192,45,.2)'; }
-const netEl = document.getElementById('netCard');
-if (netEl) netEl.innerHTML = `
+netEl.innerHTML = `
 <div class="net-side">
 <span class="net-badge" style="background:${bBg};color:${bColor}"><span class="pulse-dot" style="background:${bColor}"></span>${badge}</span>
 <span class="net-pct">${netPct}% ${translate('ofGoal')}</span>
@@ -1416,10 +1437,11 @@ if (netEl) netEl.innerHTML = `
 <p style="color:${net < 0 ? 'var(--danger)' : 'var(--p)'}">${getFormattedAmount(net)} <span class="currency-symbol">${currentCurrency.symbol}</span></p>
 </div>
 <div class="stat-icon net-icon"><i class="fas fa-wallet"></i></div>`;
+}
 renderGoals();
 }
 // =============================================================
-// 13.5 SAVINGS GOALS — ✔ الأهداف الادخارية الجديدة
+// 13.5 SAVINGS GOALS — ✔ الأهداف الادخارية
 // =============================================================
 const GOAL_TYPES = {
 house: { icon: 'fa-house', color: '#3b82f6', key: 'goalHouse' },
@@ -1431,7 +1453,9 @@ custom: { icon: 'fa-bullseye', color: '#0077b6', key: 'goalCustom' }
 };
 function openGoalModal() { openLayer('goal'); }
 function onGoalTypeChange() {
-document.getElementById('gName').style.display = (document.getElementById('gType').value === 'custom') ? 'block' : 'none';
+const t = document.getElementById('gType');
+const n = document.getElementById('gName');
+if (t && n) n.style.display = (t.value === 'custom') ? 'block' : 'none';
 }
 async function saveGoal() {
 const type = document.getElementById('gType').value;
@@ -1485,7 +1509,7 @@ return `<div class="goal-item">
 </div>
 <div class="goal-actions">
 <button class="add-btn" onclick="openGoalContribute(${g.id})" title="${translate('goalAddAmount')}"><i class="fas fa-plus"></i></button>
-<button class="del-btn" onclick="deleteGoal(${g.id})" title="${translate('deleteTransaction')}"><i class="fas fa-trash"></i></button>
+<button class="del-btn" onclick="deleteGoal(${g.id})" title="${tDelete()}"><i class="fas fa-trash"></i></button>
 </div>
 </div>`;
 }).join('');
@@ -1525,6 +1549,7 @@ toastMsg(translate('goalDeleted'), "success");
 // =============================================================
 function renderCurrencyList() {
 const list = document.getElementById('currencyList');
+if (!list) return;
 const qEl = document.getElementById('currencySearch');
 const q = qEl ? qEl.value.toLowerCase() : '';
 const filtered = ARABIC_CURRENCIES.filter(c => getCurrencyName(c).toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.name.ar || '').includes(q) || (c.name.en || '').toLowerCase().includes(q) || (c.name.ur || '').includes(q));
@@ -1535,7 +1560,8 @@ const sel = ARABIC_CURRENCIES.find(c => c.code === code);
 if (sel) {
 currentCurrency = sel;
 localStorage.setItem('currencyCode', code);
-document.getElementById('sidebarCurrencyLabel').textContent = sel.symbol;
+const l = document.getElementById('sidebarCurrencyLabel');
+if (l) l.textContent = sel.symbol;
 updateBalanceDisplay();
 updateStats();
 closeLayer('currency');
@@ -1606,9 +1632,9 @@ selectedImageFile = null;
 function getSelectedImage() { return selectedImageFile; }
 function clearSelectedImage() {
 selectedImageFile = null;
-document.getElementById('eImgName').textContent = '';
-document.getElementById('eImgCamera').value = null;
-document.getElementById('eImgGallery').value = null;
+const n = document.getElementById('eImgName'); if (n) n.textContent = '';
+const c = document.getElementById('eImgCamera'); if (c) c.value = null;
+const g = document.getElementById('eImgGallery'); if (g) g.value = null;
 }
 // =============================================================
 // 16. INDEXED DB OPERATIONS (✔ ترقية آمنة بدون مسح البيانات)
@@ -1686,7 +1712,8 @@ currentBalance = parseAmount(db.bal.amount || 0);
 function loadDarkModePreference() {
 if (localStorage.getItem('darkMode') === 'true') {
 document.body.classList.add('dark-mode');
-document.getElementById('darkModeToggle').checked = true;
+const t = document.getElementById('darkModeToggle');
+if (t) t.checked = true;
 }
 }
 function toggleDarkMode() {
