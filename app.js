@@ -185,7 +185,7 @@ console.error('Error loading translations:', err);
 translations = { ar: {}, en: {}, ur: {} };
 });
 }
-// ✔✔✔ جديد (إصلاح ترجمة فقط): ترجمة عناوين حقول البيانات بدون تغيير الشكل
+// ✔✔✔ ترجمة عناوين حقول البيانات (النوع، المبلغ...) حسب لغة التطبيق
 const FIELD_LABELS = {
 'النوع': { ar: 'النوع', en: 'Type', ur: 'قسم' },
 'الفئة': { ar: 'الفئة', en: 'Category', ur: 'زمرہ' },
@@ -229,13 +229,25 @@ if (s === '24') return translate('notif24Hours');
 if (s === '168') return translate('notif7Days');
 return s;
 }
-// ✔ تنسيق قيمة الحقل حسب نوعه (حالة / توقيت / تاريخ / مبلغ / نص) — نفس الشكل القديم
+// ✔✔✔ جديد: ترجمة القيم المخزنة بالعربية (الفئات/الأنواع) عند العرض فقط — التخزين لا يتغير
+const VALUE_I18N = {
+'راتب': 'incomeSalary', 'عمل حر': 'incomeFreelance', 'تجارة': 'incomeBusiness', 'استثمار': 'incomeInvestment', 'عمولة': 'incomeCommission', 'هدية': 'incomeGift', 'مكافأة': 'incomeBonus', 'الضمان الاجتماعي': 'incomeSocialSecurity', 'المعاش التقاعدي': 'incomePension', 'دخل آخر': 'incomeOther',
+'طعام': 'expenseFood', 'مواصلات': 'expenseTransport', 'وقود': 'expenseFuel', 'مقاهي': 'expenseCafe', 'رعاية شخصية': 'expensePersonalCare', 'أجهزة إلكترونية': 'expenseElectronics', 'صحة': 'expenseHealth', 'ترفيه': 'expenseEntertainment', 'تسوق': 'expenseShopping', 'تعليم': 'expenseEducation', 'صيانة وإصلاح': 'expenseMaintenance', 'أخرى': 'expenseOther',
+'بيع آجل': 'rightCreditSale', 'سلفة': 'rightLoan', 'إيجار مستحق': 'rightRentDue', 'شراكة': 'rightPartnership', 'حق آخر': 'rightOther',
+'إيجار': 'debtRent', 'كهرباء': 'debtElectricity', 'ماء': 'debtWater', 'فواتير الخدمات': 'debtUtilities', 'الاتصالات والإنترنت': 'debtInternet', 'قروض وتمويل': 'debtLoans', 'دين شخصي': 'debtPersonal', 'مشتريات بالتقسيط': 'debtInstallments', 'رسوم تعليمية': 'debtTuition', 'مصاريف طبية مستحقة': 'debtMedical', 'تمويل السيارة': 'debtCarFinance', 'التزامات عائلية': 'debtFamily', 'اشتراكات دورية': 'debtSubscriptions', 'رواتب': 'debtSalaries'
+};
+function translateStoredValue(val) {
+if (!val || typeof val !== 'string') return val || '';
+const key = VALUE_I18N[val.trim()];
+return key ? translate(key) : val;
+}
+// ✔ تنسيق قيمة الحقل حسب نوعه (حالة / توقيت / تاريخ / مبلغ / قيمة مخزنة)
 function formatFieldValue(key, val) {
 if (key === 'الحالة') return translateStatusValue(val);
 if (key === 'وقت_التنبيه') return translateTimingValue(val);
 if ((key === 'تاريخ_الاستحقاق' || key === 'التاريخ') && /^\d{4}-\d{2}-\d{2}$/.test(String(val))) return formatDateTime(val);
 const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
-return isAmt ? formatCurrency(val, true) : val;
+return isAmt ? formatCurrency(val, true) : translateStoredValue(val);
 }
 function applyTranslations(lang) {
 if (!translations[lang]) {
@@ -264,7 +276,7 @@ if (lang === 'ar' || lang === 'ur') {
  });
  const langLabel = document.getElementById('sidebarLanguageLabel');
  if (langLabel) {
-     const langNames = { ar: '🇸 العربية', en: '🇧 English', ur: '🇵 اردو' };
+     const langNames = { ar: '🇸 العربية', en: '🇧 English', ur: '🇵🇰 اردو' };
      langLabel.textContent = langNames[lang] || '🇸🇦 العربية';
  }
  updateBalanceDisplay();
@@ -1007,10 +1019,10 @@ const ARABIC_CURRENCIES = [
 { code: 'DJF', symbol: 'ف.ج', flag: '🇩🇯', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
 { code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
 { code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
-{ code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
+{ code: 'USD', symbol: '$', flag: '🇺', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
 { code: 'EUR', symbol: '€', flag: '🇪🇺', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
 { code: 'BDT', symbol: '৳', flag: '🇧🇩', name: { ar: 'التاكا البنغلاديشي', en: 'Bangladeshi Taka', ur: 'بنگلادیشی ٹاکا' } },
-{ code: 'INR', symbol: '₹', flag: '🇮🇳', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
+{ code: 'INR', symbol: '₹', flag: '🇮', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
 { code: 'PKR', symbol: '₨', flag: '🇵🇰', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
 { code: 'PHP', symbol: '₱', flag: '🇵🇭', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
 { code: 'CNY', symbol: '¥', flag: '🇨🇳', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
@@ -1380,7 +1392,7 @@ const statusSelect = document.getElementById('dStatus');
 const entityInput = document.getElementById('dEntity');
 if (!container) return;
 container.innerHTML = '';
- const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍ رواتب', '💡 كهرباء', '💧 ماء'];
+ const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
  if (entityTypes.includes(type)) {
      if (entityInput) {
          entityInput.style.display = 'block';
@@ -1614,7 +1626,7 @@ if (!typeSel) return;
 typeSel.innerHTML = `<option value="all">${translate('allTypes')}</option><option value="deposit">${translate('deposit')}</option><option value="withdraw">${translate('withdraw')}</option>`;
 typeSel.value = balanceFilters.type || 'all';
 }
-// ✔ شرائح إحصائيات السجلات (العدد + الإجمالي + الأعلى)
+// ✔ شرائح إحصائيات السجلات (العدد + الإجمالي + الأعلى) — ✔✔✔ مع ترجمة الفئة الأعلى
 function renderLogStats(list, field) {
 const bar = document.getElementById('logStatsBar');
 if (!bar) return;
@@ -1632,9 +1644,9 @@ const titles = { inc: translate('topIncomeSource'), exp: translate('topExpenseCa
 bar.innerHTML = `
     <div class="log-stat-chip"><span class="stat-label">${translate('operationsCount')}</span><span class="stat-value">${list.length}</span></div>
     <div class="log-stat-chip"><span class="stat-label">${translate('totalAmountStat')}</span><span class="stat-value">${getFormattedAmount(total)}</span></div>
-    <div class="log-stat-chip"><span class="stat-label">${titles[currentLog] || ''}</span><span class="stat-value">${topName} (${getFormattedAmount(topVal)})</span></div>`;
+    <div class="log-stat-chip"><span class="stat-label">${titles[currentLog] || ''}</span><span class="stat-value">${translateStoredValue(topName)} (${getFormattedAmount(topVal)})</span></div>`;
 }
-// ✔✔✔ تم إصلاح ترجمة عناوين الحقول فقط — نفس الشكل القديم تماماً
+// ✔✔✔ تفاصيل المعاملة: عناوين الحقول والقيم المخزنة تُعرض مترجمة حسب لغة التطبيق
 function _renderDetailContent(o, type) {
 const el = document.getElementById('detailContent');
 if (!el) return;
@@ -1651,7 +1663,7 @@ if (o.صورة && type === 'exp') {
 html += `<div style="display:flex;gap:10px;margin-top:20px;"><button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> ${translate('edit')}</button><button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> ${translate('delete')}</button></div>`;
 el.innerHTML = html;
 }
-// ✔ السجلات: بحث + فلاتر (فئة/نوع + حالة + فترة) + إحصائيات
+// ✔ السجلات: بحث + فلاتر (فئة/نوع + حالة + فترة) + إحصائيات — ✔✔✔ مع ترجمة الفئات المعروضة
 function renderLog() {
 const el = document.getElementById('logContent');
 if (!el) return;
@@ -1676,7 +1688,8 @@ let filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCas
      const isDeb = currentLog === 'deb';
      let amountVal = 0;
      let amountDisplay = '';
-     let desc = i.الوصف || i.الفئة || i.النوع || '—';
+     // ✔✔✔ ترجمة الفئة/النوع المخزنين عند العرض
+     let desc = i.الوصف || translateStoredValue(i.الفئة) || translateStoredValue(i.النوع) || '—';
      let date = formatDateTime(i.التاريخ || i.تاريخ_الاستحقاق);
      let borderColor = 'var(--s)';
      let statusBadge = '';
@@ -1694,7 +1707,7 @@ let filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCas
          borderColor = 'var(--danger)';
          amountColor = 'var(--danger)';
      } else if (isRig) {
-         // ✔✔✔ نفس المنطق القديم لكن عبر matchStatus لتدعم القيم الإنجليزية أيضاً
+         // ✔ نفس المنطق القديم لكن عبر matchStatus لتدعم القيم الإنجليزية أيضاً
          const st = i.الحالة || '';
          if (matchStatus(st, 'paid')) {
              borderColor = 'var(--success)';
@@ -1752,7 +1765,7 @@ let filtered = items.filter(i => Object.values(i).some(v => String(v).toLowerCas
                  <span style="color:${amountColor};">${amountDisplay}</span>
              </div>
              <div class="details">
-                 <span>${i.النوع || i.الفئة || ''} ${statusBadge}</span>
+                 <span>${translateStoredValue(i.النوع || i.الفئة)} ${statusBadge}</span>
                  <span><i class="far fa-clock" style="margin-left:4px;"></i>${date}</span>
              </div>
              <div class="log-item-hint"><i class="fas fa-hand-pointer"></i> ${translate('clickForDetails')}</div>
@@ -2002,7 +2015,7 @@ if (!item.read) {
 // عرض شاشة التفاصيل الكاملة
 renderNotificationDetail(item);
 }
-// ✔✔✔ شاشة تفاصيل التنبيه — نفس الشكل القديم + ترجمة عناوين الحقول فقط
+// ✔✔✔ شاشة تفاصيل التنبيه: عناوين الحقول والقيم تُعرض مترجمة حسب لغة التطبيق
 function renderNotificationDetail(item) {
 const el = document.getElementById('notificationsContent');
 if (!el) return;
@@ -2030,7 +2043,7 @@ if (!el) return;
              </span>
          </div>
          <h3 style="color:${typeColor};margin-top:0;display:flex;align-items:center;gap:8px;">
-             <i class="fas ${typeIcon}"></i> ${item.name}
+             <i class="fas ${typeIcon}"></i> ${translateStoredValue(item.name)}
          </h3>
          <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;">
              <span style="background:${statusColor};color:#fff;padding:4px 14px;border-radius:14px;font-size:0.85em;font-weight:700;">
@@ -2057,7 +2070,7 @@ if (!el) return;
  html += `</div>`;
  el.innerHTML = html;
 }
-// ✔ رسم محتوى مودال التنبيهات (مقروءة + غير مقروءة بمظهر مختلف + شارة النوع)
+// ✔✔✔ قائمة التنبيهات: اسم الحق/الالتزام يُعرض مترجماً
 function renderNotifications() {
 const el = document.getElementById('notificationsContent');
 if (!el) return;
@@ -2101,7 +2114,7 @@ const items = getUpcomingItems();
      const clickAttr = i.read ? '' : `onclick="viewNotification('${nid}')"`;
      return `<div class="${cls}" ${clickAttr}>
          <div class="notif-head">
-             <span class="notif-name"><i class="fas ${icon}"></i>${i.name}</span>
+             <span class="notif-name"><i class="fas ${icon}"></i>${translateStoredValue(i.name)}</span>
              ${readBadge}
          </div>
          <span class="notif-type-badge" style="background:${typeColor};">
