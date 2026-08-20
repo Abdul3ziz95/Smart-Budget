@@ -157,7 +157,7 @@ _visualOpen(top.layer, top.data);
 }
 };
 // =============================================================
-// 3.  TRANSLATION SYSTEM (i18n)
+// 3.  TRANSLATION SYSTEM (i18n) + ترجمة فورية كاملة
 // =============================================================
 let translations = {};
 let currentLang = localStorage.getItem('appLang') || 'ar';
@@ -176,49 +176,32 @@ console.error('Error loading translations:', err);
 translations = { ar: {}, en: {}, ur: {} };
 });
 }
-// =============================================================
-// ✔✔✔ خريطة ترجمة شاملة: كل فئة / نوع / حالة (بالقيمة المخزنة)
-//     تُستخدم لترجمة خيارات القوائم والقيم المعروضة معاً
-// =============================================================
+// ✔✔✔ خريطة ترجمة الفئات/الأنواع/الحالات/الخيارات (تعمل بدون data-i18n)
 const OPTION_I18N = {
-// ---- فئات الدخل ----
 'راتب': 'incomeSalary', 'عمل حر': 'incomeFreelance', 'تجارة': 'incomeBusiness', 'استثمار': 'incomeInvestment', 'عمولة': 'incomeCommission', 'هدية': 'incomeGift', 'مكافأة': 'incomeBonus', 'الضمان الاجتماعي': 'incomeSocialSecurity', 'المعاش التقاعدي': 'incomePension', 'دخل آخر': 'incomeOther',
-// ---- فئات المصروفات ----
 'طعام': 'expenseFood', 'مواصلات': 'expenseTransport', 'وقود': 'expenseFuel', 'مقاهي': 'expenseCafe', 'رعاية شخصية': 'expensePersonalCare', 'أجهزة إلكترونية': 'expenseElectronics', 'صحة': 'expenseHealth', 'ترفيه': 'expenseEntertainment', 'تسوق': 'expenseShopping', 'تعليم': 'expenseEducation', 'صيانة وإصلاح': 'expenseMaintenance', 'أخرى': 'expenseOther',
-// ---- أنواع الحقوق ----
 'بيع آجل': 'rightCreditSale', 'سلفة': 'rightLoan', 'إيجار مستحق': 'rightRentDue', 'شراكة': 'rightPartnership', 'حق آخر': 'rightOther',
-// ---- أنواع الالتزامات ----
 '🏠 إيجار': 'debtRent', '💡 كهرباء': 'debtElectricity', '💧 ماء': 'debtWater', '💡 فواتير الخدمات': 'debtUtilities', '📱 الاتصالات والإنترنت': 'debtInternet', '🏦 قروض وتمويل': 'debtLoans', '👤 دين شخصي': 'debtPersonal', '🛒 مشتريات بالتقسيط': 'debtInstallments', '🎓 رسوم تعليمية': 'debtTuition', '🏥 مصاريف طبية مستحقة': 'debtMedical', '🚗 تمويل السيارة': 'debtCarFinance', '👨‍👩‍ التزامات عائلية': 'debtFamily', '📅 اشتراكات دورية': 'debtSubscriptions', '👨‍💼 رواتب': 'debtSalaries', '📦 أخرى': 'debtOther',
-// ---- الحالات ----
 'مدفوع': 'statusPaid', 'مدفوع جزئياً': 'statusPartiallyPaid', 'غير مدفوع': 'statusUnpaid', 'متأخر': 'statusOverdue',
-// ---- العناوين الافتتاحية للقوائم ----
-'📂 فئة الدخل': 'incomeCategoryPlaceholder', '🛒 الفئة (نفقات متغيرة)': 'expenseCategoryPlaceholder', '🤝 نوع الحق': 'rightTypePlaceholder', '🧾 نوع الالتزام': 'debtTypePlaceholder', '✅ الحالة': 'statusPlaceholder', '⏱️ التنبيه قبل الاستحقاق (اختياري)': 'notifTimingPlaceholder'
+'📂 فئة الدخل': 'incomeCategoryPlaceholder', '🛒 الفئة (نفقات متغيرة)': 'expenseCategoryPlaceholder', '🤝 نوع الحق': 'rightTypePlaceholder', '🧾 نوع الالتزام': 'debtTypePlaceholder', '✅ الحالة': 'statusPlaceholder', '⏱️ التنبيه قبل الاستحقاق (اختياري)': 'notifTimingPlaceholder',
+'⏱️ قبل ساعة': 'notif1Hour', '⏱️ قبل 24 ساعة': 'notif24Hours', '⏱️ قبل 7 أيام': 'notif7Days',
+'⏱️ 1 Hour before': 'notif1Hour', '⏱️ 24 Hours before': 'notif24Hours', '⏱️ 7 Days before': 'notif7Days',
+'⏱️ 1 گھنٹہ پہلے': 'notif1Hour', '⏱️ 24 گھنٹے پہلے': 'notif24Hours', '⏱️ 7 دن پہلے': 'notif7Days'
 };
-// ✔ ترجمة قيمة مخزنة (فئة/نوع/حالة) عند العرض فقط — التخزين يبقى عربياً
+// ✔✔✔ خريطة النصوص الإرشادية (placeholders) لكل حقل
+const PLACEHOLDER_I18N = {
+'iAmount': 'amountPlaceholder', 'eAmount': 'amountPlaceholder', 'bAmount': 'amountPlaceholder',
+'iDesc': 'notesOptional', 'eDesc': 'descriptionNotes', 'rDesc': 'additionalNotes', 'dDesc': 'additionalNotes',
+'rAmount': 'totalDueAmount', 'rEntity': 'entityDebtor', 'dAmount': 'billAmount', 'dEntity': 'entityCreditor',
+'search': 'searchLog', 'balanceSearch': 'searchLog', 'currencySearch': 'searchCurrency', 'exportFileName': 'fileName'
+};
+// ✔ ترجمة قيمة مخزنة (فئة/نوع/حالة) عند العرض — التخزين يبقى عربياً
 function translateStoredValue(val) {
 if (!val || typeof val !== 'string') return val || '';
 const key = OPTION_I18N[val.trim()];
 return key ? translate(key) : val;
 }
-// ✔ ترجمة قيمة الحالة بأي لغة → اللغة الحالية
-function translateStatusValue(val) {
-if (!val || typeof val !== 'string') return val;
-if (/مدفوع بالكامل|Fully Paid/.test(val)) return translate('statusFullyPaid');
-if (/مدفوع جزئياً|Partially Paid/.test(val)) return translate('statusPartiallyPaid');
-if (/غير مدفوع|Unpaid/.test(val)) return translate('statusUnpaid');
-if (/متأخر|Overdue/.test(val)) return translate('statusOverdue');
-if (/^مدفوع$|^Paid$/.test(val)) return translate('statusPaid');
-return translateStoredValue(val);
-}
-// ✔ ترجمة وقت التنبيه (1 / 24 / 168)
-function translateTimingValue(val) {
-const s = String(val);
-if (s === '1') return translate('notif1Hour');
-if (s === '24') return translate('notif24Hours');
-if (s === '168') return translate('notif7Days');
-return s;
-}
-// ✔ ترجمة عناوين حقول البيانات (التفاصيل)
+// ✔ ترجمة عناوين حقول البيانات (التفاصيل والتنبيهات)
 const FIELD_LABELS = {
 'النوع': { ar: 'النوع', en: 'Type', ur: 'قسم' },
 'الفئة': { ar: 'الفئة', en: 'Category', ur: 'زمرہ' },
@@ -244,7 +227,22 @@ const entry = FIELD_LABELS[key];
 if (!entry) return key.replace(/_/g, ' ');
 return entry[currentLang] || entry.ar;
 }
-// ✔ تنسيق قيمة حقل حسب نوعه (حالة / توقيت / تاريخ / مبلغ / فئة)
+function translateStatusValue(val) {
+if (!val || typeof val !== 'string') return val;
+if (/مدفوع بالكامل|Fully Paid/.test(val)) return translate('statusFullyPaid');
+if (/مدفوع جزئياً|Partially Paid/.test(val)) return translate('statusPartiallyPaid');
+if (/غير مدفوع|Unpaid/.test(val)) return translate('statusUnpaid');
+if (/متأخر|Overdue/.test(val)) return translate('statusOverdue');
+if (/^مدفوع$|^Paid$/.test(val)) return translate('statusPaid');
+return translateStoredValue(val);
+}
+function translateTimingValue(val) {
+const s = String(val);
+if (s === '1') return translate('notif1Hour');
+if (s === '24') return translate('notif24Hours');
+if (s === '168') return translate('notif7Days');
+return s;
+}
 function formatFieldValue(key, val) {
 if (key === 'الحالة') return translateStatusValue(val);
 if (key === 'وقت_التنبيه') return translateTimingValue(val);
@@ -252,21 +250,19 @@ if ((key === 'تاريخ_الاستحقاق' || key === 'التاريخ') && /^\
 const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
 return isAmt ? formatCurrency(val, true) : translateStoredValue(val);
 }
-// =============================================================
-// ✔✔✔ ترجمة جميع خيارات القوائم تلقائياً (بدون data-i18n في HTML)
-// =============================================================
+// ✔✔✔ ترجمة جميع خيارات القوائم فورياً (تُحفظ المفاتيح في dataset للاستمرارية)
 function translateAllOptions() {
 document.querySelectorAll('select option').forEach(op => {
-    let key = op.getAttribute('data-i18n') || op.dataset.i18nKey || OPTION_I18N[op.value] || OPTION_I18N[op.textContent.trim()] || '';
+    const key = op.getAttribute('data-i18n') || op.dataset.i18nKey || OPTION_I18N[op.value] || OPTION_I18N[op.textContent.trim()] || '';
     if (key) {
-        op.dataset.i18nKey = key; // ✔ حفظ المفتاح ليبقى الترجمة صحيحة عند تبديل اللغة多次
+        op.dataset.i18nKey = key;
         const t = translate(key);
         if (t && t !== key) op.textContent = t;
     }
 });
 }
 // =============================================================
-// ✔✔✔ تطبيق الترجمة + إعادة رسم فورية لكل الشاشات المفتوحة
+// ✔✔✔ تطبيق الترجمة + إعادة رسم فورية لكل شيء (بدون تحديث الصفحة)
 // =============================================================
 function applyTranslations(lang) {
 if (!translations[lang]) { lang = 'ar'; }
@@ -281,7 +277,12 @@ document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
     if (t[key] !== undefined) el.placeholder = t[key];
 });
-// ✔✔✔ جديد: ترجمة كل خيارات القوائم (الفئات/الأنواع/الحالات)
+// ✔✔✔ ترجمة النصوص الإرشادية للحقول عبر الخريطة (تعمل حتى بدون data-i18n-placeholder)
+for (const [id, key] of Object.entries(PLACEHOLDER_I18N)) {
+    const el = document.getElementById(id);
+    if (el) el.placeholder = translate(key);
+}
+// ✔✔✔ ترجمة جميع خيارات القوائم فورياً
 translateAllOptions();
 const langLabel = document.getElementById('sidebarLanguageLabel');
 if (langLabel) {
@@ -290,6 +291,7 @@ if (langLabel) {
 }
 updateBalanceDisplay();
 updateStats();
+// ✔ إعادة بناء الفلاتر والسجلات المفتوحة فورياً (مع فحص آمن)
 const logModal = document.getElementById('logModal');
 if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
 const balanceLogModal = document.getElementById('balanceLogModal');
@@ -300,14 +302,14 @@ const currencyModal = document.getElementById('currencyModal');
 if (currencyModal && currencyModal.style.display === 'flex') renderCurrencyList();
 const notificationsModal = document.getElementById('notificationsModal');
 if (notificationsModal && notificationsModal.style.display === 'flex') renderNotifications();
-// ✔ إعادة رسم شاشة التفاصيل فوراً عند تغيير اللغة
+// ✔✔✔ إعادة رسم شاشة التفاصيل فورياً عند تغيير اللغة
 const detailModal = document.getElementById('detailModal');
 if (detailModal && detailModal.style.display === 'flex' && editMode) {
     const arr = db[editMode.type];
     const o = arr && arr[editMode.index];
     if (o) _renderDetailContent(o, editMode.type);
 }
-// ✔ إعادة بناء الحقول الديناميكية المترجمة إن كانت ظاهرة
+// ✔✔✔ إعادة بناء الحقول الديناميكية المترجمة (المبلغ المحصل...) إن كانت ظاهرة
 const rDyn = document.getElementById('rDynamicFields');
 if (rDyn && rDyn.innerHTML.trim() !== '') {
     const rType = document.getElementById('rType');
@@ -320,6 +322,15 @@ if (dDyn && dDyn.innerHTML.trim() !== '') {
     const dCur = (editMode && editMode.type === 'deb') ? db.deb[editMode.index] : null;
     updateDebtFields(dType ? dType.value : '', dCur);
 }
+// ✔ عنوان نافذة الإيداع/السحب إن كانت مفتوحة
+const bam = document.getElementById('balanceActionModal');
+if (bam && bam.style.display === 'flex' && balanceActionType) {
+    const tEl = document.getElementById('actionModalTitle');
+    if (tEl) tEl.textContent = balanceActionType === 'deposit' ? translate('depositTitle') : translate('withdrawTitle');
+}
+// ✔ عداد النسخ الاحتياطية
+const countEl = document.getElementById('driveBackupCount');
+if (countEl) countEl.textContent = translate('backupCountLabel') + ' ' + (backupFiles ? backupFiles.length : 0);
 updateLanguageModalCheckmarks();
 localStorage.setItem('appLang', lang);
 currentLang = lang;
@@ -816,7 +827,7 @@ setTimeout(() => { t.classList.remove('show'); }, 3500);
 // =============================================================
 // 8.  FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
 // =============================================================
-// ✔✔✔ تم إصلاح أخطاء الكتابة (cod e / s ymbol / المسافات)
+// ✔✔✔ تم إصلاح أخطاء الكتابة (cod e / s ymbol / المسافات) — نفس العملات كما هي
 const ARABIC_CURRENCIES = [
 { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
 { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
@@ -824,7 +835,7 @@ const ARABIC_CURRENCIES = [
 { code: 'QAR', symbol: 'ر.ق', flag: '🇶🇦', name: { ar: 'الريال القطري', en: 'Qatari Riyal', ur: 'قطری ریال' } },
 { code: 'KWD', symbol: 'د.ك', flag: '🇰🇼', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
 { code: 'BHD', symbol: 'د.ب', flag: '🇧🇭', name: { ar: 'الدينار البحريني', en: 'Bahraini Dinar', ur: 'بحرینی دینار' } },
-{ code: 'OMR', symbol: 'ر.ع', flag: '🇴', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
+{ code: 'OMR', symbol: 'ر.ع', flag: '🇴🇲', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
 { code: 'YER', symbol: 'ر.ي', flag: '🇾🇪', name: { ar: 'الريال اليمني', en: 'Yemeni Rial', ur: 'یمنی ریال' } },
 { code: 'IQD', symbol: 'ع.د', flag: '🇮🇶', name: { ar: 'الدينار العراقي', en: 'Iraqi Dinar', ur: 'عراقی دینار' } },
 { code: 'JOD', symbol: 'د.أ', flag: '🇯🇴', name: { ar: 'الدينار الأردني', en: 'Jordanian Dinar', ur: 'اردنی دینار' } },
@@ -833,7 +844,7 @@ const ARABIC_CURRENCIES = [
 { code: 'ILS', symbol: '₪', flag: '🇵🇸', name: { ar: 'الشيكل الفلسطيني', en: 'Israeli Shekel', ur: 'اسرائیلی شیکل' } },
 { code: 'EGP', symbol: 'ج.م', flag: '🇪🇬', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
 { code: 'LYD', symbol: 'ل.د', flag: '🇱🇾', name: { ar: 'الدينار الليبي', en: 'Libyan Dinar', ur: 'لیبیائی دینار' } },
-{ code: 'TND', symbol: 'د.ت', flag: '🇹', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
+{ code: 'TND', symbol: 'د.ت', flag: '🇹🇳', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
 { code: 'DZD', symbol: 'دج', flag: '🇩🇿', name: { ar: 'الدينار الجزائري', en: 'Algerian Dinar', ur: 'الجزائری دینار' } },
 { code: 'MAD', symbol: 'د.م', flag: '🇲🇦', name: { ar: 'الدرهم المغربي', en: 'Moroccan Dirham', ur: 'مراکشی درہم' } },
 { code: 'MRU', symbol: 'أ.م', flag: '🇲🇷', name: { ar: 'الأوقية الموريتانية', en: 'Mauritanian Ouguiya', ur: 'موریطانی اوگوئیا' } },
@@ -1184,7 +1195,7 @@ const statusSelect = document.getElementById('dStatus');
 const entityInput = document.getElementById('dEntity');
 if (!container) return;
 container.innerHTML = '';
-const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
+const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
 if (entityTypes.includes(type)) {
     if (entityInput) {
         entityInput.style.display = 'block';
@@ -1410,7 +1421,7 @@ bar.innerHTML = `
     <div class="log-stat-chip"><span class="stat-label">${translate('totalAmountStat')}</span><span class="stat-value">${getFormattedAmount(total)}</span></div>
     <div class="log-stat-chip"><span class="stat-label">${titles[currentLog] || ''}</span><span class="stat-value">${translateStoredValue(topName)} (${getFormattedAmount(topVal)})</span></div>`;
 }
-// ✔✔✔ التفاصيل: عناوين وقيم مترجمة (بما فيها الفئات/الأنواع)
+// ✔✔✔ التفاصيل: عناوين وقيم مترجمة فورياً حسب لغة التطبيق
 function _renderDetailContent(o, type) {
 const el = document.getElementById('detailContent');
 if (!el) return;
@@ -1513,7 +1524,7 @@ el.innerHTML = filtered.map(i => {
 }).join('');
 }
 function showDetailById(id, type) { openLayer('detail', { logType: type, id: id }); }
-// ✔✔✔ إصلاح "التعديل يحفظ معاملة جديدة"
+// ✔✔✔ إصلاح "التعديل يحفظ معاملة جديدة": حفظ editMode واستعادته بعد closeAllLayers
 function editTransaction() {
 if (!editMode) return;
 const savedEdit = { type: editMode.type, index: editMode.index };
@@ -1586,7 +1597,7 @@ setTimeout(() => {
     if (ind) ind.style.display = 'inline-block';
 }, 100);
 }
-// ✔✔✔ حذف المعاملة: نافذة تأكيد عصرية
+// ✔✔✔ حذف المعاملة: نافذة تأكيد عصرية (مع بديل تلقائي)
 async function deleteTransaction() {
 if (!editMode) return;
 const ok = await showConfirm({ type: 'danger', icon: 'fa-trash-can', title: translate('deleteTitle'), message: translate('confirmDeleteTransaction'), okText: translate('deleteBtn') });
@@ -1692,7 +1703,7 @@ if (!item.read) {
 }
 renderNotificationDetail(item);
 }
-// ✔✔✔ تفاصيل التنبيه: أسماء وعناوين وقيم مترجمة
+// ✔✔✔ تفاصيل التنبيه: عناوين وقيم مترجمة فورياً
 function renderNotificationDetail(item) {
 const el = document.getElementById('notificationsContent');
 if (!el) return;
@@ -1742,7 +1753,7 @@ if (source) {
 html += `</div>`;
 el.innerHTML = html;
 }
-// ✔✔✔ قائمة التنبيهات: أسماء مترجمة
+// ✔✔✔ قائمة التنبيهات: أسماء مترجمة فورياً
 function renderNotifications() {
 const el = document.getElementById('notificationsContent');
 if (!el) return;
