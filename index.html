@@ -29,15 +29,72 @@
 <button class="action balance-log" onclick="openBalanceLogModal()"><i class="fas fa-history"></i><span data-i18n="balanceLog">سجل حركات الرصيد</span></button>
 </div>
 </div>
+
+<!-- ✔ ملخص الإحصائيات — التصميم الجديد -->
 <div class="stats-summary">
-<h3 class="stats-title" data-i18n="statsSummary">ملخص الإحصائيات</h3>
-<div class="stats-grid">
-<div class="stat-card stat-income"><h3 data-i18n="totalIncome">إجمالي الدخل</h3><p id="sIncTotal">0 ﷼</p></div>
-<div class="stat-card stat-expense"><h3 data-i18n="totalExpenses">إجمالي المصروفات</h3><p id="sExpTotal">0 ﷼</p></div>
-<div class="stat-card stat-rights-total"><h3 data-i18n="totalRights">إجمالي الحقوق المستحقة</h3><p id="sRigTotal">0 ﷼</p></div>
-<div class="stat-card stat-rights-paid"><h3 data-i18n="rightsCollected">المحصل من الحقوق</h3><p id="sRigPaid">0 ﷼</p></div>
-<div class="stat-card stat-debt-total"><h3 data-i18n="totalDebts">إجمالي الالتزامات الكلية</h3><p id="sDebTotal">0 ﷼</p></div>
-<div class="stat-card stat-debt-paid"><h3 data-i18n="debtsPaid">المدفوع من الالتزامات</h3><p id="sDebPaid">0 ﷼</p></div>
+<div class="stats-head">
+<h3 class="stats-title"><i class="fas fa-chart-line"></i> <span data-i18n="statsSummary">ملخص الإحصائيات</span></h3>
+<div class="stats-period-wrap"><i class="far fa-calendar-alt"></i><span data-i18n="periodMonth">هذا الشهر</span><i class="fas fa-chevron-down"></i></div>
+</div>
+
+<div class="stat-big c-income">
+<div class="stat-big-icon"><i class="fas fa-chart-line"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="totalIncome">إجمالي الدخل</div>
+<div class="stat-big-value" id="sIncTotal">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sIncBar"></div></div>
+<div class="stat-big-sub" id="sIncSub"></div>
+</div>
+<div class="stat-big-pct" id="sIncPct">0%</div>
+</div>
+
+<div class="stat-big c-expense">
+<div class="stat-big-icon"><i class="fas fa-shopping-cart"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="totalExpenses">إجمالي المصروفات</div>
+<div class="stat-big-value" id="sExpTotal">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sExpBar"></div></div>
+<div class="stat-big-sub" id="sExpSub"></div>
+</div>
+<div class="stat-big-pct" id="sExpPct">0%</div>
+</div>
+
+<div class="stat-big c-debt">
+<div class="stat-big-icon"><i class="fas fa-credit-card"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="debtsPaid">المدفوع من الالتزامات</div>
+<div class="stat-big-value" id="sDebPaid">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sDebBar"></div></div>
+<div class="stat-big-sub" id="sDebSub"></div>
+</div>
+<div class="stat-big-pct" id="sDebPct">0%</div>
+</div>
+
+<div class="stat-big c-right">
+<div class="stat-big-icon"><i class="fas fa-handshake"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="rightsCollected">المحصل من الحقوق</div>
+<div class="stat-big-value" id="sRigPaid">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sRigBar"></div></div>
+<div class="stat-big-sub" id="sRigSub"></div>
+</div>
+<div class="stat-big-pct" id="sRigPct">0%</div>
+</div>
+
+<div class="stats-mini">
+<div class="mini-stat"><div class="mini-icon mi-ops"><i class="far fa-calendar-check"></i></div><div class="mini-title" id="sOpsTitle"></div><div class="mini-value mv-ops" id="sOpsCount">0</div><div class="mini-sub" id="sOpsSub"></div></div>
+<div class="mini-stat"><div class="mini-icon mi-exp"><i class="fas fa-chart-pie"></i></div><div class="mini-title" id="sExpRatioTitle"></div><div class="mini-value mv-exp" id="sExpRatio">0%</div><div class="mini-sub" id="sExpRatioSub"></div></div>
+<div class="mini-stat"><div class="mini-icon mi-goal"><i class="fas fa-bullseye"></i></div><div class="mini-title" id="sGoalTitle"></div><div class="mini-value mv-goal" id="sGoalRatio">0%</div><div class="mini-sub" id="sGoalSub"></div></div>
+<div class="mini-stat"><div class="mini-icon mi-net"><i class="fas fa-wallet"></i></div><div class="mini-title" id="sNetTitle"></div><div class="mini-value mv-net" id="sNet">0 ﷼</div><div class="mini-sub" id="sNetSub"></div></div>
+</div>
+
+<div class="stat-status good" id="sStatusBanner">
+<div class="stat-status-icon"><i class="fas fa-lightbulb"></i></div>
+<div class="stat-status-body">
+<div class="stat-status-title"><i class="fas fa-check-circle" id="sStatusIcon"></i> <span id="sStatusTitle"></span></div>
+<div class="stat-status-msg" id="sStatusMsg"></div>
+</div>
+<i class="fas fa-chevron-left stat-status-arrow"></i>
 </div>
 </div>
 </div>
@@ -110,7 +167,6 @@
 <option value="حق آخر" data-i18n="rightOther">📦 حق آخر</option>
 </select>
 <input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" data-i18n-placeholder="totalDueAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
-<!-- ✔✔✔ حقل «المبلغ المحصل» أصبح مباشرة أسفل «المبلغ الكلي» -->
 <div id="rDynamicFields"></div>
 <input id="rEntity" type="text" placeholder="👤 الجهة / المدين (اسم الشخص أو المؤسسة)" data-i18n-placeholder="entityDebtor">
 <div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="rDueDate" type="date"></div>
@@ -144,7 +200,7 @@
 <option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
 <option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
 <option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-<option value="👨‍ التزامات عائلية" data-i18n="debtFamily">👨‍‍ التزامات عائلية</option>
+<option value="👨‍‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
 <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
 <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
 <option value="أخرى" data-i18n="debtOther">📦 أخرى</option>
@@ -183,7 +239,7 @@
 
 <!-- ============ LOG MODAL ============ -->
 <div id="logModal" class="modal">
-<header><button onclick="closeLayer('log')"><i class="fas fa-times"></i></button><div class="title">السجل</div></header>
+<header><button onclick="closeLayer('log')"><i class="fas fa-times"></i></button><div class="title" data-i18n="searchLog">السجل</div></header>
 <div class="modal-content">
 <input id="search" type="text" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderLog()">
 <div class="log-filters">
@@ -294,7 +350,7 @@
 <header><button onclick="closeLayer('language')"><i class="fas fa-times"></i></button><div class="title" data-i18n="languageSelectTitle">اختر اللغة</div></header>
 <div class="modal-content">
 <button class="secondary" onclick="setLanguage('ar')">🇸🇦 العربية <i id="langCheckAr" class="fas fa-check" style="color:var(--success);"></i></button>
-<button class="secondary" onclick="setLanguage('en')">🇬 English <i id="langCheckEn" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
+<button class="secondary" onclick="setLanguage('en')">🇬🇧 English <i id="langCheckEn" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
 <button class="secondary" onclick="setLanguage('ur')">🇵🇰 اردو <i id="langCheckUr" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
 </div>
 </div>
@@ -333,19 +389,6 @@
 <button class="sidebar-menu-item" onclick="openAboutModal()"><i class="fas fa-info-circle"></i><span data-i18n="aboutApp">حول التطبيق</span></button>
 <div class="sidebar-divider"></div>
 <button class="sidebar-menu-item" style="color:var(--danger);" onclick="confirmResetData()"><i class="fas fa-trash-alt" style="color:var(--danger);"></i><span data-i18n="resetData">إعادة تعيين البيانات</span></button>
-</div>
-</div>
-
-<!-- ============ MODERN CONFIRM DIALOG ============ -->
-<div id="confirmOverlay" class="confirm-overlay" onclick="confirmBackdrop(event)">
-<div class="confirm-dialog">
-<div id="confirmIcon" class="confirm-icon danger"><i class="fas fa-triangle-exclamation"></i></div>
-<h3 id="confirmTitle"></h3>
-<p id="confirmMessage"></p>
-<div class="confirm-actions">
-<button id="confirmOkBtn" class="confirm-ok" onclick="resolveConfirm(true)"></button>
-<button id="confirmCancelBtn" class="confirm-cancel" onclick="resolveConfirm(false)"></button>
-</div>
 </div>
 </div>
 
