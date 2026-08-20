@@ -3,7 +3,7 @@
 // استراتيجية: Cache First للملفات الثابتة
 // =============================================================
 
-const CACHE_NAME = 'smart-budget-v5.1';
+const CACHE_NAME = 'smart-budget-v15.1';
 const ASSETS = [
   './',
   './index.html',
