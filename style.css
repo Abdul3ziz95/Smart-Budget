@@ -75,7 +75,7 @@ transition: all 0.2s; cursor: pointer; font-family: inherit; font-size: 16px; fo
 .balance-actions .deposit i { color: var(--success); }
 .balance-actions .withdraw i { color: var(--danger); }
 .balance-actions .balance-log i { color: var(--p); }
-/* ============ OVERVIEW — ملخص الإحصائيات ============ */
+/* ============ OVERVIEW — ملخص الإحصائيات (القديم) ============ */
 .stats-summary { margin-bottom: 15px; }
 .stats-title { font-size: 18px; font-weight: 800; margin: 0 0 12px; color: var(--text-dark); }
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -107,6 +107,84 @@ body.dark-mode #sDebTotal span:not(.currency-symbol) { color: #fbbf24; }
 body.dark-mode #sDebPaid span:not(.currency-symbol) { color: #f87171; }
 .stats-grid .currency-symbol { color: var(--p) !important; }
 @media (max-width: 340px) { .stats-grid { grid-template-columns: 1fr; } }
+/* ============ NEW STATS SUMMARY (مثل الصورة) ============ */
+.stats-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+.stats-head .stats-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; font-weight: 800; color: var(--text-dark); }
+.stats-head .stats-title i { color: var(--p); font-size: 1.2em; }
+.stats-period-wrap {
+display: flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1px solid var(--border-color);
+border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow-light); color: var(--text-dark); font-weight: 700; font-size: 14px;
+}
+.stats-period-wrap .fa-chevron-down { font-size: .8em; }
+.stat-big {
+display: flex; align-items: center; gap: 12px; border-radius: 18px; padding: 16px; margin-bottom: 12px;
+box-shadow: var(--shadow-light); border: 1px solid var(--border-color);
+}
+.stat-big .stat-big-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4em; color: #fff; flex-shrink: 0; }
+.stat-big-body { flex: 1; min-width: 0; }
+.stat-big-title { font-size: 15px; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; }
+.stat-big-value { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.stat-big-bar { height: 8px; border-radius: 8px; background: color-mix(in srgb, var(--border-color) 40%, transparent); overflow: hidden; margin-bottom: 6px; }
+.stat-big-fill { height: 100%; border-radius: 8px; width: 0%; transition: width .5s; }
+.stat-big-sub { font-size: 12px; color: #888; }
+body.dark-mode .stat-big-sub { color: #aaa; }
+.stat-big-pct { min-width: 52px; height: 32px; padding: 0 10px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; }
+.c-income { background: color-mix(in srgb, var(--success) 8%, var(--card-bg)); }
+.c-income .stat-big-icon { background: var(--success); }
+.c-income .stat-big-fill { background: var(--success); }
+.c-income .stat-big-value, .c-income .stat-big-value span { color: var(--success) !important; }
+.c-income .stat-big-pct { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.c-expense { background: color-mix(in srgb, var(--danger) 8%, var(--card-bg)); }
+.c-expense .stat-big-icon { background: var(--danger); }
+.c-expense .stat-big-fill { background: var(--danger); }
+.c-expense .stat-big-value, .c-expense .stat-big-value span { color: var(--danger) !important; }
+.c-expense .stat-big-pct { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+.c-debt { background: color-mix(in srgb, #f59e0b 10%, var(--card-bg)); }
+.c-debt .stat-big-icon { background: #f59e0b; }
+.c-debt .stat-big-fill { background: #f59e0b; }
+.c-debt .stat-big-value, .c-debt .stat-big-value span { color: #f59e0b !important; }
+.c-debt .stat-big-pct { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #b26a00; }
+body.dark-mode .c-debt .stat-big-pct { color: #fbbf24; }
+.c-right { background: color-mix(in srgb, #10b981 8%, var(--card-bg)); }
+.c-right .stat-big-icon { background: #10b981; }
+.c-right .stat-big-fill { background: #10b981; }
+.c-right .stat-big-value, .c-right .stat-big-value span { color: #10b981 !important; }
+.c-right .stat-big-pct { background: color-mix(in srgb, #10b981 15%, transparent); color: #10b981; }
+.stats-mini {
+display: grid; grid-template-columns: repeat(4,1fr); background: color-mix(in srgb, var(--p) 8%, var(--card-bg));
+border: 1px solid var(--border-color); border-radius: 18px; padding: 14px 8px; margin-bottom: 12px; box-shadow: var(--shadow-light);
+}
+.mini-stat { text-align: center; padding: 4px 6px; }
+.mini-stat:not(:last-child) { border-left: 1px solid var(--border-color); }
+.mini-icon { width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1em; }
+.mi-ops { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #f59e0b; }
+.mi-exp { background: color-mix(in srgb, var(--p) 15%, transparent); color: var(--p); }
+.mi-goal { background: color-mix(in srgb, #8b5cf6 15%, transparent); color: #8b5cf6; }
+.mi-net { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.mini-title { font-size: 12.5px; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; }
+.mini-value { font-size: 17px; font-weight: 800; margin-bottom: 2px; }
+.mv-ops { color: #f59e0b; }
+.mv-exp { color: var(--p); }
+.mv-goal { color: #8b5cf6; }
+.mv-net { color: var(--success); }
+.stats-mini .balance-positive, .stats-mini .balance-positive span { color: var(--success) !important; }
+.stats-mini .balance-negative, .stats-mini .balance-negative span { color: var(--danger) !important; }
+.mini-sub { font-size: 11px; color: #888; }
+body.dark-mode .mini-sub { color: #aaa; }
+@media (max-width: 420px) { .stats-mini { grid-template-columns: repeat(2,1fr); row-gap: 12px; } .mini-stat:nth-child(2) { border-left: none; } }
+.stat-status { display: flex; align-items: center; gap: 12px; border-radius: 18px; padding: 14px 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-light); }
+.stat-status.good { background: color-mix(in srgb, var(--p) 10%, var(--card-bg)); }
+.stat-status.bad { background: color-mix(in srgb, var(--danger) 10%, var(--card-bg)); }
+.stat-status-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2em; flex-shrink: 0; }
+.stat-status.good .stat-status-icon { background: color-mix(in srgb, var(--p) 15%, transparent); color: #fbbf24; }
+.stat-status.bad .stat-status-icon { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+.stat-status-body { flex: 1; }
+.stat-status-title { font-weight: 800; font-size: 15px; color: var(--text-dark); display: flex; align-items: center; gap: 6px; }
+.stat-status.good .stat-status-title i { color: var(--success); }
+.stat-status.bad .stat-status-title i { color: var(--danger); }
+.stat-status-msg { font-size: 12.5px; color: #666; margin-top: 2px; }
+body.dark-mode .stat-status-msg { color: #aaa; }
+.stat-status-arrow { color: #888; }
 /* ============ SECTION HINTS ============ */
 .section-hint {
 display: block; padding: 10px 14px; margin: 6px 0 12px; border-radius: 10px;
@@ -544,43 +622,6 @@ width: 90px; height: 90px; line-height: 90px; border-radius: 50%; margin: 0 auto
 .notif-summary { grid-template-columns: 1fr; }
 .notif-item .notif-head { flex-direction: column; align-items: flex-start; }
 }
-/* ============================================================
-✔✔✔ MODERN CONFIRM DIALOG — نافذة التأكيد العصرية
-(تعمل تلقائياً في الوضعين النهاري والليلي عبر متغيرات CSS)
-============================================================ */
-.confirm-overlay {
-position: fixed; inset: 0; background: rgba(0,0,0,.55);
-backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-display: none; align-items: center; justify-content: center; z-index: 500; padding: 20px;
-}
-.confirm-overlay.show { display: flex; animation: cfFade .25s ease; }
-.confirm-dialog {
-background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px;
-padding: 28px 22px 20px; max-width: 340px; width: 100%; text-align: center;
-box-shadow: 0 24px 70px rgba(0,0,0,.35); animation: cfPop .35s cubic-bezier(.34,1.56,.64,1);
-}
-.confirm-icon {
-width: 74px; height: 74px; border-radius: 50%; margin: 0 auto 16px;
-display: flex; align-items: center; justify-content: center; font-size: 30px;
-}
-.confirm-icon.danger { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
-.confirm-icon.warning { background: color-mix(in srgb, var(--warning) 16%, transparent); color: #b26a00; }
-body.dark-mode .confirm-icon.warning { color: var(--warning); }
-.confirm-dialog h3 { margin: 0 0 8px; font-size: 19px; font-weight: 800; color: var(--text-dark); }
-.confirm-dialog p { margin: 0 0 20px; font-size: 14.5px; line-height: 1.8; color: #888; }
-body.dark-mode .confirm-dialog p { color: #aaa; }
-.confirm-actions { display: flex; gap: 10px; }
-.confirm-actions button {
-flex: 1; padding: 13px; border-radius: 14px; font-size: 15px; font-weight: 800;
-cursor: pointer; font-family: inherit; transition: transform .15s, box-shadow .2s; border: none;
-}
-.confirm-actions button:active { transform: scale(.96); }
-.confirm-cancel { background: var(--input-bg); color: var(--text-dark); border: 1px solid var(--border-color) !important; }
-.confirm-cancel:hover { background: color-mix(in srgb, var(--input-bg) 85%, #999); }
-.confirm-ok { background: linear-gradient(135deg, var(--danger), #c9184a); color: #fff; box-shadow: 0 6px 18px rgba(239,71,111,.35); }
-.confirm-ok:hover { box-shadow: 0 8px 24px rgba(239,71,111,.5); transform: translateY(-1px); }
-@keyframes cfFade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes cfPop { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 /* ============ RESPONSIVE ============ */
 @media (max-width: 400px) {
 .bottom-nav .nav-item span { font-size: 11px; }
