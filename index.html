@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="appTitle">ميزانيتك الذكية | Smart Budget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,7 +15,7 @@
 <header>
 <button onclick="openSidebar()" aria-label="menu"><i class="fas fa-bars"></i></button>
 <div class="title" data-i18n="appTitleShort">ميزانيتك المالية الذكية</div>
-<button id="notificationBell" onclick="openNotifications()" aria-label="notifications"><i class="fas fa-bell"></i><span id="notifBadge" class="notif-badge" style="display:none;">0</span></button>
+<button id="notificationBell" onclick="openNotifications()" aria-label="notifications"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge" style="display:none;">0</span></button>
 </header>
 
 <!-- ============ OVERVIEW ============ -->
@@ -29,72 +30,15 @@
 <button class="action balance-log" onclick="openBalanceLogModal()"><i class="fas fa-history"></i><span data-i18n="balanceLog">سجل حركات الرصيد</span></button>
 </div>
 </div>
-
-<!-- ✔ ملخص الإحصائيات — التصميم الجديد -->
 <div class="stats-summary">
-<div class="stats-head">
-<h3 class="stats-title"><i class="fas fa-chart-line"></i> <span data-i18n="statsSummary">ملخص الإحصائيات</span></h3>
-<div class="stats-period-wrap"><i class="far fa-calendar-alt"></i><span data-i18n="periodMonth">هذا الشهر</span><i class="fas fa-chevron-down"></i></div>
-</div>
-
-<div class="stat-big c-income">
-<div class="stat-big-icon"><i class="fas fa-chart-line"></i></div>
-<div class="stat-big-body">
-<div class="stat-big-title" data-i18n="totalIncome">إجمالي الدخل</div>
-<div class="stat-big-value" id="sIncTotal">0 ﷼</div>
-<div class="stat-big-bar"><div class="stat-big-fill" id="sIncBar"></div></div>
-<div class="stat-big-sub" id="sIncSub"></div>
-</div>
-<div class="stat-big-pct" id="sIncPct">0%</div>
-</div>
-
-<div class="stat-big c-expense">
-<div class="stat-big-icon"><i class="fas fa-shopping-cart"></i></div>
-<div class="stat-big-body">
-<div class="stat-big-title" data-i18n="totalExpenses">إجمالي المصروفات</div>
-<div class="stat-big-value" id="sExpTotal">0 ﷼</div>
-<div class="stat-big-bar"><div class="stat-big-fill" id="sExpBar"></div></div>
-<div class="stat-big-sub" id="sExpSub"></div>
-</div>
-<div class="stat-big-pct" id="sExpPct">0%</div>
-</div>
-
-<div class="stat-big c-debt">
-<div class="stat-big-icon"><i class="fas fa-credit-card"></i></div>
-<div class="stat-big-body">
-<div class="stat-big-title" data-i18n="debtsPaid">المدفوع من الالتزامات</div>
-<div class="stat-big-value" id="sDebPaid">0 ﷼</div>
-<div class="stat-big-bar"><div class="stat-big-fill" id="sDebBar"></div></div>
-<div class="stat-big-sub" id="sDebSub"></div>
-</div>
-<div class="stat-big-pct" id="sDebPct">0%</div>
-</div>
-
-<div class="stat-big c-right">
-<div class="stat-big-icon"><i class="fas fa-handshake"></i></div>
-<div class="stat-big-body">
-<div class="stat-big-title" data-i18n="rightsCollected">المحصل من الحقوق</div>
-<div class="stat-big-value" id="sRigPaid">0 ﷼</div>
-<div class="stat-big-bar"><div class="stat-big-fill" id="sRigBar"></div></div>
-<div class="stat-big-sub" id="sRigSub"></div>
-</div>
-<div class="stat-big-pct" id="sRigPct">0%</div>
-</div>
-
-<div class="stats-mini">
-<div class="mini-stat"><div class="mini-icon mi-ops"><i class="far fa-calendar-check"></i></div><div class="mini-title" id="sOpsTitle"></div><div class="mini-value mv-ops" id="sOpsCount">0</div><div class="mini-sub" id="sOpsSub"></div></div>
-<div class="mini-stat"><div class="mini-icon mi-exp"><i class="fas fa-chart-pie"></i></div><div class="mini-title" id="sExpRatioTitle"></div><div class="mini-value mv-exp" id="sExpRatio">0%</div><div class="mini-sub" id="sExpRatioSub"></div></div>
-<div class="mini-stat"><div class="mini-icon mi-goal"><i class="fas fa-bullseye"></i></div><div class="mini-title" id="sGoalTitle"></div><div class="mini-value mv-goal" id="sGoalRatio">0%</div><div class="mini-sub" id="sGoalSub"></div></div>
-<div class="mini-stat"><div class="mini-icon mi-net"><i class="fas fa-wallet"></i></div><div class="mini-title" id="sNetTitle"></div><div class="mini-value mv-net" id="sNet">0 ﷼</div><div class="mini-sub" id="sNetSub"></div></div>
-</div>
-
-<div class="stat-status good" id="sStatusBanner">
-<div class="stat-status-icon"><i class="fas fa-lightbulb"></i></div>
-<div class="stat-status-body">
-<div class="stat-status-title"><i class="fas fa-check-circle" id="sStatusIcon"></i> <span id="sStatusTitle"></span></div>
-<div class="stat-status-msg" id="sStatusMsg"></div>
-</div>
-<i class="fas fa-chevron-left stat-status-arrow"></i>
+<h3 class="stats-title" data-i18n="statsSummary">ملخص الإحصائيات</h3>
+<div class="stats-grid">
+<div class="stat-card stat-income"><h3 data-i18n="totalIncome">إجمالي الدخل</h3><p id="sIncTotal">0 ﷼</p></div>
+<div class="stat-card stat-expense"><h3 data-i18n="totalExpenses">إجمالي المصروفات</h3><p id="sExpTotal">0 ﷼</p></div>
+<div class="stat-card stat-rights-total"><h3 data-i18n="totalRights">إجمالي الحقوق المستحقة</h3><p id="sRigTotal">0 ﷼</p></div>
+<div class="stat-card stat-rights-paid"><h3 data-i18n="rightsCollected">المحصل من الحقوق</h3><p id="sRigPaid">0 ﷼</p></div>
+<div class="stat-card stat-debt-total"><h3 data-i18n="totalDebts">إجمالي الالتزامات الكلية</h3><p id="sDebTotal">0 ﷼</p></div>
+<div class="stat-card stat-debt-paid"><h3 data-i18n="debtsPaid">المدفوع من الالتزامات</h3><p id="sDebPaid">0 ﷼</p></div>
 </div>
 </div>
 </div>
@@ -103,7 +47,7 @@
 <div id="income" class="section">
 <span class="edit-indicator" id="incEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</span>
-<input id="iAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<input id="iAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal">
 <select id="iType">
 <option value="" disabled selected data-i18n="incomeCategoryPlaceholder">📂 فئة الدخل</option>
 <option value="راتب" data-i18n="incomeSalary">💼 راتب</option>
@@ -127,7 +71,7 @@
 <div id="expenses" class="section">
 <span class="edit-indicator" id="expEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</span>
-<input id="eAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<input id="eAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal">
 <select id="eType">
 <option value="" disabled selected data-i18n="expenseCategoryPlaceholder">🛒 الفئة (نفقات متغيرة)</option>
 <option value="طعام" data-i18n="expenseFood">🍽️ طعام</option>
@@ -147,7 +91,7 @@
 <input id="eDesc" type="text" placeholder="📝 وصف / ملاحظة" data-i18n-placeholder="descriptionNotes">
 <button class="secondary" onclick="showImageSourceModal()" data-i18n="attachInvoice">إرفاق صورة الفاتورة (اختياري)</button>
 <span id="eImgName" style="font-size:0.85em;color:#888;display:block;"></span>
-<input type="file" id="eImgCamera" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(this)">
+<input type="file" id="eImgCamera" accept="image/*" style="display:none;" onchange="handleImageSelect(this)">
 <input type="file" id="eImgGallery" accept="image/*" style="display:none;" onchange="handleImageSelect(this)">
 <button class="action" onclick="addExpense()" data-i18n="saveExpense">حفظ المصروف</button>
 <button class="secondary" onclick="openLog('exp')" data-i18n="expenseLog">سجل المصروفات</button>
@@ -158,6 +102,8 @@
 <span class="edit-indicator" id="rigEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل «المبلغ المحصل»</span>
 <span class="section-hint warning" data-i18n="rightsWarning">⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</span>
+<input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" data-i18n-placeholder="totalDueAmount" oninput="formatAmount(this)" inputmode="decimal">
+<div id="rDynamicFields"></div>
 <select id="rType" onchange="updateRightFields(this.value)">
 <option value="" disabled selected data-i18n="rightTypePlaceholder">🤝 نوع الحق</option>
 <option value="بيع آجل" data-i18n="rightCreditSale">🛒 بيع آجل</option>
@@ -166,8 +112,6 @@
 <option value="شراكة" data-i18n="rightPartnership">🤝 شراكة</option>
 <option value="حق آخر" data-i18n="rightOther">📦 حق آخر</option>
 </select>
-<input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" data-i18n-placeholder="totalDueAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
-<div id="rDynamicFields"></div>
 <input id="rEntity" type="text" placeholder="👤 الجهة / المدين (اسم الشخص أو المؤسسة)" data-i18n-placeholder="entityDebtor">
 <div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="rDueDate" type="date"></div>
 <span class="field-hint" data-i18n="dueDateHint">تاريخ الاستحقاق المتوقع</span>
@@ -203,9 +147,10 @@
 <option value="👨‍‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
 <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
 <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
-<option value="أخرى" data-i18n="debtOther">📦 أخرى</option>
+<option value="📦 أخرى" data-i18n="debtOther">📦 أخرى</option>
 </select>
-<input id="dAmount" type="text" placeholder="💵 قيمة الفاتورة / القسط الحالي" data-i18n-placeholder="billAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<div id="dDynamicFields"></div>
+<input id="dAmount" type="text" placeholder="💵 قيمة الفاتورة / القسط الحالي" data-i18n-placeholder="billAmount" oninput="formatAmount(this)" inputmode="decimal">
 <input id="dEntity" type="text" placeholder="🏢 الجهة / الدائن" data-i18n-placeholder="entityCreditor" style="display:none;">
 <select id="dStatus">
 <option value="" disabled selected data-i18n="statusPlaceholder">✅ الحالة</option>
@@ -223,12 +168,11 @@
 </select>
 <span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
 <input id="dDesc" type="text" placeholder="📝 ملاحظات إضافية" data-i18n-placeholder="additionalNotes">
-<div id="dDynamicFields"></div>
 <button class="action" onclick="addDebt()" data-i18n="saveDebt">حفظ الالتزام</button>
 <button class="secondary" onclick="openLog('deb')" data-i18n="debtsLog">سجل الالتزامات</button>
 </div>
 
-<!-- ============ BOTTOM NAVIGATION ============ -->
+<!-- ============ BOTTOM NAV ============ -->
 <nav class="bottom-nav">
 <button class="nav-item" data-tab="income" onclick="openTabFromNav('income')"><i class="fas fa-arrow-down"></i><span data-i18n="navIncome">الدخل</span></button>
 <button class="nav-item" data-tab="expenses" onclick="openTabFromNav('expenses')"><i class="fas fa-arrow-up"></i><span data-i18n="navExpenses">مصروفات</span></button>
@@ -239,7 +183,7 @@
 
 <!-- ============ LOG MODAL ============ -->
 <div id="logModal" class="modal">
-<header><button onclick="closeLayer('log')"><i class="fas fa-times"></i></button><div class="title" data-i18n="searchLog">السجل</div></header>
+<header><button onclick="closeLayer('log')"><i class="fas fa-times"></i></button><div class="title" data-i18n="searchLog">🔍 بحث في السجل...</div></header>
 <div class="modal-content">
 <input id="search" type="text" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderLog()">
 <div class="log-filters">
@@ -263,7 +207,7 @@
 <header><button onclick="closeLayer('balanceAction')"><i class="fas fa-times"></i></button><div class="title" id="actionModalTitle" data-i18n="depositTitle">إيداع</div></header>
 <div class="modal-content">
 <p style="text-align:center;"><span data-i18n="currentBalanceLabel">رصيدك الحالي:</span> <span id="currentBalanceInAction"></span></p>
-<input id="bAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<input id="bAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal">
 <input id="bDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
 <div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="bDate" type="datetime-local"></div>
 <button class="action" onclick="processBalanceAction()" data-i18n="execute">تنفيذ</button>
@@ -317,9 +261,9 @@
 <span id="driveModalStatus" class="status disconnected" data-i18n="driveDisconnectedStatus">❌ غير متصل</span>
 <button class="refresh-btn" onclick="refreshBackupList()"><i class="fas fa-sync-alt"></i> <span data-i18n="refresh">تحديث</span></button>
 </div>
-<button class="drive-backup-btn" onclick="handleDriveBackup()"><i class="fas fa-cloud-upload-alt"></i> <span data-i18n="backupNew">حفظ نسخة احتياطية جديدة</span></button>
 <div id="driveBackupCount" class="backup-count">عدد النسخ المرفوعة: 0</div>
 <div id="driveBackupList"></div>
+<button class="drive-backup-btn" onclick="handleDriveBackup()"><i class="fas fa-cloud-upload-alt"></i> <span data-i18n="backupNew">حفظ نسخة احتياطية جديدة</span></button>
 </div>
 </div>
 
