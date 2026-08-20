@@ -110,6 +110,8 @@
 <option value="حق آخر" data-i18n="rightOther">📦 حق آخر</option>
 </select>
 <input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" data-i18n-placeholder="totalDueAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<!-- ✔✔✔ حقل «المبلغ المحصل» أصبح مباشرة أسفل «المبلغ الكلي» -->
+<div id="rDynamicFields"></div>
 <input id="rEntity" type="text" placeholder="👤 الجهة / المدين (اسم الشخص أو المؤسسة)" data-i18n-placeholder="entityDebtor">
 <div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="rDueDate" type="date"></div>
 <span class="field-hint" data-i18n="dueDateHint">تاريخ الاستحقاق المتوقع</span>
@@ -121,7 +123,6 @@
 </select>
 <span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
 <input id="rDesc" type="text" placeholder="📝 ملاحظات إضافية" data-i18n-placeholder="additionalNotes">
-<div id="rDynamicFields"></div>
 <button class="action" onclick="addRight()" data-i18n="saveRight">حفظ الحق</button>
 <button class="secondary" onclick="openLog('rig')" data-i18n="rightsLog">سجل الحقوق</button>
 </div>
@@ -143,7 +144,7 @@
 <option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
 <option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
 <option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-<option value="👨‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
+<option value="👨‍ التزامات عائلية" data-i18n="debtFamily">👨‍‍ التزامات عائلية</option>
 <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
 <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
 <option value="أخرى" data-i18n="debtOther">📦 أخرى</option>
@@ -293,7 +294,7 @@
 <header><button onclick="closeLayer('language')"><i class="fas fa-times"></i></button><div class="title" data-i18n="languageSelectTitle">اختر اللغة</div></header>
 <div class="modal-content">
 <button class="secondary" onclick="setLanguage('ar')">🇸🇦 العربية <i id="langCheckAr" class="fas fa-check" style="color:var(--success);"></i></button>
-<button class="secondary" onclick="setLanguage('en')">🇬🇧 English <i id="langCheckEn" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
+<button class="secondary" onclick="setLanguage('en')">🇬 English <i id="langCheckEn" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
 <button class="secondary" onclick="setLanguage('ur')">🇵🇰 اردو <i id="langCheckUr" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
 </div>
 </div>
