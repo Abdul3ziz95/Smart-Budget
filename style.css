@@ -75,7 +75,7 @@ transition: all 0.2s; cursor: pointer; font-family: inherit; font-size: 16px; fo
 .balance-actions .deposit i { color: var(--success); }
 .balance-actions .withdraw i { color: var(--danger); }
 .balance-actions .balance-log i { color: var(--p); }
-/* ============ OVERVIEW — ملخص الإحصائيات ============ */
+/* ============ OVERVIEW — ملخص الإحصائيات (القديم) ============ */
 .stats-summary { margin-bottom: 15px; }
 .stats-title { font-size: 18px; font-weight: 800; margin: 0 0 12px; color: var(--text-dark); }
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -107,6 +107,84 @@ body.dark-mode #sDebTotal span:not(.currency-symbol) { color: #fbbf24; }
 body.dark-mode #sDebPaid span:not(.currency-symbol) { color: #f87171; }
 .stats-grid .currency-symbol { color: var(--p) !important; }
 @media (max-width: 340px) { .stats-grid { grid-template-columns: 1fr; } }
+/* ============ NEW STATS SUMMARY (مثل الصورة) ============ */
+.stats-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+.stats-head .stats-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; font-weight: 800; color: var(--text-dark); }
+.stats-head .stats-title i { color: var(--p); font-size: 1.2em; }
+.stats-period-wrap {
+display: flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1px solid var(--border-color);
+border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow-light); color: var(--text-dark); font-weight: 700; font-size: 14px;
+}
+.stats-period-wrap .fa-chevron-down { font-size: .8em; }
+.stat-big {
+display: flex; align-items: center; gap: 12px; border-radius: 18px; padding: 16px; margin-bottom: 12px;
+box-shadow: var(--shadow-light); border: 1px solid var(--border-color);
+}
+.stat-big .stat-big-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4em; color: #fff; flex-shrink: 0; }
+.stat-big-body { flex: 1; min-width: 0; }
+.stat-big-title { font-size: 15px; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; }
+.stat-big-value { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.stat-big-bar { height: 8px; border-radius: 8px; background: color-mix(in srgb, var(--border-color) 40%, transparent); overflow: hidden; margin-bottom: 6px; }
+.stat-big-fill { height: 100%; border-radius: 8px; width: 0%; transition: width .5s; }
+.stat-big-sub { font-size: 12px; color: #888; }
+body.dark-mode .stat-big-sub { color: #aaa; }
+.stat-big-pct { min-width: 52px; height: 32px; padding: 0 10px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; }
+.c-income { background: color-mix(in srgb, var(--success) 8%, var(--card-bg)); }
+.c-income .stat-big-icon { background: var(--success); }
+.c-income .stat-big-fill { background: var(--success); }
+.c-income .stat-big-value, .c-income .stat-big-value span { color: var(--success) !important; }
+.c-income .stat-big-pct { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.c-expense { background: color-mix(in srgb, var(--danger) 8%, var(--card-bg)); }
+.c-expense .stat-big-icon { background: var(--danger); }
+.c-expense .stat-big-fill { background: var(--danger); }
+.c-expense .stat-big-value, .c-expense .stat-big-value span { color: var(--danger) !important; }
+.c-expense .stat-big-pct { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+.c-debt { background: color-mix(in srgb, #f59e0b 10%, var(--card-bg)); }
+.c-debt .stat-big-icon { background: #f59e0b; }
+.c-debt .stat-big-fill { background: #f59e0b; }
+.c-debt .stat-big-value, .c-debt .stat-big-value span { color: #f59e0b !important; }
+.c-debt .stat-big-pct { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #b26a00; }
+body.dark-mode .c-debt .stat-big-pct { color: #fbbf24; }
+.c-right { background: color-mix(in srgb, #10b981 8%, var(--card-bg)); }
+.c-right .stat-big-icon { background: #10b981; }
+.c-right .stat-big-fill { background: #10b981; }
+.c-right .stat-big-value, .c-right .stat-big-value span { color: #10b981 !important; }
+.c-right .stat-big-pct { background: color-mix(in srgb, #10b981 15%, transparent); color: #10b981; }
+.stats-mini {
+display: grid; grid-template-columns: repeat(4,1fr); background: color-mix(in srgb, var(--p) 8%, var(--card-bg));
+border: 1px solid var(--border-color); border-radius: 18px; padding: 14px 8px; margin-bottom: 12px; box-shadow: var(--shadow-light);
+}
+.mini-stat { text-align: center; padding: 4px 6px; }
+.mini-stat:not(:last-child) { border-left: 1px solid var(--border-color); }
+.mini-icon { width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1em; }
+.mi-ops { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #f59e0b; }
+.mi-exp { background: color-mix(in srgb, var(--p) 15%, transparent); color: var(--p); }
+.mi-goal { background: color-mix(in srgb, #8b5cf6 15%, transparent); color: #8b5cf6; }
+.mi-net { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.mini-title { font-size: 12.5px; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; }
+.mini-value { font-size: 17px; font-weight: 800; margin-bottom: 2px; }
+.mv-ops { color: #f59e0b; }
+.mv-exp { color: var(--p); }
+.mv-goal { color: #8b5cf6; }
+.mv-net { color: var(--success); }
+.stats-mini .balance-positive, .stats-mini .balance-positive span { color: var(--success) !important; }
+.stats-mini .balance-negative, .stats-mini .balance-negative span { color: var(--danger) !important; }
+.mini-sub { font-size: 11px; color: #888; }
+body.dark-mode .mini-sub { color: #aaa; }
+@media (max-width: 420px) { .stats-mini { grid-template-columns: repeat(2,1fr); row-gap: 12px; } .mini-stat:nth-child(2) { border-left: none; } }
+.stat-status { display: flex; align-items: center; gap: 12px; border-radius: 18px; padding: 14px 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-light); }
+.stat-status.good { background: color-mix(in srgb, var(--p) 10%, var(--card-bg)); }
+.stat-status.bad { background: color-mix(in srgb, var(--danger) 10%, var(--card-bg)); }
+.stat-status-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2em; flex-shrink: 0; }
+.stat-status.good .stat-status-icon { background: color-mix(in srgb, var(--p) 15%, transparent); color: #fbbf24; }
+.stat-status.bad .stat-status-icon { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+.stat-status-body { flex: 1; }
+.stat-status-title { font-weight: 800; font-size: 15px; color: var(--text-dark); display: flex; align-items: center; gap: 6px; }
+.stat-status.good .stat-status-title i { color: var(--success); }
+.stat-status.bad .stat-status-title i { color: var(--danger); }
+.stat-status-msg { font-size: 12.5px; color: #666; margin-top: 2px; }
+body.dark-mode .stat-status-msg { color: #aaa; }
+.stat-status-arrow { color: #888; }
 /* ============ SECTION HINTS ============ */
 .section-hint {
 display: block; padding: 10px 14px; margin: 6px 0 12px; border-radius: 10px;
@@ -252,7 +330,7 @@ background: color-mix(in srgb, var(--danger) 15%, transparent); transition: back
 .sidebar-switch-item .switch { margin-right: auto; position: relative; display: inline-block; width: 45px; height: 25px; }
 .sidebar-switch-item .switch input { opacity: 0; width: 0; height: 0; }
 .sidebar-switch-item .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .4s; border-radius: 25px; }
-.sidebar-switch-item .slider:before { position: absolute; content: " "; height: 19px; width: 19px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+.sidebar-switch-item .slider:before { position: absolute; content: ""; height: 19px; width: 19px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
 .sidebar-switch-item input:checked+.slider { background-color: var(--p); }
 .sidebar-switch-item input:checked+.slider:before { transform: translateX(20px); }
 .sidebar-currency-item {
@@ -419,7 +497,9 @@ border-radius: 50%; background: rgba(72,202,228,0.2); transition: background 0.3
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); } 70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
 /* ============================================================
 🔔 NOTIFICATION SYSTEM — نظام التنبيهات الكامل
+(الجرس + المقروء/غير المقروء + حق/التزام)
 ============================================================ */
+/* ✔ زر الجرس في الهيدر + أنيميشن الاهتزاز */
 #notificationBell { position: relative; }
 #notificationBell i { display: inline-block; animation: bellRing 4s ease-in-out infinite; transform-origin: top center; }
 @keyframes bellRing {
@@ -431,6 +511,7 @@ border-radius: 50%; background: rgba(72,202,228,0.2); transition: background 0.3
 90% { transform: rotate(3deg); }
 92% { transform: rotate(0); }
 }
+/* ✔ شارة عدد التنبيهات غير المقروءة على الجرس */
 .notif-badge {
 position: absolute; top: -5px; right: -2px;
 background: var(--danger); color: #fff;
@@ -442,6 +523,7 @@ border: 2px solid var(--p);
 animation: pulse 1.5s infinite;
 pointer-events: none; z-index: 2;
 }
+/* ✔ شريط الملخص داخل مودال التنبيهات */
 .notif-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 14px; }
 .notif-summary .notif-sum-card {
 background: var(--input-bg); border: 1px solid var(--border-color);
@@ -456,6 +538,7 @@ body.dark-mode .notif-summary .notif-sum-card .sum-label { color: #aaa; }
 .notif-summary .notif-sum-card.upcoming-card { border-top: 4px solid var(--warning); }
 .notif-summary .notif-sum-card.upcoming-card .sum-value { color: #8a6d00; }
 body.dark-mode .notif-summary .notif-sum-card.upcoming-card .sum-value { color: var(--warning); }
+/* ✔ عناوين المجموعات (غير مقروءة / مقروءة) */
 .notif-group-title {
 font-size: 0.95em; font-weight: 800; margin: 16px 0 8px;
 display: flex; align-items: center; gap: 8px; color: var(--text-dark);
@@ -467,15 +550,18 @@ body.dark-mode .notif-group-title.read-title { color: #aaa; }
 background: var(--input-bg); border: 1px solid var(--border-color);
 border-radius: 12px; padding: 1px 10px; font-size: 0.85em;
 }
+/* ✔ عنصر التنبيه — الحالة الأساسية */
 .notif-item {
 background: var(--card-bg); padding: 16px; border-radius: 14px; margin-bottom: 10px;
 box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-right: 5px solid var(--s);
 transition: all 0.2s; color: var(--text-dark);
 }
+/* ✔ تنبيه غير مقروء (متأخر / قادم) — بارز وقابل للنقر */
 .notif-item.overdue, .notif-item.upcoming { cursor: pointer; }
 .notif-item.overdue { border-right-color: var(--danger); background: color-mix(in srgb, var(--danger) 5%, var(--card-bg)); }
 .notif-item.upcoming { border-right-color: var(--warning); background: color-mix(in srgb, var(--warning) 6%, var(--card-bg)); }
 .notif-item.overdue:hover, .notif-item.upcoming:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+/* ✔ تنبيه مقروء — باهت وغير قابل للنقر */
 .notif-item.read {
 border-right-color: #ccc;
 background: color-mix(in srgb, var(--card-bg) 95%, #999);
@@ -488,12 +574,14 @@ opacity: 0.65; cursor: default;
 .notif-item.read .notif-body { color: #aaa; }
 .notif-item.read .notif-entity { color: #bbb; }
 body.dark-mode .notif-item.read { border-right-color: #555; background: color-mix(in srgb, var(--card-bg) 90%, #666); }
+/* ✔ رأس عنصر التنبيه */
 .notif-item .notif-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .notif-item .notif-name { font-weight: 800; font-size: 1em; }
 .notif-item .notif-name i { margin-left: 7px; }
 .notif-item.overdue .notif-name i { color: var(--danger); }
 .notif-item.upcoming .notif-name i { color: #b8860b; }
 body.dark-mode .notif-item.upcoming .notif-name i { color: var(--warning); }
+/* ✔ شارات الحالة (متأخر / قادم / مقروء) */
 .notif-item .notif-tag { font-size: 0.72em; font-weight: 800; padding: 3px 12px; border-radius: 20px; white-space: nowrap; }
 .notif-item.overdue .notif-tag { background: var(--danger); color: #fff; }
 .notif-item.upcoming .notif-tag { background: var(--warning); color: #333; }
@@ -501,6 +589,7 @@ body.dark-mode .notif-item.upcoming .notif-name i { color: var(--warning); }
 .notif-item.read .notif-tag.read-tag { background: #e0e0e0; color: #666; }
 body.dark-mode .notif-tag.read-tag,
 body.dark-mode .notif-item.read .notif-tag.read-tag { background: #444; color: #aaa; }
+/* ✔ شارة "حق لك" / "التزام عليك" */
 .notif-type-badge {
 display: inline-flex; align-items: center; gap: 6px;
 color: #fff; font-size: 0.8em; font-weight: 800;
@@ -509,6 +598,7 @@ margin: 6px 0 10px; white-space: nowrap;
 }
 .notif-type-badge i { font-size: 0.9em; }
 .notif-item.read .notif-type-badge { opacity: 0.5; }
+/* ✔ جسم عنصر التنبيه (المبلغ + التاريخ) */
 .notif-item .notif-body { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.9em; color: #666; flex-wrap: wrap; }
 body.dark-mode .notif-item .notif-body { color: #aaa; }
 .notif-item .notif-amount { font-weight: 800; color: var(--text-dark); }
@@ -516,8 +606,10 @@ body.dark-mode .notif-item .notif-body { color: #aaa; }
 .notif-item .notif-date i, .notif-item .notif-entity i { margin-left: 5px; }
 .notif-item .notif-entity { font-size: 0.85em; color: #888; margin-top: 6px; display: block; }
 body.dark-mode .notif-item .notif-entity { color: #aaa; }
+/* ✔ مؤشر "اضغط للعرض" في التنبيهات غير المقروءة */
 .notif-read-hint { font-size: 0.75em; color: var(--p); margin-top: 8px; display: block; font-weight: 700; }
 body.dark-mode .notif-read-hint { color: #90e0ef; }
+/* ✔ حالة عدم وجود تنبيهات */
 .notif-empty-state { text-align: center; color: #999; padding: 40px 10px; }
 .notif-empty-state i {
 font-size: 3.2em; display: block; margin-bottom: 16px; color: var(--success);
