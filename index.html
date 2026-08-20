@@ -46,7 +46,6 @@
 <div id="income" class="section">
 <span class="edit-indicator" id="incEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</span>
-<div class="card">
 <input id="iAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
 <select id="iType">
 <option value="" disabled selected data-i18n="incomeCategoryPlaceholder">📂 فئة الدخل</option>
@@ -61,18 +60,16 @@
 <option value="المعاش التقاعدي" data-i18n="incomePension">🧓 المعاش التقاعدي</option>
 <option value="دخل آخر" data-i18n="incomeOther">📦 دخل آخر</option>
 </select>
-<input id="iDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
 <div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="iDate" type="date"></div>
+<input id="iDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
 <button class="action" onclick="addIncome()" data-i18n="saveIncome">حفظ الدخل</button>
 <button class="secondary" onclick="openLog('inc')" data-i18n="incomeLog">سجل الدخل</button>
-</div>
 </div>
 
 <!-- ============ EXPENSES ============ -->
 <div id="expenses" class="section">
 <span class="edit-indicator" id="expEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</span>
-<div class="card">
 <input id="eAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
 <select id="eType">
 <option value="" disabled selected data-i18n="expenseCategoryPlaceholder">🛒 الفئة (نفقات متغيرة)</option>
@@ -89,8 +86,8 @@
 <option value="صيانة وإصلاح" data-i18n="expenseMaintenance">🔧 صيانة وإصلاح</option>
 <option value="أخرى" data-i18n="expenseOther">📦 أخرى</option>
 </select>
-<input id="eDesc" type="text" placeholder="📝 وصف / ملاحظة" data-i18n-placeholder="descriptionNotes">
 <div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="eDate" type="date"></div>
+<input id="eDesc" type="text" placeholder="📝 وصف / ملاحظة" data-i18n-placeholder="descriptionNotes">
 <button class="secondary" onclick="showImageSourceModal()" data-i18n="attachInvoice">إرفاق صورة الفاتورة (اختياري)</button>
 <span id="eImgName" style="font-size:0.85em;color:#888;display:block;"></span>
 <input type="file" id="eImgCamera" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(this)">
@@ -98,14 +95,12 @@
 <button class="action" onclick="addExpense()" data-i18n="saveExpense">حفظ المصروف</button>
 <button class="secondary" onclick="openLog('exp')" data-i18n="expenseLog">سجل المصروفات</button>
 </div>
-</div>
 
 <!-- ============ RIGHTS ============ -->
 <div id="rights" class="section">
 <span class="edit-indicator" id="rigEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل «المبلغ المحصل»</span>
 <span class="section-hint warning" data-i18n="rightsWarning">⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</span>
-<div class="card">
 <select id="rType" onchange="updateRightFields(this.value)">
 <option value="" disabled selected data-i18n="rightTypePlaceholder">🤝 نوع الحق</option>
 <option value="بيع آجل" data-i18n="rightCreditSale">🛒 بيع آجل</option>
@@ -130,13 +125,11 @@
 <button class="action" onclick="addRight()" data-i18n="saveRight">حفظ الحق</button>
 <button class="secondary" onclick="openLog('rig')" data-i18n="rightsLog">سجل الحقوق</button>
 </div>
-</div>
 
 <!-- ============ DEBTS ============ -->
 <div id="debts" class="section">
 <span class="edit-indicator" id="debEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="debtsHint">* دفع الالتزامات يُخصم من رصيدك الحالي</span>
-<div class="card">
 <select id="dType" onchange="updateDebtFields(this.value)">
 <option value="" disabled selected data-i18n="debtTypePlaceholder">🧾 نوع الالتزام</option>
 <option value="🏠 إيجار" data-i18n="debtRent">🏠 إيجار</option>
@@ -150,7 +143,7 @@
 <option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
 <option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
 <option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-<option value="👨‍‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
+<option value="👨‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
 <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
 <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
 <option value="أخرى" data-i18n="debtOther">📦 أخرى</option>
@@ -176,7 +169,6 @@
 <div id="dDynamicFields"></div>
 <button class="action" onclick="addDebt()" data-i18n="saveDebt">حفظ الالتزام</button>
 <button class="secondary" onclick="openLog('deb')" data-i18n="debtsLog">سجل الالتزامات</button>
-</div>
 </div>
 
 <!-- ============ BOTTOM NAVIGATION ============ -->
@@ -213,13 +205,11 @@
 <div id="balanceActionModal" class="modal">
 <header><button onclick="closeLayer('balanceAction')"><i class="fas fa-times"></i></button><div class="title" id="actionModalTitle" data-i18n="depositTitle">إيداع</div></header>
 <div class="modal-content">
-<div class="card">
 <p style="text-align:center;"><span data-i18n="currentBalanceLabel">رصيدك الحالي:</span> <span id="currentBalanceInAction"></span></p>
 <input id="bAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
 <input id="bDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
 <div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="bDate" type="datetime-local"></div>
 <button class="action" onclick="processBalanceAction()" data-i18n="execute">تنفيذ</button>
-</div>
 </div>
 </div>
 
