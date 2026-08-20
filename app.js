@@ -170,6 +170,12 @@ _visualOpen(top.layer, top.data);
 // =============================================================
 let translations = {};
 let currentLang = localStorage.getItem('appLang') || 'ar';
+// ✔✔✔ مفاتيح إضافية مدمجة (تعمل حتى لو لم تُضف إلى lang.json)
+const EXTRA_LANG = {
+ar: { restoreWarningTitle: 'استعادة نسخة احتياطية', restoreWarning: 'تنبيه: سيتم حذف جميع البيانات الحالية واستبدالها بالنسخة المستعادة. لا يمكن التراجع عن هذه العملية.', deleteTitle: 'حذف المعاملة', deleteBtn: 'حذف' },
+en: { restoreWarningTitle: 'Restore Backup', restoreWarning: 'Warning: All current data will be deleted and replaced with the restored backup. This action cannot be undone.', deleteTitle: 'Delete Transaction', deleteBtn: 'Delete' },
+ur: { restoreWarningTitle: 'بیک اپ بحال کریں', restoreWarning: 'انتباہ: تمام موجودہ ڈیٹا حذف کر کے بحال شدہ بیک اپ سے بدل دیا جائے گا۔ اس عمل کو واپس نہیں کیا جا سکتا۔', deleteTitle: 'ٹرانزیکشن حذف کریں', deleteBtn: 'حذف کریں' }
+};
 function loadTranslations() {
 return fetch('lang.json')
 .then(res => {
@@ -284,12 +290,12 @@ if (lang === 'ar' || lang === 'ur') {
  });
  const langLabel = document.getElementById('sidebarLanguageLabel');
  if (langLabel) {
-     const langNames = { ar: '🇸 العربية', en: '🇧 English', ur: '🇵🇰 اردو' };
-     langLabel.textContent = langNames[lang] || '🇸🇦 العربية';
+     const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' };
+     langLabel.textContent = langNames[lang] || '🇸 العربية';
  }
  updateBalanceDisplay();
  updateStats();
- // ✔ إعادة بناء الفلاتر والسجلات المفتوحة فوراً (مع فحص آمن يمنع الانهيار)
+ // ✔ إعادة بناء الفلاتر عند تغيير اللغة (مع فحص آمن يمنع الانهيار)
  const logModal = document.getElementById('logModal');
  if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
  const balanceLogModal = document.getElementById('balanceLogModal');
@@ -303,8 +309,9 @@ if (lang === 'ar' || lang === 'ur') {
  // ✔✔✔ جديد: إعادة رسم شاشة التفاصيل فوراً عند تغيير اللغة
  const detailModal = document.getElementById('detailModal');
  if (detailModal && detailModal.style.display === 'flex' && editMode) {
-     const currentItem = db[editMode.type] ? db[editMode.type][editMode.index] : null;
-     if (currentItem) _renderDetailContent(currentItem, editMode.type);
+     const arr = db[editMode.type];
+     const o = arr && arr[editMode.index];
+     if (o) _renderDetailContent(o, editMode.type);
  }
  // ✔✔✔ جديد: إعادة بناء الحقول الديناميكية المترجمة (المبلغ المحصل...) إن كانت ظاهرة
  const rDyn = document.getElementById('rDynamicFields');
@@ -324,10 +331,10 @@ if (lang === 'ar' || lang === 'ur') {
  currentLang = lang;
 }
 function translate(key) {
-if (!translations[currentLang] || translations[currentLang][key] === undefined) {
-return translations['ar']?.[key] || key;
-}
-return translations[currentLang][key];
+if (translations[currentLang] && translations[currentLang][key] !== undefined) return translations[currentLang][key];
+if (EXTRA_LANG[currentLang] && EXTRA_LANG[currentLang][key] !== undefined) return EXTRA_LANG[currentLang][key];
+if (translations['ar'] && translations['ar'][key] !== undefined) return translations['ar'][key];
+return EXTRA_LANG.ar[key] || key;
 }
 function setLanguage(lang) {
 if (lang === currentLang) {
@@ -439,6 +446,7 @@ if (typeof gapi === 'undefined') {
  try {
      gapi.load('client', async () => {
          try {
+             // ✔✔✔ تم حذف apiKey الفارغ
              await gapi.client.init({
                  discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
              });
@@ -830,8 +838,10 @@ showLoading(translate('savingBackup'));
      toastMsg(translate('backupFailed') + ': ' + error.message, "error");
  }
 }
+// ✔✔✔ استعادة من Google Drive: نافذة تأكيد عصرية + حذف البيانات القديمة قبل الاستبدال
 async function restoreBackup(fileId) {
-if (!confirm(translate('confirmRestore'))) return;
+const ok = await showConfirm({ type: 'warning', icon: 'fa-cloud-arrow-down', title: translate('restoreWarningTitle'), message: translate('restoreWarning'), okText: translate('restore') });
+if (!ok) return;
 showLoading(translate('restoringData'));
  try {
      const response = await fetch(
@@ -844,6 +854,7 @@ showLoading(translate('restoringData'));
      }
      const text = await response.text();
      const imported = JSON.parse(text);
+     await clearAllStores(); // ✔ حذف البيانات القديمة أولاً
      if (imported.bal && Array.isArray(imported.bal.changes)) {
          imported.bal.clientId = 1;
          await addDataToStore('bal', [imported.bal]);
@@ -927,18 +938,18 @@ if (!IDB_connection) return toastMsg(translate('dbError'), "error");
  URL.revokeObjectURL(url);
  toastMsg(translate('exportSuccess'), "success");
 }
+// ✔✔✔ استعادة نسخة محلية: نافذة تأكيد عصرية + استبدال البيانات القديمة
 async function importData(event) {
 const file = event.target.files[0];
 if (!file) return;
-if (!confirm(translate('confirmImport'))) {
-     event.target.value = null;
-     return;
- }
+const ok = await showConfirm({ type: 'warning', icon: 'fa-file-import', title: translate('restoreWarningTitle'), message: translate('restoreWarning'), okText: translate('importData') });
+if (!ok) { event.target.value = null; return; }
  showLoading(translate('importingData'));
  const reader = new FileReader();
  reader.onload = async (e) => {
      try {
          const imported = JSON.parse(e.target.result);
+         await clearAllStores(); // ✔ حذف البيانات القديمة أولاً
          if (imported.bal && Array.isArray(imported.bal.changes)) {
              imported.bal.clientId = 1;
              await addDataToStore('bal', [imported.bal]);
@@ -1041,7 +1052,7 @@ const ARABIC_CURRENCIES = [
 { code: 'MAD', symbol: 'د.م', flag: '🇲🇦', name: { ar: 'الدرهم المغربي', en: 'Moroccan Dirham', ur: 'مراکشی درہم' } },
 { code: 'MRU', symbol: 'أ.م', flag: '🇲🇷', name: { ar: 'الأوقية الموريتانية', en: 'Mauritanian Ouguiya', ur: 'موریطانی اوگوئیا' } },
 { code: 'SOS', symbol: 'ش.ص', flag: '🇸🇴', name: { ar: 'الشلن الصومالي', en: 'Somali Shilling', ur: 'صومالی شلنگ' } },
-{ code: 'DJF', symbol: 'ف.ج', flag: '🇩🇯', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
+{ code: 'DJF', symbol: 'ف.ج', flag: '🇩', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
 { code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
 { code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
 { code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
@@ -1417,7 +1428,7 @@ const statusSelect = document.getElementById('dStatus');
 const entityInput = document.getElementById('dEntity');
 if (!container) return;
 container.innerHTML = '';
- const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍ رواتب', '💡 كهرباء', '💧 ماء'];
+ const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨💼 رواتب', '💡 كهرباء', '💧 ماء'];
  if (entityTypes.includes(type)) {
      if (entityInput) {
          entityInput.style.display = 'block';
@@ -1886,9 +1897,11 @@ const type = savedEdit.type;
      if (ind) ind.style.display = 'inline-block';
  }, 100);
 }
+// ✔✔✔ حذف المعاملة: نافذة تأكيد عصرية بدل confirm القديم
 async function deleteTransaction() {
 if (!editMode) return;
-if (!confirm(translate('confirmDeleteTransaction'))) return;
+const ok = await showConfirm({ type: 'danger', icon: 'fa-trash-can', title: translate('deleteTitle'), message: translate('confirmDeleteTransaction'), okText: translate('deleteBtn') });
+if (!ok) return;
 const type = editMode.type;
  const txn = db[type][editMode.index];
  if (!txn) return;
@@ -2177,7 +2190,7 @@ db.inc.forEach(i => incTotal += parseAmount(i.المبلغ));
 db.exp.forEach(i => expTotal += parseAmount(i.المبلغ));
 db.rig.forEach(i => { rigTotal += parseAmount(i.المبلغ); rigPaid += parseAmount(i.المبلغ_المضاف_للرصيد || 0); });
 db.deb.forEach(i => { debTotal += parseAmount(i.المبلغ_الكلي_للالتزام || i.المبلغ || 0); debPaid += parseAmount(i.المبلغ_المخصوم_للرصيد || 0); });
-const setHTML = (id, html) => { const elem = document.getElementById(id); if (elem) elem.innerHTML = html; };
+const setHTML = (id, htmlStr) => { const elem = document.getElementById(id); if (elem) elem.innerHTML = htmlStr; };
 setHTML('sIncTotal', '<span class="pulse-dot"></span>' + formatCurrency(incTotal, true));
 setHTML('sExpTotal', formatCurrency(expTotal, true));
 setHTML('sRigTotal', formatCurrency(rigTotal, rigTotal > 0));
@@ -2215,9 +2228,11 @@ closeLayer('currency');
 toastMsg(`${translate('currencySet')} ${getCurrencyName(sel)} 💱`, "success");
 }
 }
+// ✔✔✔ إعادة تعيين البيانات: نافذة تأكيد عصرية بدل confirm القديم
 function confirmResetData() {
 closeLayer('sidebar');
-if (confirm(translate('confirmReset'))) resetAllData();
+showConfirm({ type: 'danger', icon: 'fa-trash-can', title: translate('resetData'), message: translate('confirmReset'), okText: translate('resetData') })
+    .then(ok => { if (ok) resetAllData(); });
 }
 function resetAllData() {
 if (!IDB_connection) return toastMsg(translate('dbError'), "error");
@@ -2378,6 +2393,16 @@ currentBalance = parseAmount(db.bal.amount || 0);
 // 🔔 جديد: تحديث شارة الجرس بعد كل تحميل للبيانات
 updateNotificationBadge();
 }
+// ✔✔✔ مسح جميع المتاجر (يُستخدم عند الاستعادة للاستبدال الكامل)
+async function clearAllStores() {
+if (!IDB_connection) return;
+return new Promise((resolve, reject) => {
+    const tx = IDB_connection.transaction(STORE_NAMES, 'readwrite');
+    STORE_NAMES.forEach(sn => tx.objectStore(sn).clear());
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+});
+}
 // =============================================================
 // 17. DARK MODE
 // =============================================================
@@ -2425,4 +2450,38 @@ loadTranslations().then(() => {
      restoreDriveState();
  }, 1000);
 };
+// =============================================================
+// 19. ✔✔✔ نظام نوافذ التأكيد العصرية (بديل confirm المتصفح القديم)
+//     يعمل تلقائياً مع الوضعين النهاري والليلي عبر متغيرات CSS
+// =============================================================
+let _confirmResolver = null;
+function showConfirm(o) {
+return new Promise(resolve => {
+    const ov = document.getElementById('confirmOverlay');
+    if (!ov) { resolve(window.confirm(o.message)); return; } // ✔ بديل تلقائي إن لم تُضف النافذة في HTML
+    _confirmResolver = resolve;
+    const titleEl = document.getElementById('confirmTitle');
+    const msgEl = document.getElementById('confirmMessage');
+    const ic = document.getElementById('confirmIcon');
+    const okBtn = document.getElementById('confirmOkBtn');
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+    if (titleEl) titleEl.textContent = o.title || '';
+    if (msgEl) msgEl.textContent = o.message || '';
+    if (ic) {
+        ic.className = 'confirm-icon ' + (o.type || 'danger');
+        ic.innerHTML = '<i class="fas ' + (o.icon || 'fa-triangle-exclamation') + '"></i>';
+    }
+    if (okBtn) okBtn.textContent = o.okText || translate('deleteBtn');
+    if (cancelBtn) cancelBtn.textContent = translate('cancel');
+    ov.classList.add('show');
+});
+}
+function resolveConfirm(v) {
+const ov = document.getElementById('confirmOverlay');
+if (ov) ov.classList.remove('show');
+if (_confirmResolver) { _confirmResolver(v); _confirmResolver = null; }
+}
+function confirmBackdrop(e) {
+if (e.target && e.target.id === 'confirmOverlay') resolveConfirm(false);
+}
 console.log('ميزانيتك الذكية جاهزة ✅');
