@@ -120,20 +120,32 @@ if (layer.type === 'modal') {
     if (ov) ov.classList.remove('open');
 }
 }
+// =============================================================
+// ✔✔✔ إصلاح تعليقة فتح السجلات (مكدس التنقّل)
+// =============================================================
 function openLayer(layerName, data = {}) {
-if (historyStack.length && historyStack[historyStack.length - 1].layer === layerName) return;
+const alreadyTop = historyStack.length && historyStack[historyStack.length-1].layer === layerName;
 if (layerName === 'detail') {
-const o = db[data.logType]?.find(item => item.clientId === data.id || item.id === data.id);
-if (!o) { toastMsg(translate('notFound'), "error"); return; }
+    const o = db[data.logType]?.find(item => item.clientId === data.id || item.id === data.id);
+    if (!o) { toastMsg(translate('notFound'), "error"); return; }
+    const idx = db[data.logType].findIndex(item => item.clientId === data.id || item.id === data.id);
+    editMode = { type: data.logType, index: idx };
 }
-const state = { layer: layerName, data: data };
-historyStack.push(state);
-history.pushState(state, null, `#${layerName}`);
+if (!alreadyTop) {
+    const state = { layer: layerName, data: data };
+    historyStack.push(state);
+    history.pushState(state, null, `#${layerName}`);
+}
 _visualOpen(layerName, data);
 }
 function closeLayer(layerName, clearEdit = true) {
-const top = historyStack[historyStack.length - 1];
-if (top && top.layer === layerName) { history.back(); } else { _visualClose(layerName, clearEdit); }
+const top = historyStack[historyStack.length-1];
+if (top && top.layer === layerName) { history.back(); }
+else {
+    const idx = historyStack.findIndex(s => s.layer === layerName);
+    if (idx > -1) historyStack.splice(idx, 1);
+    _visualClose(layerName, clearEdit);
+}
 }
 function closeAllLayers() {
 while (historyStack.length > 1) {
@@ -176,14 +188,12 @@ console.error('Error loading translations:', err);
 translations = { ar: {}, en: {}, ur: {} };
 });
 }
-// ✔✔✔ خريطة الحقول (بالمعرّف ID) → مفتاح الترجمة (تعمل بدون data-i18n-placeholder)
 const PLACEHOLDER_I18N = {
 'iAmount': 'amountPlaceholder', 'eAmount': 'amountPlaceholder', 'bAmount': 'amountPlaceholder',
 'iDesc': 'notesOptional', 'eDesc': 'descriptionNotes', 'rDesc': 'additionalNotes', 'dDesc': 'additionalNotes',
 'rAmount': 'totalDueAmount', 'rEntity': 'entityDebtor', 'dAmount': 'billAmount', 'dEntity': 'entityCreditor',
 'search': 'searchLog', 'balanceSearch': 'searchLog', 'currencySearch': 'searchCurrency', 'exportFileName': 'fileName'
 };
-// ✔✔✔ خريطة خيارات القوائم (القيمة أو النص) → مفتاح الترجمة
 const OPTION_I18N = {
 'راتب': 'incomeSalary', 'عمل حر': 'incomeFreelance', 'تجارة': 'incomeBusiness', 'استثمار': 'incomeInvestment', 'عمولة': 'incomeCommission', 'هدية': 'incomeGift', 'مكافأة': 'incomeBonus', 'الضمان الاجتماعي': 'incomeSocialSecurity', 'المعاش التقاعدي': 'incomePension', 'دخل آخر': 'incomeOther',
 'طعام': 'expenseFood', 'مواصلات': 'expenseTransport', 'وقود': 'expenseFuel', 'مقاهي': 'expenseCafe', 'رعاية شخصية': 'expensePersonalCare', 'أجهزة إلكترونية': 'expenseElectronics', 'صحة': 'expenseHealth', 'ترفيه': 'expenseEntertainment', 'تسوق': 'expenseShopping', 'تعليم': 'expenseEducation', 'صيانة وإصلاح': 'expenseMaintenance', 'أخرى': 'expenseOther',
@@ -195,13 +205,11 @@ const OPTION_I18N = {
 '⏱️ 1 Hour before': 'notif1Hour', '⏱️ 24 Hours before': 'notif24Hours', '⏱️ 7 Days before': 'notif7Days',
 '⏱️ 1 گھنٹہ پہلے': 'notif1Hour', '⏱️ 24 گھنٹے پہلے': 'notif24Hours', '⏱️ 7 دن پہلے': 'notif7Days'
 };
-// ✔ ترجمة قيمة مخزنة (فئة/نوع/حالة) عند العرض — التخزين يبقى عربياً
 function translateStoredValue(val) {
 if (!val || typeof val !== 'string') return val || '';
 const key = OPTION_I18N[val.trim()];
 return key ? translate(key) : val;
 }
-// ✔ ترجمة عناوين حقول البيانات (التفاصيل والتنبيهات)
 const FIELD_LABELS = {
 'النوع': { ar: 'النوع', en: 'Type', ur: 'قسم' },
 'الفئة': { ar: 'الفئة', en: 'Category', ur: 'زمرہ' },
@@ -250,7 +258,6 @@ if ((key === 'تاريخ_الاستحقاق' || key === 'التاريخ') && /^\
 const isAmt = key.includes('المبلغ') || key.includes('المدفوع') || key.includes('المتبقي') || key.includes('القسط') || key.includes('إجمالي');
 return isAmt ? formatCurrency(val, true) : translateStoredValue(val);
 }
-// ✔✔✔ ترجمة جميع خيارات القوائم فورياً (تُحفظ المفاتيح في dataset للاستمرارية)
 function translateAllOptions() {
 document.querySelectorAll('select option').forEach(op => {
     const key = op.getAttribute('data-i18n') || op.dataset.i18nKey || OPTION_I18N[op.value] || OPTION_I18N[op.textContent.trim()] || '';
@@ -261,20 +268,15 @@ document.querySelectorAll('select option').forEach(op => {
     }
 });
 }
-// ✔✔✔ ترجمة نصوص الحقول الإرشادية فورياً عبر المعرّفات
 function translatePlaceholders() {
 for (const [id, key] of Object.entries(PLACEHOLDER_I18N)) {
     const el = document.getElementById(id);
     if (el) el.placeholder = translate(key);
 }
 }
-// =============================================================
-// ✔✔✔ تطبيق الترجمة الفورية لكامل التطبيق (بدون تحديث الصفحة)
-// =============================================================
 function applyTranslations(lang) {
 if (!translations[lang]) { lang = 'ar'; }
 const t = translations[lang] || {};
-// ✔ تعيين اللغة أولاً حتى تستخدم كل دوال translate() اللغة الجديدة فوراً
 currentLang = lang;
 const html = document.documentElement;
 if (lang === 'ar' || lang === 'ur') { html.dir = 'rtl'; html.lang = lang; } else { html.dir = 'ltr'; html.lang = 'en'; }
@@ -295,7 +297,6 @@ if (langLabel) {
 }
 updateBalanceDisplay();
 updateStats();
-// ✔ إعادة بناء الفلاتر والسجلات المفتوحة فورياً (مع فحص آمن)
 const logModal = document.getElementById('logModal');
 if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
 const balanceLogModal = document.getElementById('balanceLogModal');
@@ -306,14 +307,12 @@ const currencyModal = document.getElementById('currencyModal');
 if (currencyModal && currencyModal.style.display === 'flex') renderCurrencyList();
 const notificationsModal = document.getElementById('notificationsModal');
 if (notificationsModal && notificationsModal.style.display === 'flex') renderNotifications();
-// ✔ إعادة رسم شاشة التفاصيل فورياً إن كانت مفتوحة
 const detailModal = document.getElementById('detailModal');
 if (detailModal && detailModal.style.display === 'flex' && editMode) {
     const arr = db[editMode.type];
     const o = arr && arr[editMode.index];
     if (o) _renderDetailContent(o, editMode.type);
 }
-// ✔ إعادة بناء الحقول الديناميكية المترجمة (المبلغ المحصل...) إن كانت ظاهرة
 const rDyn = document.getElementById('rDynamicFields');
 if (rDyn && rDyn.innerHTML.trim() !== '') {
     const rType = document.getElementById('rType');
@@ -326,13 +325,11 @@ if (dDyn && dDyn.innerHTML.trim() !== '') {
     const dCur = (editMode && editMode.type === 'deb') ? db.deb[editMode.index] : null;
     updateDebtFields(dType ? dType.value : '', dCur);
 }
-// ✔ عنوان نافذة الإيداع/السحب إن كانت مفتوحة
 const bam = document.getElementById('balanceActionModal');
 if (bam && bam.style.display === 'flex' && balanceActionType) {
     const tEl = document.getElementById('actionModalTitle');
     if (tEl) tEl.textContent = balanceActionType === 'deposit' ? translate('depositTitle') : translate('withdrawTitle');
 }
-// ✔ عداد النسخ الاحتياطية
 const countEl = document.getElementById('driveBackupCount');
 if (countEl) countEl.textContent = translate('backupCountLabel') + ' ' + (backupFiles ? backupFiles.length : 0);
 updateLanguageModalCheckmarks();
@@ -618,7 +615,6 @@ let max = 0;
 (backupFiles || []).forEach(f => { const n = parseBackupNumber(f.name); if (n && n > max) max = n; });
 return max + 1;
 }
-// ✔✔✔ لغة التواريخ تتبع لغة التطبيق + بدون كلمة "رقم" غير المترجمة
 function renderDriveBackupList() {
 const container = document.getElementById('driveBackupList');
 const countEl = document.getElementById('driveBackupCount');
@@ -820,7 +816,6 @@ setTimeout(() => { t.classList.remove('show'); }, 3500);
 // =============================================================
 // 8.  FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
 // =============================================================
-// ✔✔✔ تم إصلاح أخطاء الكتابة (cod e / s ymbol / المسافات) — نفس العملات
 const ARABIC_CURRENCIES = [
 { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
 { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
@@ -921,7 +916,6 @@ else if (num < 0) colorClass = 'balance-negative';
 else colorClass = 'balance-zero';
 return `<span class="${colorClass}">${fmt} <span class="currency-symbol">${currentCurrency.symbol}</span></span>`;
 }
-// ✔✔✔ لغة التواريخ تتبع لغة التطبيق (عربي / إنجليزي / أردو)
 function formatDateTime(dateString) {
 if (!dateString) return '—';
 const locale = (currentLang === 'ur') ? 'ur-PK' : (currentLang || 'ar');
@@ -1414,7 +1408,6 @@ bar.innerHTML = `
     <div class="log-stat-chip"><span class="stat-label">${translate('totalAmountStat')}</span><span class="stat-value">${getFormattedAmount(total)}</span></div>
     <div class="log-stat-chip"><span class="stat-label">${titles[currentLog] || ''}</span><span class="stat-value">${translateStoredValue(topName)} (${getFormattedAmount(topVal)})</span></div>`;
 }
-// ✔✔✔ التفاصيل: عناوين وقيم مترجمة فورياً حسب لغة التطبيق
 function _renderDetailContent(o, type) {
 const el = document.getElementById('detailContent');
 if (!el) return;
@@ -1431,7 +1424,6 @@ if (o.صورة && type === 'exp') {
 html += `<div style="display:flex;gap:10px;margin-top:20px;"><button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> ${translate('edit')}</button><button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> ${translate('delete')}</button></div>`;
 el.innerHTML = html;
 }
-// ✔✔✔ السجلات: فئات/أنواع مترجمة فورياً
 function renderLog() {
 const el = document.getElementById('logContent');
 if (!el) return;
@@ -1517,7 +1509,6 @@ el.innerHTML = filtered.map(i => {
 }).join('');
 }
 function showDetailById(id, type) { openLayer('detail', { logType: type, id: id }); }
-// ✔✔✔ إصلاح "التعديل يحفظ معاملة جديدة": حفظ editMode واستعادته
 function editTransaction() {
 if (!editMode) return;
 const savedEdit = { type: editMode.type, index: editMode.index };
@@ -1694,7 +1685,6 @@ if (!item.read) {
 }
 renderNotificationDetail(item);
 }
-// ✔✔✔ تفاصيل التنبيه: عناوين وقيم مترجمة فورياً
 function renderNotificationDetail(item) {
 const el = document.getElementById('notificationsContent');
 if (!el) return;
@@ -1744,7 +1734,6 @@ if (source) {
 html += `</div>`;
 el.innerHTML = html;
 }
-// ✔✔✔ قائمة التنبيهات: أسماء مترجمة فورياً
 function renderNotifications() {
 const el = document.getElementById('notificationsContent');
 if (!el) return;
@@ -1803,77 +1792,70 @@ if (read.length) {
 el.innerHTML = html;
 }
 // =============================================================
-// 13. UPDATE STATS  (✔✔✔ يدعم الواجهة القديمة والجديدة + ترجمة فورية)
+// 13. UPDATE STATS  (✔✔✔ بدون هدف شهري + مساعد مالي ذكي)
 // =============================================================
-const MONTHLY_GOAL = 10000;
-const STATS_LABELS = {
-fromMonthlyGoal: { ar: 'من الهدف الشهري', en: 'of the monthly goal', ur: 'ماہانہ ہدف سے' },
-fromMonthlyIncome: { ar: 'من الدخل الشهري', en: 'of monthly income', ur: 'ماہانہ آمدنی سے' },
-fromTotalObligations: { ar: 'من إجمالي الالتزامات', en: 'of total obligations', ur: 'کل ذمہ داریوں سے' },
-fromTotalRights: { ar: 'من إجمالي الحقوق', en: 'of total rights', ur: 'کل حقوق سے' },
-opsCount: { ar: 'عدد العمليات', en: 'Operations', ur: 'عملیات کی تعداد' },
-expenseRatio: { ar: 'نسبة المصروفات', en: 'Expenses ratio', ur: 'اخراجات کی شرح' },
-ofIncome: { ar: 'من الدخل', en: 'of income', ur: 'آمدنی سے' },
-goalRatio: { ar: 'نسبة تحقيق الهدف', en: 'Goal achievement', ur: 'ہدف کی شرح' },
-netTitle: { ar: 'صافي وضعك المالي', en: 'Your net position', ur: 'آپ کی خالص صورتحال' },
-available: { ar: 'متاح للصرف', en: 'available to spend', ur: 'خرچ کے لیے دستیاب' },
-goodTitle: { ar: 'وضعك المالي جيد', en: 'Your financial status is good', ur: 'آپ کی مالی صورتحال اچھی ہے' },
-goodMsg: { ar: 'مصروفاتك أقل من دخلك، وأنت تسير بشكل جيد نحو تحقيق أهدافك.', en: 'Your expenses are less than your income, and you are progressing well toward your goals.', ur: 'آپ کے اخراجات آمدنی سے کم ہیں، اور آپ اپنے اہداف کی طرف اچھی طرح بڑھ رہے ہیں۔' },
-badTitle: { ar: 'وضعك المالي يحتاج انتباهاً', en: 'Your financial status needs attention', ur: 'آپ کی مالی صورتحال کو توجہ درکار ہے' },
-badMsg: { ar: 'مصروفاتك أعلى من دخلك في هذه الفترة.', en: 'Your expenses exceed your income in this period.', ur: 'اس مدت میں آپ کے اخراجات آمدنی سے زیادہ ہیں۔' }
+const ADVISOR = {
+ar: { good:'وضعك المالي جيد هذا الشهر: مصروفاتك أقل من دخلك.', over:'تنبيه: مصروفاتك أعلى من دخلك هذا الشهر؛ راجع قسم المصروفات.', noIncome:'لا يوجد دخل مسجل هذا الشهر مع وجود مصروفات؛ أضف دخلك من قسم الدخل.', noData:'لا توجد عمليات هذا الشهر بعد؛ ابدأ بتسجيل دخل أو مصروف.', tipR:'لديك حقوق غير محصلة بقيمة', tipD:'لديك التزامات غير مدفوعة بقيمة' },
+en: { good:'Your status is good this month: expenses are less than income.', over:'Alert: expenses exceed income this month; review Expenses.', noIncome:'No income recorded this month but you have expenses; add income.', noData:'No transactions this month yet; start by adding income or expense.', tipR:'You have uncollected rights of', tipD:'You have unpaid obligations of' },
+ur: { good:'اس مہینے آپ کی صورتحال اچھی ہے: اخراجات آمدنی سے کم ہیں۔', over:'انتباہ: اس مہینے اخراجات آمدنی سے زیادہ ہیں؛ اخراجات کا جائزہ لیں۔', noIncome:'اس مہینے آمدنی درج نہیں مگر اخراجات ہیں؛ آمدنی شامل کریں۔', noData:'اس مہینے ابھی کوئی عمل نہیں؛ آمدنی یا خرچ درج کریں۔', tipR:'آپ کے پاس وصولی کے بقایا حقوق ہیں بذریعہ', tipD:'آپ پر غیر ادا شدہ ذمہ داریاں ہیں بذریعہ' }
 };
-function statT(key) { const e = STATS_LABELS[key]; if (!e) return ''; return e[currentLang] || e.ar; }
 function updateStats() {
 const now = new Date();
-const inMonth = (d) => { if (!d) return false; const dt = new Date(d); return !isNaN(dt) && dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear(); };
-const sum = (list, f) => list.reduce((a, i) => a + parseAmount(i[f] || 0), 0);
-const incList = db.inc.filter(i => inMonth(i.التاريخ));
-const expList = db.exp.filter(i => inMonth(i.التاريخ));
-const rigList = db.rig.filter(i => inMonth(i.تاريخ_الاستحقاق || i.التاريخ));
-const debList = db.deb.filter(i => inMonth(i.تاريخ_الاستحقاق || i.التاريخ));
-const incTotal = sum(incList, 'المبلغ');
-const expTotal = sum(expList, 'المبلغ');
-const rigTotal = sum(rigList, 'المبلغ');
-const rigPaid = sum(rigList, 'المبلغ_المضاف_للرصيد');
-const debTotal = debList.reduce((a, i) => a + (i.المبلغ_الكلي_للالتزام ? parseAmount(i.المبلغ_الكلي_للالتزام) : parseAmount(i.المبلغ || 0)), 0);
-const debPaid = sum(debList, 'المبلغ_المخصوم_للرصيد');
-const set = (id, v) => { const el = document.getElementById(id); if (el) el.innerHTML = v; };
-const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-const setBar = (id, p) => { const el = document.getElementById(id); if (el) el.style.width = p + '%'; };
-const pct = (a, b) => (b > 0 ? Math.min(100, Math.round((a / b) * 100)) : 0);
-// ✔ الواجهة القديمة (6 بطاقات) إن وجدت
+const inMonth = d => { if(!d) return false; const dt=new Date(d); return !isNaN(dt)&&dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear(); };
+const sum=(l,f)=>l.reduce((a,i)=>a+parseAmount(i[f]||0),0);
+const incList=db.inc.filter(i=>inMonth(i.التاريخ));
+const expList=db.exp.filter(i=>inMonth(i.التاريخ));
+const rigList=db.rig.filter(i=>inMonth(i.تاريخ_الاستحقاق||i.التاريخ));
+const debList=db.deb.filter(i=>inMonth(i.تاريخ_الاستحقاق||i.التاريخ));
+const incTotal=sum(incList,'المبلغ');
+const expTotal=sum(expList,'المبلغ');
+const rigTotal=sum(rigList,'المبلغ');
+const rigPaid=sum(rigList,'المبلغ_المضاف_للرصيد');
+const debTotal=debList.reduce((a,i)=>a+(i.المبلغ_الكلي_للالتزام?parseAmount(i.المبلغ_الكلي_للالتزام):parseAmount(i.المبلغ||0)),0);
+const debPaid=sum(debList,'المبلغ_المخصوم_للرصيد');
+const net=incTotal-expTotal;
+const set=(id,v)=>{const el=document.getElementById(id); if(el) el.innerHTML=v;};
+const setText=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+const setBar=(id,p)=>{const el=document.getElementById(id); if(el) el.style.width=p+'%';};
+const pct=(a,b)=>(b>0?Math.min(100,Math.round(a/b*100)):0);
+const cur = (currentLang==='ur')?'ur':(currentLang==='en')?'en':'ar';
+const A = ADVISOR[cur];
+const money = x => `${getFormattedAmount(x)} ${currentCurrency.symbol}`;
 if (document.getElementById('sRigTotal')) {
-    set('sIncTotal', '<span class="pulse-dot"></span>' + formatCurrency(incTotal, true));
-    set('sExpTotal', formatCurrency(expTotal, true));
-    set('sRigTotal', formatCurrency(rigTotal, rigTotal > 0));
-    set('sRigPaid', '<span class="pulse-dot"></span>' + formatCurrency(rigPaid, true));
-    set('sDebTotal', formatCurrency(debTotal, debTotal > 0));
-    set('sDebPaid', formatCurrency(debPaid, false));
+ set('sIncTotal','<span class="pulse-dot"></span>'+formatCurrency(incTotal,true));
+ set('sExpTotal',formatCurrency(expTotal,true));
+ set('sRigTotal',formatCurrency(rigTotal,rigTotal>0));
+ set('sRigPaid','<span class="pulse-dot"></span>'+formatCurrency(rigPaid,true));
+ set('sDebTotal',formatCurrency(debTotal,debTotal>0));
+ set('sDebPaid',formatCurrency(debPaid,false));
 }
-// ✔ الواجهة الجديدة (مثل الصورة) إن وجدت
-if (document.getElementById('sIncBar')) {
-    const incPct = pct(incTotal, MONTHLY_GOAL), expPct = pct(expTotal, incTotal), debPct = pct(debPaid, debTotal), rigPct = pct(rigPaid, rigTotal);
-    const net = incTotal - expTotal;
-    set('sIncTotal', formatCurrency(incTotal, true)); setBar('sIncBar', incPct); setText('sIncPct', incPct + '%');
-    set('sIncSub', `${statT('fromMonthlyGoal')} ${formatCurrency(MONTHLY_GOAL)}`);
-    set('sExpTotal', formatCurrency(expTotal, true)); setBar('sExpBar', expPct); setText('sExpPct', expPct + '%');
-    set('sExpSub', `${statT('fromMonthlyIncome')} ${formatCurrency(incTotal)}`);
-    set('sDebPaid', formatCurrency(debPaid, true)); setBar('sDebBar', debPct); setText('sDebPct', debPct + '%');
-    set('sDebSub', `${statT('fromTotalObligations')} ${formatCurrency(debTotal)}`);
-    set('sRigPaid', formatCurrency(rigPaid, true)); setBar('sRigBar', rigPct); setText('sRigPct', rigPct + '%');
-    set('sRigSub', `${statT('fromTotalRights')} ${formatCurrency(rigTotal)}`);
-    setText('sOpsTitle', statT('opsCount'));
-    setText('sOpsCount', incList.length + expList.length + rigList.length + debList.length);
-    setText('sOpsSub', translate('periodMonth'));
-    setText('sExpRatioTitle', statT('expenseRatio')); setText('sExpRatio', expPct + '%'); setText('sExpRatioSub', statT('ofIncome'));
-    setText('sGoalTitle', statT('goalRatio')); setText('sGoalRatio', incPct + '%'); setText('sGoalSub', statT('fromMonthlyGoal'));
-    setText('sNetTitle', statT('netTitle')); set('sNet', formatCurrency(net, true)); setText('sNetSub', statT('available'));
-    const banner = document.getElementById('sStatusBanner');
-    const sIcon = document.getElementById('sStatusIcon');
-    if (banner) banner.className = 'stat-status ' + (net >= 0 ? 'good' : 'bad');
-    if (sIcon) sIcon.className = 'fas ' + (net >= 0 ? 'fa-check-circle' : 'fa-exclamation-circle');
-    setText('sStatusTitle', net >= 0 ? statT('goodTitle') : statT('badTitle'));
-    setText('sStatusMsg', net >= 0 ? statT('goodMsg') : statT('badMsg'));
+if (document.getElementById('sIncTotal')) {
+ set('sIncTotal', formatCurrency(incTotal,true));
+ const ib=document.getElementById('sIncBar'); if(ib&&ib.parentElement) ib.parentElement.style.display='none';
+ const ip=document.getElementById('sIncPct'); if(ip) ip.style.display='none';
+ const isub=document.getElementById('sIncSub'); if(isub) isub.style.display='none';
+ set('sExpTotal', formatCurrency(expTotal,true)); setBar('sExpBar', pct(expTotal,incTotal)); setText('sExpPct', pct(expTotal,incTotal)+'%'); set('sExpSub', `${A.over.split(':')[0]}: ${money(incTotal)}`);
+ set('sDebPaid', formatCurrency(debPaid,true)); setBar('sDebBar', pct(debPaid,debTotal)); setText('sDebPct', pct(debPaid,debTotal)+'%'); set('sDebSub', `${money(debTotal)}`);
+ set('sRigPaid', formatCurrency(rigPaid,true)); setBar('sRigBar', pct(rigPaid,rigTotal)); setText('sRigPct', pct(rigPaid,rigTotal)+'%'); set('sRigSub', `${money(rigTotal)}`);
+ setText('sOpsTitle', translate('operationsCount')); setText('sOpsCount', incList.length+expList.length+rigList.length+debList.length); setText('sOpsSub', translate('periodMonth'));
+ setText('sExpRatioTitle', translate('topExpenseCategory')); setText('sExpRatio', pct(expTotal,incTotal)+'%'); setText('sExpRatioSub', translate('totalIncome'));
+ setText('sGoalTitle', translate('totalIncome')); setText('sGoalRatio', pct(incTotal,incTotal+expTotal)+'%'); setText('sGoalSub', translate('statsSummary'));
+ setText('sNetTitle', translate('remaining')); set('sNet', formatCurrency(net,true)); setText('sNetSub', translate('periodMonth'));
+ let aKey, aType;
+ if (incTotal===0 && expTotal===0) { aKey='noData'; aType='good'; }
+ else if (incTotal===0) { aKey='noIncome'; aType='bad'; }
+ else if (net<0) { aKey='over'; aType='bad'; }
+ else { aKey='good'; aType='good'; }
+ let msg = A[aKey];
+ const rigUnpaid = rigTotal-rigPaid, debUnpaid = debTotal-debPaid;
+ if (rigUnpaid>0) msg += ' • ' + A.tipR + ' ' + money(rigUnpaid);
+ if (debUnpaid>0) msg += ' • ' + A.tipD + ' ' + money(debUnpaid);
+ const banner=document.getElementById('sStatusBanner');
+ const sIcon=document.getElementById('sStatusIcon');
+ if (banner) banner.className='stat-status '+(aType==='good'?'good':'bad');
+ if (sIcon) sIcon.className='fas '+(aType==='good'?'fa-check-circle':'fa-exclamation-circle');
+ setText('sStatusTitle', aType==='good'?translate('goodTitle'):translate('badTitle'));
+ setText('sStatusMsg', msg);
 }
 }
 // =============================================================
