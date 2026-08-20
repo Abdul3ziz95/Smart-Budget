@@ -157,7 +157,7 @@ _visualOpen(top.layer, top.data);
 }
 };
 // =============================================================
-// 3.  TRANSLATION SYSTEM (i18n) + ترجمة فورية كاملة
+// 3.  TRANSLATION SYSTEM (i18n) + الترجمة الفورية الكاملة
 // =============================================================
 let translations = {};
 let currentLang = localStorage.getItem('appLang') || 'ar';
@@ -176,7 +176,14 @@ console.error('Error loading translations:', err);
 translations = { ar: {}, en: {}, ur: {} };
 });
 }
-// ✔✔✔ خريطة ترجمة الفئات/الأنواع/الحالات/الخيارات (تعمل بدون data-i18n)
+// ✔✔✔ خريطة الحقول (بالمعرّف ID) → مفتاح الترجمة (تعمل بدون data-i18n-placeholder)
+const PLACEHOLDER_I18N = {
+'iAmount': 'amountPlaceholder', 'eAmount': 'amountPlaceholder', 'bAmount': 'amountPlaceholder',
+'iDesc': 'notesOptional', 'eDesc': 'descriptionNotes', 'rDesc': 'additionalNotes', 'dDesc': 'additionalNotes',
+'rAmount': 'totalDueAmount', 'rEntity': 'entityDebtor', 'dAmount': 'billAmount', 'dEntity': 'entityCreditor',
+'search': 'searchLog', 'balanceSearch': 'searchLog', 'currencySearch': 'searchCurrency', 'exportFileName': 'fileName'
+};
+// ✔✔✔ خريطة خيارات القوائم (بالقيمة أو النص) → مفتاح الترجمة
 const OPTION_I18N = {
 'راتب': 'incomeSalary', 'عمل حر': 'incomeFreelance', 'تجارة': 'incomeBusiness', 'استثمار': 'incomeInvestment', 'عمولة': 'incomeCommission', 'هدية': 'incomeGift', 'مكافأة': 'incomeBonus', 'الضمان الاجتماعي': 'incomeSocialSecurity', 'المعاش التقاعدي': 'incomePension', 'دخل آخر': 'incomeOther',
 'طعام': 'expenseFood', 'مواصلات': 'expenseTransport', 'وقود': 'expenseFuel', 'مقاهي': 'expenseCafe', 'رعاية شخصية': 'expensePersonalCare', 'أجهزة إلكترونية': 'expenseElectronics', 'صحة': 'expenseHealth', 'ترفيه': 'expenseEntertainment', 'تسوق': 'expenseShopping', 'تعليم': 'expenseEducation', 'صيانة وإصلاح': 'expenseMaintenance', 'أخرى': 'expenseOther',
@@ -188,19 +195,6 @@ const OPTION_I18N = {
 '⏱️ 1 Hour before': 'notif1Hour', '⏱️ 24 Hours before': 'notif24Hours', '⏱️ 7 Days before': 'notif7Days',
 '⏱️ 1 گھنٹہ پہلے': 'notif1Hour', '⏱️ 24 گھنٹے پہلے': 'notif24Hours', '⏱️ 7 دن پہلے': 'notif7Days'
 };
-// ✔✔✔ خريطة النصوص الإرشادية (placeholders) لكل حقل
-const PLACEHOLDER_I18N = {
-'iAmount': 'amountPlaceholder', 'eAmount': 'amountPlaceholder', 'bAmount': 'amountPlaceholder',
-'iDesc': 'notesOptional', 'eDesc': 'descriptionNotes', 'rDesc': 'additionalNotes', 'dDesc': 'additionalNotes',
-'rAmount': 'totalDueAmount', 'rEntity': 'entityDebtor', 'dAmount': 'billAmount', 'dEntity': 'entityCreditor',
-'search': 'searchLog', 'balanceSearch': 'searchLog', 'currencySearch': 'searchCurrency', 'exportFileName': 'fileName'
-};
-// ✔ ترجمة قيمة مخزنة (فئة/نوع/حالة) عند العرض — التخزين يبقى عربياً
-function translateStoredValue(val) {
-if (!val || typeof val !== 'string') return val || '';
-const key = OPTION_I18N[val.trim()];
-return key ? translate(key) : val;
-}
 // ✔ ترجمة عناوين حقول البيانات (التفاصيل والتنبيهات)
 const FIELD_LABELS = {
 'النوع': { ar: 'النوع', en: 'Type', ur: 'قسم' },
@@ -243,6 +237,11 @@ if (s === '24') return translate('notif24Hours');
 if (s === '168') return translate('notif7Days');
 return s;
 }
+function translateStoredValue(val) {
+if (!val || typeof val !== 'string') return val || '';
+const key = OPTION_I18N[val.trim()];
+return key ? translate(key) : val;
+}
 function formatFieldValue(key, val) {
 if (key === 'الحالة') return translateStatusValue(val);
 if (key === 'وقت_التنبيه') return translateTimingValue(val);
@@ -261,12 +260,21 @@ document.querySelectorAll('select option').forEach(op => {
     }
 });
 }
+// ✔✔✔ ترجمة نصوص الحقول الإرشادية فورياً عبر المعرّفات
+function translatePlaceholders() {
+for (const [id, key] of Object.entries(PLACEHOLDER_I18N)) {
+    const el = document.getElementById(id);
+    if (el) el.placeholder = translate(key);
+}
+}
 // =============================================================
-// ✔✔✔ تطبيق الترجمة + إعادة رسم فورية لكل شيء (بدون تحديث الصفحة)
+// ✔✔✔ تطبيق الترجمة الفورية لكامل التطبيق (بدون تحديث الصفحة)
 // =============================================================
 function applyTranslations(lang) {
 if (!translations[lang]) { lang = 'ar'; }
 const t = translations[lang] || {};
+// ✔✔✔ تعيين اللغة أولاً حتى تستخدم كل دوال translate() اللغة الجديدة فوراً
+currentLang = lang;
 const html = document.documentElement;
 if (lang === 'ar' || lang === 'ur') { html.dir = 'rtl'; html.lang = lang; } else { html.dir = 'ltr'; html.lang = 'en'; }
 document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -277,16 +285,12 @@ document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     const key = el.getAttribute('data-i18n-placeholder');
     if (t[key] !== undefined) el.placeholder = t[key];
 });
-// ✔✔✔ ترجمة النصوص الإرشادية للحقول عبر الخريطة (تعمل حتى بدون data-i18n-placeholder)
-for (const [id, key] of Object.entries(PLACEHOLDER_I18N)) {
-    const el = document.getElementById(id);
-    if (el) el.placeholder = translate(key);
-}
-// ✔✔✔ ترجمة جميع خيارات القوائم فورياً
+// ✔✔✔ الحقول والقوائم (تعمل حتى بدون data-i18n في HTML)
+translatePlaceholders();
 translateAllOptions();
 const langLabel = document.getElementById('sidebarLanguageLabel');
 if (langLabel) {
-    const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' };
+    const langNames = { ar: '🇸🇦 العربية', en: '🇬 English', ur: '🇰 اردو' };
     langLabel.textContent = langNames[lang] || '🇸🇦 العربية';
 }
 updateBalanceDisplay();
@@ -302,14 +306,14 @@ const currencyModal = document.getElementById('currencyModal');
 if (currencyModal && currencyModal.style.display === 'flex') renderCurrencyList();
 const notificationsModal = document.getElementById('notificationsModal');
 if (notificationsModal && notificationsModal.style.display === 'flex') renderNotifications();
-// ✔✔✔ إعادة رسم شاشة التفاصيل فورياً عند تغيير اللغة
+// ✔ إعادة رسم شاشة التفاصيل فورياً إن كانت مفتوحة
 const detailModal = document.getElementById('detailModal');
 if (detailModal && detailModal.style.display === 'flex' && editMode) {
     const arr = db[editMode.type];
     const o = arr && arr[editMode.index];
     if (o) _renderDetailContent(o, editMode.type);
 }
-// ✔✔✔ إعادة بناء الحقول الديناميكية المترجمة (المبلغ المحصل...) إن كانت ظاهرة
+// ✔ إعادة بناء الحقول الديناميكية المترجمة (المبلغ المحصل...) إن كانت ظاهرة
 const rDyn = document.getElementById('rDynamicFields');
 if (rDyn && rDyn.innerHTML.trim() !== '') {
     const rType = document.getElementById('rType');
@@ -333,7 +337,6 @@ const countEl = document.getElementById('driveBackupCount');
 if (countEl) countEl.textContent = translate('backupCountLabel') + ' ' + (backupFiles ? backupFiles.length : 0);
 updateLanguageModalCheckmarks();
 localStorage.setItem('appLang', lang);
-currentLang = lang;
 }
 function translate(key) {
 if (!translations[currentLang] || translations[currentLang][key] === undefined) {
@@ -554,22 +557,19 @@ if (!isDriveConnected) { toastMsg(translate('driveNotConnected'), "error"); retu
 performBackup();
 }
 function signOut() {
-showConfirm({ type: 'danger', icon: 'fa-right-from-bracket', title: translate('signOut'), message: translate('confirmSignOut'), okText: translate('signOut') })
-.then(ok => {
-    if (!ok) return;
-    stopTokenRefresh();
-    accessToken = null;
-    localStorage.removeItem('drive_token');
-    localStorage.removeItem('drive_email');
-    localStorage.removeItem('drive_folder_id');
-    localStorage.removeItem('drive_token_expiry');
-    isDriveConnected = false;
-    userEmail = '';
-    appFolderId = null;
-    backupFiles = [];
-    updateDriveUI();
-    toastMsg(translate('signedOut'), "info");
-});
+if (!confirm(translate('confirmSignOut'))) return;
+stopTokenRefresh();
+accessToken = null;
+localStorage.removeItem('drive_token');
+localStorage.removeItem('drive_email');
+localStorage.removeItem('drive_folder_id');
+localStorage.removeItem('drive_token_expiry');
+isDriveConnected = false;
+userEmail = '';
+appFolderId = null;
+backupFiles = [];
+updateDriveUI();
+toastMsg(translate('signedOut'), "info");
 }
 function updateDriveUI() {
 const menuItem = document.getElementById('driveMenuItem');
@@ -685,17 +685,14 @@ try {
      toastMsg(translate('backupFailed') + ': ' + error.message, "error");
 }
 }
-// ✔✔✔ استعادة: نافذة تأكيد عصرية + حذف البيانات القديمة قبل الاستبدال
 async function restoreBackup(fileId) {
-const ok = await showConfirm({ type: 'warning', icon: 'fa-cloud-arrow-down', title: translate('restoreWarningTitle'), message: translate('restoreWarning'), okText: translate('restore') });
-if (!ok) return;
+if (!confirm(translate('confirmRestore'))) return;
 showLoading(translate('restoringData'));
 try {
      const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
      if (!response.ok) throw new Error(`Failed to download file: ${response.status}`);
      const text = await response.text();
      const imported = JSON.parse(text);
-     await clearAllStores();
      if (imported.bal && Array.isArray(imported.bal.changes)) { imported.bal.clientId = 1; await addDataToStore('bal', [imported.bal]); }
      for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await addDataToStore(sn, imported[sn]); }
      if (imported.currency) {
@@ -718,8 +715,7 @@ try {
 }
 }
 async function deleteBackup(fileId) {
-const ok = await showConfirm({ type: 'danger', icon: 'fa-trash-can', title: translate('delete'), message: translate('confirmDeleteBackup'), okText: translate('deleteBtn') });
-if (!ok) return;
+if (!confirm(translate('confirmDeleteBackup'))) return;
 try {
      const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${accessToken}` } });
      if (!response.ok) throw new Error(`Delete failed: ${response.status}`);
@@ -751,18 +747,15 @@ document.body.removeChild(a);
 URL.revokeObjectURL(url);
 toastMsg(translate('exportSuccess'), "success");
 }
-// ✔✔✔ استيراد محلي: نافذة تأكيد عصرية + استبدال البيانات القديمة
 async function importData(event) {
 const file = event.target.files[0];
 if (!file) return;
-const ok = await showConfirm({ type: 'warning', icon: 'fa-file-import', title: translate('restoreWarningTitle'), message: translate('restoreWarning'), okText: translate('importData') });
-if (!ok) { event.target.value = null; return; }
+if (!confirm(translate('confirmImport'))) { event.target.value = null; return; }
 showLoading(translate('importingData'));
 const reader = new FileReader();
 reader.onload = async (e) => {
     try {
         const imported = JSON.parse(e.target.result);
-        await clearAllStores();
         if (imported.bal && Array.isArray(imported.bal.changes)) { imported.bal.clientId = 1; await addDataToStore('bal', [imported.bal]); }
         for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await addDataToStore(sn, imported[sn]); }
         if (imported.currency) {
@@ -827,7 +820,7 @@ setTimeout(() => { t.classList.remove('show'); }, 3500);
 // =============================================================
 // 8.  FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
 // =============================================================
-// ✔✔✔ تم إصلاح أخطاء الكتابة (cod e / s ymbol / المسافات) — نفس العملات كما هي
+// ✔✔✔ تم إصلاح أخطاء الكتابة (cod e / s ymbol / المسافات) — نفس العملات
 const ARABIC_CURRENCIES = [
 { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
 { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
@@ -844,7 +837,7 @@ const ARABIC_CURRENCIES = [
 { code: 'ILS', symbol: '₪', flag: '🇵🇸', name: { ar: 'الشيكل الفلسطيني', en: 'Israeli Shekel', ur: 'اسرائیلی شیکل' } },
 { code: 'EGP', symbol: 'ج.م', flag: '🇪🇬', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
 { code: 'LYD', symbol: 'ل.د', flag: '🇱🇾', name: { ar: 'الدينار الليبي', en: 'Libyan Dinar', ur: 'لیبیائی دینار' } },
-{ code: 'TND', symbol: 'د.ت', flag: '🇹🇳', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
+{ code: 'TND', symbol: 'د.ت', flag: '🇹', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
 { code: 'DZD', symbol: 'دج', flag: '🇩🇿', name: { ar: 'الدينار الجزائري', en: 'Algerian Dinar', ur: 'الجزائری دینار' } },
 { code: 'MAD', symbol: 'د.م', flag: '🇲🇦', name: { ar: 'الدرهم المغربي', en: 'Moroccan Dirham', ur: 'مراکشی درہم' } },
 { code: 'MRU', symbol: 'أ.م', flag: '🇲🇷', name: { ar: 'الأوقية الموريتانية', en: 'Mauritanian Ouguiya', ur: 'موریطانی اوگوئیا' } },
@@ -1195,7 +1188,7 @@ const statusSelect = document.getElementById('dStatus');
 const entityInput = document.getElementById('dEntity');
 if (!container) return;
 container.innerHTML = '';
-const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
+const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
 if (entityTypes.includes(type)) {
     if (entityInput) {
         entityInput.style.display = 'block';
@@ -1421,7 +1414,7 @@ bar.innerHTML = `
     <div class="log-stat-chip"><span class="stat-label">${translate('totalAmountStat')}</span><span class="stat-value">${getFormattedAmount(total)}</span></div>
     <div class="log-stat-chip"><span class="stat-label">${titles[currentLog] || ''}</span><span class="stat-value">${translateStoredValue(topName)} (${getFormattedAmount(topVal)})</span></div>`;
 }
-// ✔✔✔ التفاصيل: عناوين وقيم مترجمة فورياً حسب لغة التطبيق
+// ✔✔✔ التفاصيل: عناوين وقيم مترجمة فورياً
 function _renderDetailContent(o, type) {
 const el = document.getElementById('detailContent');
 if (!el) return;
@@ -1438,7 +1431,7 @@ if (o.صورة && type === 'exp') {
 html += `<div style="display:flex;gap:10px;margin-top:20px;"><button class="secondary" onclick="editTransaction()" style="flex:1;"><i class="fas fa-edit" style="margin-left:5px;"></i> ${translate('edit')}</button><button class="action" onclick="deleteTransaction()" style="background:var(--danger);flex:1;"><i class="fas fa-trash" style="margin-left:5px;"></i> ${translate('delete')}</button></div>`;
 el.innerHTML = html;
 }
-// ✔✔✔ السجلات: فئات/أنواع مترجمة عبر translateStoredValue
+// ✔✔✔ السجلات: فئات/أنواع مترجمة فورياً
 function renderLog() {
 const el = document.getElementById('logContent');
 if (!el) return;
@@ -1524,7 +1517,7 @@ el.innerHTML = filtered.map(i => {
 }).join('');
 }
 function showDetailById(id, type) { openLayer('detail', { logType: type, id: id }); }
-// ✔✔✔ إصلاح "التعديل يحفظ معاملة جديدة": حفظ editMode واستعادته بعد closeAllLayers
+// ✔✔✔ إصلاح "التعديل يحفظ معاملة جديدة": حفظ editMode واستعادته
 function editTransaction() {
 if (!editMode) return;
 const savedEdit = { type: editMode.type, index: editMode.index };
@@ -1534,7 +1527,7 @@ if (!data) { toastMsg(translate('notFound'), "error"); return; }
 const tabMap = { inc: 'income', exp: 'expenses', rig: 'rights', deb: 'debts' };
 const tabId = tabMap[type];
 closeAllLayers();
-editMode = savedEdit; // ✔ الاستعادة الفورية
+editMode = savedEdit;
 openTab(tabId, true);
 setTimeout(() => {
     if (type === 'inc') {
@@ -1597,11 +1590,9 @@ setTimeout(() => {
     if (ind) ind.style.display = 'inline-block';
 }, 100);
 }
-// ✔✔✔ حذف المعاملة: نافذة تأكيد عصرية (مع بديل تلقائي)
 async function deleteTransaction() {
 if (!editMode) return;
-const ok = await showConfirm({ type: 'danger', icon: 'fa-trash-can', title: translate('deleteTitle'), message: translate('confirmDeleteTransaction'), okText: translate('deleteBtn') });
-if (!ok) return;
+if (!confirm(translate('confirmDeleteTransaction'))) return;
 const type = editMode.type;
 const txn = db[type][editMode.index];
 if (!txn) return;
@@ -1857,11 +1848,9 @@ closeLayer('currency');
 toastMsg(`${translate('currencySet')} ${getCurrencyName(sel)} 💱`, "success");
 }
 }
-// ✔✔✔ إعادة التعيين: نافذة تأكيد عصرية
 function confirmResetData() {
 closeLayer('sidebar');
-showConfirm({ type: 'danger', icon: 'fa-trash-can', title: translate('resetData'), message: translate('confirmReset'), okText: translate('resetData') })
-    .then(ok => { if (ok) resetAllData(); });
+if (confirm(translate('confirmReset'))) resetAllData();
 }
 function resetAllData() {
 if (!IDB_connection) return toastMsg(translate('dbError'), "error");
@@ -2008,16 +1997,6 @@ db.exp = exp; db.rig = rig; db.deb = deb; db.bal = bal; db.inc = inc;
 currentBalance = parseAmount(db.bal.amount || 0);
 updateNotificationBadge();
 }
-// ✔✔✔ مسح جميع المتاجر (للاستبدال عند الاستعادة)
-async function clearAllStores() {
-if (!IDB_connection) return;
-return new Promise((resolve, reject) => {
-    const tx = IDB_connection.transaction(STORE_NAMES, 'readwrite');
-    STORE_NAMES.forEach(sn => tx.objectStore(sn).clear());
-    tx.oncomplete = resolve;
-    tx.onerror = () => reject(tx.error);
-});
-}
 // =============================================================
 // 17. DARK MODE
 // =============================================================
@@ -2044,7 +2023,10 @@ historyStack.push({ layer: 'main' });
 } else { historyStack.push(history.state); }
 loadTranslations().then(() => { applyTranslations(currentLang); });
 const now = getLocalDateString();
-['eDate', 'rDueDate', 'dDueDate', 'iDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = now; });
+['eDate', 'rDueDate', 'dDueDate', 'iDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = now;
+});
 const currencyLabel = document.getElementById('sidebarCurrencyLabel');
 if (currencyLabel) currencyLabel.textContent = currentCurrency.symbol;
 updateBalanceDisplay();
@@ -2053,35 +2035,4 @@ updateDriveUI();
 updateNotificationBadge();
 setTimeout(() => { initGapi(); initGis(); restoreDriveState(); }, 1000);
 };
-// =============================================================
-// 19. ✔✔✔ نظام نوافذ التأكيد العصرية (مع بديل تلقائي إن لم توجد النافذة)
-// =============================================================
-let _confirmResolver = null;
-function showConfirm(o) {
-return new Promise(resolve => {
-    const ov = document.getElementById('confirmOverlay');
-    if (!ov) { resolve(window.confirm(o.message)); return; } // ✔ بديل تلقائي
-    _confirmResolver = resolve;
-    const titleEl = document.getElementById('confirmTitle');
-    const msgEl = document.getElementById('confirmMessage');
-    const ic = document.getElementById('confirmIcon');
-    const okBtn = document.getElementById('confirmOkBtn');
-    const cancelBtn = document.getElementById('confirmCancelBtn');
-    if (titleEl) titleEl.textContent = o.title || '';
-    if (msgEl) msgEl.textContent = o.message || '';
-    if (ic) {
-        ic.className = 'confirm-icon ' + (o.type || 'danger');
-        ic.innerHTML = '<i class="fas ' + (o.icon || 'fa-triangle-exclamation') + '"></i>';
-    }
-    if (okBtn) okBtn.textContent = o.okText || translate('deleteBtn');
-    if (cancelBtn) cancelBtn.textContent = translate('cancel');
-    ov.classList.add('show');
-});
-}
-function resolveConfirm(v) {
-const ov = document.getElementById('confirmOverlay');
-if (ov) ov.classList.remove('show');
-if (_confirmResolver) { _confirmResolver(v); _confirmResolver = null; }
-}
-function confirmBackdrop(e) { if (e.target && e.target.id === 'confirmOverlay') resolveConfirm(false); }
 console.log('ميزانيتك الذكية جاهزة ✅');
