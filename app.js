@@ -31,6 +31,7 @@ let currentLog = '',
 let selectedImageFile = null;
 let logFilters = { cat: 'all', status: 'all', period: 'all' };
 let balanceFilters = { type: 'all' };
+let statsPeriodFilter = localStorage.getItem('statsPeriodFilter') || 'all';
 
 // =============================================================
 // 2. NAVIGATION / LAYERS
@@ -125,9 +126,6 @@ function _visualClose(layerName, clearEdit = true) {
     }
 }
 
-// =============================================================
-// ✔✔✔ إصلاح تعليقة فتح السجلات (مكدس التنقّل)
-// =============================================================
 function openLayer(layerName, data = {}) {
     const alreadyTop = historyStack.length && historyStack[historyStack.length - 1].layer === layerName;
     if (layerName === 'detail') {
@@ -391,7 +389,7 @@ function startTokenRefresh() {
     if (tokenRefreshInterval) { clearInterval(tokenRefreshInterval); }
     tokenRefreshInterval = setInterval(async () => {
         if (isDriveConnected && accessToken) {
-            try { if (tokenClient) { tokenClient.requestAccessToken({ prompt: '' }); } } catch (e) { console.log('Token refresh fails, will retry later'); }
+            try { if (tokenClient) { tokenClient.requestAccessToken({ prompt: '' }); } } catch (e) { console.log('Token refresh failed, will retry later'); }
         }
     }, 50 * 60 * 1000);
 }
@@ -1824,22 +1822,57 @@ function renderNotifications() {
 }
 
 // =============================================================
-// 13. UPDATE STATS (✔✔✔ بدون هدف شهري + مساعد مالي ذكي)
+// 12.8 📅 STATS PERIOD FILTER (الفلترة الزمنية للإحصائيات)
+// =============================================================
+function getWeekRange() {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=الأحد، 1=الاثنين، ...، 6=السبت
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    return { start: startOfWeek, end: endOfWeek };
+}
+
+function inStatsPeriod(dateStr, period) {
+    if (period === 'all' || !dateStr) return true;
+    const d = new Date(dateStr);
+    if (isNaN(d)) return true;
+    const now = new Date();
+    if (period === 'today') return d.toDateString() === now.toDateString();
+    if (period === 'week') {
+        const range = getWeekRange();
+        return d >= range.start && d <= range.end;
+    }
+    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === 'year') return d.getFullYear() === now.getFullYear();
+    return true;
+}
+
+function setStatsPeriod(period) {
+    statsPeriodFilter = period;
+    localStorage.setItem('statsPeriodFilter', period);
+    updateStats();
+}
+
+// =============================================================
+// 13. UPDATE STATS (✔ مساعد مالي ذكي + فلتر الفترة الزمنية)
 // =============================================================
 const ADVISOR = {
-    ar: { good: 'وضعك المالي جيد هذا الشهر: مصروفاتك أقل من دخلك.', over: 'تنبيه: مصروفاتك أعلى من دخلك هذا الشهر؛ راجع قسم المصروفات.', noIncome: 'لا يوجد دخل مسجل هذا الشهر مع وجود مصروفات؛ أضف دخلك من قسم الدخل.', noData: 'لا توجد عمليات هذا الشهر بعد؛ ابدأ بتسجيل دخل أو مصروف.', tipR: 'لديك حقوق غير محصلة بقيمة', tipD: 'لديك التزامات غير مدفوعة بقيمة' },
-    en: { good: 'Your status is good this month: expenses are less than income.', over: 'Alert: expenses exceed income this month; review Expenses.', noIncome: 'No income recorded this month but you have expenses; add income.', noData: 'No transactions this month yet; start by adding income or expense.', tipR: 'You have uncollected rights of', tipD: 'You have unpaid obligations of' },
-    ur: { good: 'اس مہینے آپ کی صورتحال اچھی ہے: اخراجات آمدنی سے کم ہیں۔', over: 'انتباہ: اس مہینے اخراجات آمدنی سے زیادہ ہیں؛ اخراجات کا جائزہ لیں۔', noIncome: 'اس مہینے آمدنی درج نہیں مگر اخراجات ہیں؛ آمدنی شامل کریں۔', noData: 'اس مہینے ابھی کوئی عمل نہیں؛ آمدنی یا خرچ درج کریں۔', tipR: 'آپ کے پاس وصولی کے بقایا حقوق ہیں بذریعہ', tipD: 'آپ پر غیر ادا شدہ ذمہ داریاں ہیں بذریعہ' }
+    ar: { good: 'وضعك المالي جيد: مصروفاتك أقل من دخلك.', over: 'تنبيه: مصروفاتك أعلى من دخلك؛ راجع قسم المصروفات.', noIncome: 'لا يوجد دخل مسجل مع وجود مصروفات؛ أضف دخلك من قسم الدخل.', noData: 'لا توجد عمليات في هذه الفترة بعد؛ ابدأ بتسجيل دخل أو مصروف.', tipR: 'لديك حقوق غير محصلة بقيمة', tipD: 'لديك التزامات غير مدفوعة بقيمة' },
+    en: { good: 'Your status is good: expenses are less than income.', over: 'Alert: expenses exceed income; review Expenses.', noIncome: 'No income recorded but you have expenses; add income.', noData: 'No transactions in this period yet; start by adding income or expense.', tipR: 'You have uncollected rights of', tipD: 'You have unpaid obligations of' },
+    ur: { good: 'آپ کی صورتحال اچھی ہے: اخراجات آمدنی سے کم ہیں۔', over: 'انتباہ: اخراجات آمدنی سے زیادہ ہیں؛ اخراجات کا جائزہ لیں۔', noIncome: 'آمدنی درج نہیں مگر اخراجات ہیں؛ آمدنی شامل کریں۔', noData: 'اس مدت میں ابھی کوئی عمل نہیں؛ آمدنی یا خرچ درج کریں۔', tipR: 'آپ کے پاس وصولی کے بقایا حقوق ہیں بذریعہ', tipD: 'آپ پر غیر ادا شدہ ذمہ داریاں ہیں بذریعہ' }
 };
 
 function updateStats() {
-    const now = new Date();
-    const inMonth = d => { if (!d) return false; const dt = new Date(d); return !isNaN(dt) && dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear(); };
     const sum = (l, f) => l.reduce((a, i) => a + parseAmount(i[f] || 0), 0);
-    const incList = db.inc.filter(i => inMonth(i.التاريخ));
-    const expList = db.exp.filter(i => inMonth(i.التاريخ));
-    const rigList = db.rig.filter(i => inMonth(i.تاريخ_الاستحقاق || i.التاريخ));
-    const debList = db.deb.filter(i => inMonth(i.تاريخ_الاستحقاق || i.التاريخ));
+    const period = statsPeriodFilter;
+    const incList = db.inc.filter(i => inStatsPeriod(i.التاريخ, period));
+    const expList = db.exp.filter(i => inStatsPeriod(i.التاريخ, period));
+    const rigList = db.rig.filter(i => inStatsPeriod(i.تاريخ_الاستحقاق || i.التاريخ, period));
+    const debList = db.deb.filter(i => inStatsPeriod(i.تاريخ_الاستحقاق || i.التاريخ, period));
     const incTotal = sum(incList, 'المبلغ');
     const expTotal = sum(expList, 'المبلغ');
     const rigTotal = sum(rigList, 'المبلغ');
@@ -1871,10 +1904,6 @@ function updateStats() {
         const esub = document.getElementById('sExpSub'); if (esub) esub.style.display = 'none';
         set('sDebPaid', formatCurrency(debPaid, true)); setBar('sDebBar', pct(debPaid, debTotal)); setText('sDebPct', pct(debPaid, debTotal) + '%'); set('sDebSub', `${translate('totalDebts')}: <strong>${money(debTotal)}</strong>`);
         set('sRigPaid', formatCurrency(rigPaid, true)); setBar('sRigBar', pct(rigPaid, rigTotal)); setText('sRigPct', pct(rigPaid, rigTotal) + '%'); set('sRigSub', `${translate('totalRights')}: <strong>${money(rigTotal)}</strong>`);
-        setText('sOpsTitle', translate('operationsCount')); setText('sOpsCount', incList.length + expList.length + rigList.length + debList.length); setText('sOpsSub', translate('periodMonth'));
-        setText('sExpRatioTitle', translate('topExpenseCategory')); setText('sExpRatio', pct(expTotal, incTotal) + '%'); setText('sExpRatioSub', translate('totalIncome'));
-        setText('sGoalTitle', translate('totalIncome')); setText('sGoalRatio', pct(incTotal, incTotal + expTotal) + '%'); setText('sGoalSub', translate('statsSummary'));
-        setText('sNetTitle', translate('remaining')); set('sNet', formatCurrency(net, true)); setText('sNetSub', translate('periodMonth'));
         let aKey, aType;
         if (incTotal === 0 && expTotal === 0) { aKey = 'noData'; aType = 'good'; }
         else if (incTotal === 0) { aKey = 'noIncome'; aType = 'bad'; }
@@ -2115,6 +2144,8 @@ window.onload = () => {
     loadTranslations().then(() => { applyTranslations(currentLang); });
     const now = getLocalDateString();
     ['eDate', 'rDueDate', 'dDueDate', 'iDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = now; });
+    const statsPeriodEl = document.getElementById('statsPeriod');
+    if (statsPeriodEl) statsPeriodEl.value = statsPeriodFilter;
     const currencyLabel = document.getElementById('sidebarCurrencyLabel');
     if (currencyLabel) currencyLabel.textContent = currentCurrency.symbol;
     updateBalanceDisplay();
