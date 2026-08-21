@@ -2,409 +2,515 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="appTitle">ميزانيتك الذكية | Smart Budget</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0077b6">
+<title>ميزانيتك الذكية | Smart Budget</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/tajawal/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/tajawal/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/tajawal/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/tajawal/800.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="app">
 
-<!-- ============ HEADER ============ -->
-<header>
-<button onclick="openSidebar()" aria-label="menu"><i class="fas fa-bars"></i></button>
-<div class="title" data-i18n="appTitleShort">ميزانيتك المالية الذكية</div>
-<button id="notificationBell" onclick="openNotifications()" aria-label="notifications"><i class="fas fa-bell"></i><span id="notifBadge" class="notif-badge" style="display:none;">0</span></button>
-</header>
+  <!-- ===== HEADER ===== -->
+  <header>
+    <button type="button" onclick="openSidebar()" aria-label="menu"><i class="fas fa-bars"></i></button>
+    <div class="title" data-i18n="appTitleShort">ميزانيتك المالية الذكية</div>
+    <button type="button" id="notificationBell" onclick="openNotifications()" aria-label="notifications">
+      <i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge">0</span>
+    </button>
+  </header>
 
-<!-- ============ OVERVIEW ============ -->
-<div id="overview" class="section active">
-<div class="balance-display">
-<button id="balanceVisibilityToggle" onclick="toggleBalanceVisibility()"><i class="fas fa-eye"></i></button>
-<h2 data-i18n="currentBalance">الرصيد النقدي الحالي</h2>
-<p id="currentBalanceDisplay">0 ﷼</p>
-<div class="balance-actions">
-<button class="action deposit" onclick="openBalanceActionModal('deposit')"><i class="fas fa-arrow-up"></i><span data-i18n="deposit">إيداع</span></button>
-<button class="action withdraw" onclick="openBalanceActionModal('withdraw')"><i class="fas fa-arrow-down"></i><span data-i18n="withdraw">سحب</span></button>
-<button class="action balance-log" onclick="openBalanceLogModal()"><i class="fas fa-history"></i><span data-i18n="balanceLog">سجل حركات الرصيد</span></button>
-</div>
-</div>
+  <!-- ===== OVERVIEW ===== -->
+  <section id="overview" class="section active">
+    <div class="balance-display">
+      <button id="balanceVisibilityToggle" type="button" onclick="toggleBalanceVisibility()"><i class="fas fa-eye"></i></button>
+      <h2 data-i18n="currentBalance">الرصيد النقدي الحالي</h2>
+      <p id="currentBalanceDisplay">0 ﷼</p>
+      <div class="balance-actions">
+        <button class="action deposit" type="button" onclick="openBalanceActionModal('deposit')">
+          <i class="fas fa-circle-plus"></i><span data-i18n="deposit">إيداع</span></button>
+        <button class="action withdraw" type="button" onclick="openBalanceActionModal('withdraw')">
+          <i class="fas fa-circle-minus"></i><span data-i18n="withdraw">سحب</span></button>
+        <button class="action balance-log" type="button" onclick="openBalanceLogModal()">
+          <i class="fas fa-clock-rotate-left"></i><span data-i18n="balanceLog">سجل حركات الرصيد</span></button>
+      </div>
+    </div>
 
-<!-- ✔ ملخص الإحصائيات — التصميم الجديد -->
-<div class="stats-summary">
-<div class="stats-head">
-<h3 class="stats-title"><i class="fas fa-chart-line"></i> <span data-i18n="statsSummary">ملخص الإحصائيات</span></h3>
-<div class="stats-period-wrap"><i class="far fa-calendar-alt"></i><span data-i18n="periodMonth">هذا الشهر</span><i class="fas fa-chevron-down"></i></div>
-</div>
+    <div class="card stats-summary">
+      <div class="stats-head">
+        <h2 class="stats-title"><i class="fas fa-chart-pie"></i><span data-i18n="statsSummary">ملخص الإحصائيات</span></h2>
+        <div class="stats-period-wrap"><span data-i18n="periodMonth">هذا الشهر</span><i class="fas fa-chevron-down"></i></div>
+      </div>
 
-<div class="stat-big c-income">
-<div class="stat-big-icon"><i class="fas fa-chart-line"></i></div>
-<div class="stat-big-body">
-<div class="stat-big-title" data-i18n="totalIncome">إجمالي الدخل</div>
-<div class="stat-big-value" id="sIncTotal">0 ﷼</div>
-<div class="stat-big-bar"><div class="stat-big-fill" id="sIncBar"></div></div>
-<div class="stat-big-sub" id="sIncSub"></div>
-</div>
-<div class="stat-big-pct" id="sIncPct">0%</div>
-</div>
+      <div class="stat-big c-income">
+        <div class="stat-big-icon"><i class="fas fa-arrow-trend-up"></i></div>
+        <div class="stat-big-body">
+          <div class="stat-big-title" data-i18n="totalIncome">إجمالي الدخل</div>
+          <div class="stat-big-value" id="sIncTotal">0</div>
+          <div class="stat-big-bar"><div class="stat-big-fill" id="sIncBar"></div></div>
+          <div class="stat-big-sub" id="sIncSub"></div>
+        </div>
+        <div class="stat-big-pct" id="sIncPct">0%</div>
+      </div>
 
-<div class="stat-big c-expense">
-<div class="stat-big-icon"><i class="fas fa-shopping-cart"></i></div>
-<div class="stat-big-body">
-<div class="stat-big-title" data-i18n="totalExpenses">إجمالي المصروفات</div>
-<div class="stat-big-value" id="sExpTotal">0 ﷼</div>
-<div class="stat-big-bar"><div class="stat-big-fill" id="sExpBar"></div></div>
-<div class="stat-big-sub" id="sExpSub"></div>
-</div>
-<div class="stat-big-pct" id="sExpPct">0%</div>
-</div>
+      <div class="stat-big c-expense">
+        <div class="stat-big-icon"><i class="fas fa-arrow-trend-down"></i></div>
+        <div class="stat-big-body">
+          <div class="stat-big-title" data-i18n="totalExpenses">إجمالي المصروفات</div>
+          <div class="stat-big-value" id="sExpTotal">0</div>
+          <div class="stat-big-bar"><div class="stat-big-fill" id="sExpBar"></div></div>
+          <div class="stat-big-sub" id="sExpSub"></div>
+        </div>
+        <div class="stat-big-pct" id="sExpPct">0%</div>
+      </div>
 
-<div class="stat-big c-debt">
-<div class="stat-big-icon"><i class="fas fa-credit-card"></i></div>
-<div class="stat-big-body">
-<div class="stat-big-title" data-i18n="debtsPaid">المدفوع من الالتزامات</div>
-<div class="stat-big-value" id="sDebPaid">0 ﷼</div>
-<div class="stat-big-bar"><div class="stat-big-fill" id="sDebBar"></div></div>
-<div class="stat-big-sub" id="sDebSub"></div>
-</div>
-<div class="stat-big-pct" id="sDebPct">0%</div>
-</div>
+      <div class="stat-big c-debt">
+        <div class="stat-big-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+        <div class="stat-big-body">
+          <div class="stat-big-title" data-i18n="debtsPaid">المدفوع من الالتزامات</div>
+          <div class="stat-big-value" id="sDebPaid">0</div>
+          <div class="stat-big-bar"><div class="stat-big-fill" id="sDebBar"></div></div>
+          <div class="stat-big-sub" id="sDebSub"></div>
+        </div>
+        <div class="stat-big-pct" id="sDebPct">0%</div>
+      </div>
 
-<div class="stat-big c-right">
-<div class="stat-big-icon"><i class="fas fa-handshake"></i></div>
-<div class="stat-big-body">
-<div class="stat-big-title" data-i18n="rightsCollected">المحصل من الحقوق</div>
-<div class="stat-big-value" id="sRigPaid">0 ﷼</div>
-<div class="stat-big-bar"><div class="stat-big-fill" id="sRigBar"></div></div>
-<div class="stat-big-sub" id="sRigSub"></div>
-</div>
-<div class="stat-big-pct" id="sRigPct">0%</div>
-</div>
+      <div class="stat-big c-right">
+        <div class="stat-big-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+        <div class="stat-big-body">
+          <div class="stat-big-title" data-i18n="rightsCollected">المحصل من الحقوق</div>
+          <div class="stat-big-value" id="sRigPaid">0</div>
+          <div class="stat-big-bar"><div class="stat-big-fill" id="sRigBar"></div></div>
+          <div class="stat-big-sub" id="sRigSub"></div>
+        </div>
+        <div class="stat-big-pct" id="sRigPct">0%</div>
+      </div>
 
-<div class="stats-mini">
-<div class="mini-stat"><div class="mini-icon mi-ops"><i class="far fa-calendar-check"></i></div><div class="mini-title" id="sOpsTitle"></div><div class="mini-value mv-ops" id="sOpsCount">0</div><div class="mini-sub" id="sOpsSub"></div></div>
-<div class="mini-stat"><div class="mini-icon mi-exp"><i class="fas fa-chart-pie"></i></div><div class="mini-title" id="sExpRatioTitle"></div><div class="mini-value mv-exp" id="sExpRatio">0%</div><div class="mini-sub" id="sExpRatioSub"></div></div>
-<div class="mini-stat"><div class="mini-icon mi-goal"><i class="fas fa-bullseye"></i></div><div class="mini-title" id="sGoalTitle"></div><div class="mini-value mv-goal" id="sGoalRatio">0%</div><div class="mini-sub" id="sGoalSub"></div></div>
-<div class="mini-stat"><div class="mini-icon mi-net"><i class="fas fa-wallet"></i></div><div class="mini-title" id="sNetTitle"></div><div class="mini-value mv-net" id="sNet">0 ﷼</div><div class="mini-sub" id="sNetSub"></div></div>
-</div>
+      <div class="stats-mini">
+        <div class="mini-stat">
+          <div class="mini-icon mi-ops"><i class="fas fa-list-ol"></i></div>
+          <div class="mini-title" id="sOpsTitle" data-i18n="operationsCount">عدد العمليات</div>
+          <div class="mini-value mv-ops" id="sOpsCount">0</div>
+          <div class="mini-sub" id="sOpsSub"></div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-icon mi-exp"><i class="fas fa-percent"></i></div>
+          <div class="mini-title" id="sExpRatioTitle" data-i18n="topExpenseCategory">أعلى فئة إنفاق</div>
+          <div class="mini-value mv-exp" id="sExpRatio">0%</div>
+          <div class="mini-sub" id="sExpRatioSub"></div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-icon mi-goal"><i class="fas fa-bullseye"></i></div>
+          <div class="mini-title" id="sGoalTitle" data-i18n="totalIncome">إجمالي الدخل</div>
+          <div class="mini-value mv-goal" id="sGoalRatio">0%</div>
+          <div class="mini-sub" id="sGoalSub"></div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-icon mi-net"><i class="fas fa-wallet"></i></div>
+          <div class="mini-title" id="sNetTitle" data-i18n="remaining">المتبقي</div>
+          <div class="mini-value" id="sNet">0</div>
+          <div class="mini-sub" id="sNetSub"></div>
+        </div>
+      </div>
 
-<div class="stat-status good" id="sStatusBanner">
-<div class="stat-status-icon"><i class="fas fa-lightbulb"></i></div>
-<div class="stat-status-body">
-<div class="stat-status-title"><i class="fas fa-check-circle" id="sStatusIcon"></i> <span id="sStatusTitle"></span></div>
-<div class="stat-status-msg" id="sStatusMsg"></div>
-</div>
-<i class="fas fa-chevron-left stat-status-arrow"></i>
-</div>
-</div>
-</div>
+      <div class="stat-status good" id="sStatusBanner">
+        <div class="stat-status-icon"><i class="fas fa-check-circle" id="sStatusIcon"></i></div>
+        <div class="stat-status-body">
+          <div class="stat-status-title" id="sStatusTitle"></div>
+          <div class="stat-status-msg" id="sStatusMsg"></div>
+        </div>
+        <div class="stat-status-arrow"><i class="fas fa-chevron-left"></i></div>
+      </div>
+    </div>
+  </section>
 
-<!-- ============ INCOME ============ -->
-<div id="income" class="section">
-<span class="edit-indicator" id="incEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
-<span class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</span>
-<input id="iAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
-<select id="iType">
-<option value="" disabled selected data-i18n="incomeCategoryPlaceholder">📂 فئة الدخل</option>
-<option value="راتب" data-i18n="incomeSalary">💼 راتب</option>
-<option value="عمل حر" data-i18n="incomeFreelance">💻 عمل حر</option>
-<option value="تجارة" data-i18n="incomeBusiness">🏪 تجارة</option>
-<option value="استثمار" data-i18n="incomeInvestment">📈 استثمار</option>
-<option value="عمولة" data-i18n="incomeCommission">💰 عمولة</option>
-<option value="هدية" data-i18n="incomeGift">🎁 هدية</option>
-<option value="مكافأة" data-i18n="incomeBonus">🏆 مكافأة</option>
-<option value="الضمان الاجتماعي" data-i18n="incomeSocialSecurity">🛡️ الضمان الاجتماعي</option>
-<option value="المعاش التقاعدي" data-i18n="incomePension">🧓 المعاش التقاعدي</option>
-<option value="دخل آخر" data-i18n="incomeOther">📦 دخل آخر</option>
-</select>
-<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="iDate" type="date"></div>
-<input id="iDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
-<button class="action" onclick="addIncome()" data-i18n="saveIncome">حفظ الدخل</button>
-<button class="secondary" onclick="openLog('inc')" data-i18n="incomeLog">سجل الدخل</button>
-</div>
+  <!-- ===== INCOME ===== -->
+  <section id="income" class="section">
+    <span class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</span>
+    <div class="card">
+      <span class="edit-indicator" id="incEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
+      <select id="iType" data-i18n="incomeCategoryPlaceholder">
+        <option value="" disabled selected>📂 فئة الدخل</option>
+        <option value="راتب">راتب</option>
+        <option value="عمل حر">عمل حر</option>
+        <option value="تجارة">تجارة</option>
+        <option value="استثمار">استثمار</option>
+        <option value="عمولة">عمولة</option>
+        <option value="هدية">هدية</option>
+        <option value="مكافأة">مكافأة</option>
+        <option value="الضمان الاجتماعي">الضمان الاجتماعي</option>
+        <option value="المعاش التقاعدي">المعاش التقاعدي</option>
+        <option value="دخل آخر">دخل آخر</option>
+      </select>
+      <input type="text" id="iAmount" inputmode="decimal" oninput="formatAmount(this)" data-i18n-placeholder="amountPlaceholder" placeholder="💵 المبلغ">
+      <div class="datetime-container"><i class="fas fa-calendar cal-icon"></i><input type="date" id="iDate"></div>
+      <input type="text" id="iDesc" data-i18n-placeholder="notesOptional" placeholder="📝 ملاحظات (اختياري)">
+      <button class="action" type="button" onclick="addIncome()" data-i18n="saveIncome">حفظ الدخل</button>
+      <button class="secondary" type="button" onclick="openLog('inc')"><i class="fas fa-list"></i> <span data-i18n="incomeLog">سجل الدخل</span></button>
+    </div>
+  </section>
 
-<!-- ============ EXPENSES ============ -->
-<div id="expenses" class="section">
-<span class="edit-indicator" id="expEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
-<span class="section-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</span>
-<input id="eAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
-<select id="eType">
-<option value="" disabled selected data-i18n="expenseCategoryPlaceholder">🛒 الفئة (نفقات متغيرة)</option>
-<option value="طعام" data-i18n="expenseFood">🍽️ طعام</option>
-<option value="مواصلات" data-i18n="expenseTransport">🚗 مواصلات</option>
-<option value="وقود" data-i18n="expenseFuel">⛽ وقود</option>
-<option value="مقاهي" data-i18n="expenseCafe">☕ مقاهي</option>
-<option value="رعاية شخصية" data-i18n="expensePersonalCare">🧴 رعاية شخصية</option>
-<option value="أجهزة إلكترونية" data-i18n="expenseElectronics">📱 أجهزة إلكترونية</option>
-<option value="صحة" data-i18n="expenseHealth">🏥 صحة</option>
-<option value="ترفيه" data-i18n="expenseEntertainment">🎮 ترفيه</option>
-<option value="تسوق" data-i18n="expenseShopping">🛍️ تسوق</option>
-<option value="تعليم" data-i18n="expenseEducation">📚 تعليم</option>
-<option value="صيانة وإصلاح" data-i18n="expenseMaintenance">🔧 صيانة وإصلاح</option>
-<option value="أخرى" data-i18n="expenseOther">📦 أخرى</option>
-</select>
-<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="eDate" type="date"></div>
-<input id="eDesc" type="text" placeholder="📝 وصف / ملاحظة" data-i18n-placeholder="descriptionNotes">
-<button class="secondary" onclick="showImageSourceModal()" data-i18n="attachInvoice">إرفاق صورة الفاتورة (اختياري)</button>
-<span id="eImgName" style="font-size:0.85em;color:#888;display:block;"></span>
-<input type="file" id="eImgCamera" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(this)">
-<input type="file" id="eImgGallery" accept="image/*" style="display:none;" onchange="handleImageSelect(this)">
-<button class="action" onclick="addExpense()" data-i18n="saveExpense">حفظ المصروف</button>
-<button class="secondary" onclick="openLog('exp')" data-i18n="expenseLog">سجل المصروفات</button>
-</div>
+  <!-- ===== EXPENSES ===== -->
+  <section id="expenses" class="section">
+    <span class="section-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</span>
+    <div class="card">
+      <span class="edit-indicator" id="expEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
+      <select id="eType" data-i18n="expenseCategoryPlaceholder">
+        <option value="" disabled selected>🛒 الفئة (نفقات متغيرة)</option>
+        <option value="طعام">طعام</option>
+        <option value="مواصلات">مواصلات</option>
+        <option value="وقود">وقود</option>
+        <option value="مقاهي">مقاهي</option>
+        <option value="رعاية شخصية">رعاية شخصية</option>
+        <option value="أجهزة إلكترونية">أجهزة إلكترونية</option>
+        <option value="صحة">صحة</option>
+        <option value="ترفيه">ترفيه</option>
+        <option value="تسوق">تسوق</option>
+        <option value="تعليم">تعليم</option>
+        <option value="صيانة وإصلاح">صيانة وإصلاح</option>
+        <option value="أخرى">أخرى</option>
+      </select>
+      <input type="text" id="eAmount" inputmode="decimal" oninput="formatAmount(this)" data-i18n-placeholder="amountPlaceholder" placeholder="💵 المبلغ">
+      <div class="datetime-container"><i class="fas fa-calendar cal-icon"></i><input type="date" id="eDate"></div>
+      <input type="text" id="eDesc" data-i18n-placeholder="descriptionNotes" placeholder="📝 وصف / ملاحظة">
+      <button class="secondary" type="button" onclick="showImageSourceModal()"><i class="fas fa-paperclip"></i> <span data-i18n="attachInvoice">إرفاق صورة الفاتورة (اختياري)</span></button>
+      <span class="field-hint" id="eImgName"></span>
+      <input type="file" id="eImgCamera" accept="image/*" style="display:none" onchange="handleImageSelect(this)">
+      <input type="file" id="eImgGallery" accept="image/*" style="display:none" onchange="handleImageSelect(this)">
+      <button class="action" type="button" onclick="addExpense()" data-i18n="saveExpense">حفظ المصروف</button>
+      <button class="secondary" type="button" onclick="openLog('exp')"><i class="fas fa-list"></i> <span data-i18n="expenseLog">سجل المصروفات</span></button>
+    </div>
+  </section>
 
-<!-- ============ RIGHTS ============ -->
-<div id="rights" class="section">
-<span class="edit-indicator" id="rigEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
-<span class="section-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل «المبلغ المحصل»</span>
-<span class="section-hint warning" data-i18n="rightsWarning">⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</span>
-<select id="rType" onchange="updateRightFields(this.value)">
-<option value="" disabled selected data-i18n="rightTypePlaceholder">🤝 نوع الحق</option>
-<option value="بيع آجل" data-i18n="rightCreditSale">🛒 بيع آجل</option>
-<option value="سلفة" data-i18n="rightLoan">💸 سلفة</option>
-<option value="إيجار مستحق" data-i18n="rightRentDue">🏠 إيجار مستحق</option>
-<option value="شراكة" data-i18n="rightPartnership">🤝 شراكة</option>
-<option value="حق آخر" data-i18n="rightOther">📦 حق آخر</option>
-</select>
-<input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" data-i18n-placeholder="totalDueAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
-<div id="rDynamicFields"></div>
-<input id="rEntity" type="text" placeholder="👤 الجهة / المدين (اسم الشخص أو المؤسسة)" data-i18n-placeholder="entityDebtor">
-<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="rDueDate" type="date"></div>
-<span class="field-hint" data-i18n="dueDateHint">تاريخ الاستحقاق المتوقع</span>
-<select id="rNotifTiming">
-<option value="" disabled selected data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
-<option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
-<option value="24" data-i18n="notif24Hours">⏱️ قبل 24 ساعة</option>
-<option value="168" data-i18n="notif7Days">⏱️ قبل 7 أيام</option>
-</select>
-<span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
-<input id="rDesc" type="text" placeholder="📝 ملاحظات إضافية" data-i18n-placeholder="additionalNotes">
-<button class="action" onclick="addRight()" data-i18n="saveRight">حفظ الحق</button>
-<button class="secondary" onclick="openLog('rig')" data-i18n="rightsLog">سجل الحقوق</button>
-</div>
+  <!-- ===== RIGHTS ===== -->
+  <section id="rights" class="section">
+    <span class="section-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل «المبلغ المحصل»</span>
+    <span class="section-hint warning" data-i18n="rightsWarning">⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</span>
+    <div class="card">
+      <span class="edit-indicator" id="rigEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
+      <select id="rType" data-i18n="rightTypePlaceholder" onchange="updateRightFields(this.value)">
+        <option value="" disabled selected>🤝 نوع الحق</option>
+        <option value="بيع آجل">بيع آجل</option>
+        <option value="سلفة">سلفة</option>
+        <option value="إيجار مستحق">إيجار مستحق</option>
+        <option value="شراكة">شراكة</option>
+        <option value="حق آخر">حق آخر</option>
+      </select>
+      <input type="text" id="rEntity" data-i18n-placeholder="entityDebtor" placeholder="👤 الجهة / المدين (اسم الشخص أو المؤسسة)">
+      <input type="text" id="rAmount" inputmode="decimal" oninput="formatAmount(this)" data-i18n-placeholder="totalDueAmount" placeholder="💵 المبلغ المستحق (الكلي)">
+      <div id="rDynamicFields"></div>
+      <label class="fl" data-i18n="dueDateHint">تاريخ الاستحقاق المتوقع</label>
+      <div class="datetime-container"><i class="fas fa-calendar cal-icon"></i><input type="date" id="rDueDate"></div>
+      <input type="text" id="rDesc" data-i18n-placeholder="additionalNotes" placeholder="📝 ملاحظات إضافية">
+      <select id="rNotifTiming" data-i18n="notifTimingPlaceholder">
+        <option value="" disabled selected>⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
+        <option value="1">⏱️ قبل ساعة</option>
+        <option value="24">⏱️ قبل 24 ساعة</option>
+        <option value="168">⏱️ قبل 7 أيام</option>
+      </select>
+      <span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
+      <button class="action" type="button" onclick="addRight()" data-i18n="saveRight">حفظ الحق</button>
+      <button class="secondary" type="button" onclick="openLog('rig')"><i class="fas fa-list"></i> <span data-i18n="rightsLog">سجل الحقوق</span></button>
+    </div>
+  </section>
 
-<!-- ============ DEBTS ============ -->
-<div id="debts" class="section">
-<span class="edit-indicator" id="debEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
-<span class="section-hint" data-i18n="debtsHint">* دفع الالتزامات يُخصم من رصيدك الحالي</span>
-<select id="dType" onchange="updateDebtFields(this.value)">
-<option value="" disabled selected data-i18n="debtTypePlaceholder">🧾 نوع الالتزام</option>
-<option value="🏠 إيجار" data-i18n="debtRent">🏠 إيجار</option>
-<option value="💡 كهرباء" data-i18n="debtElectricity">💡 كهرباء</option>
-<option value="💧 ماء" data-i18n="debtWater">💧 ماء</option>
-<option value="💡 فواتير الخدمات" data-i18n="debtUtilities">💡 فواتير الخدمات</option>
-<option value="📱 الاتصالات والإنترنت" data-i18n="debtInternet">📱 الاتصالات والإنترنت</option>
-<option value="🏦 قروض وتمويل" data-i18n="debtLoans">🏦 قروض وتمويل</option>
-<option value="👤 دين شخصي" data-i18n="debtPersonal">👤 دين شخصي</option>
-<option value="🛒 مشتريات بالتقسيط" data-i18n="debtInstallments">🛒 مشتريات بالتقسيط</option>
-<option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
-<option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
-<option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-<option value="👨‍‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
-<option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
-<option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
-<option value="أخرى" data-i18n="debtOther">📦 أخرى</option>
-</select>
-<input id="dAmount" type="text" placeholder="💵 قيمة الفاتورة / القسط الحالي" data-i18n-placeholder="billAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
-<input id="dEntity" type="text" placeholder="🏢 الجهة / الدائن" data-i18n-placeholder="entityCreditor" style="display:none;">
-<select id="dStatus">
-<option value="" disabled selected data-i18n="statusPlaceholder">✅ الحالة</option>
-<option value="مدفوع" data-i18n="statusPaid">مدفوع</option>
-<option value="مدفوع جزئياً" data-i18n="statusPartiallyPaid">مدفوع جزئياً</option>
-<option value="غير مدفوع" data-i18n="statusUnpaid">غير مدفوع</option>
-<option value="متأخر" data-i18n="statusOverdue">متأخر</option>
-</select>
-<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="dDueDate" type="date"></div>
-<select id="dNotifTiming">
-<option value="" disabled selected data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
-<option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
-<option value="24" data-i18n="notif24Hours">⏱️ قبل 24 ساعة</option>
-<option value="168" data-i18n="notif7Days">⏱️ قبل 7 أيام</option>
-</select>
-<span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
-<input id="dDesc" type="text" placeholder="📝 ملاحظات إضافية" data-i18n-placeholder="additionalNotes">
-<div id="dDynamicFields"></div>
-<button class="action" onclick="addDebt()" data-i18n="saveDebt">حفظ الالتزام</button>
-<button class="secondary" onclick="openLog('deb')" data-i18n="debtsLog">سجل الالتزامات</button>
-</div>
+  <!-- ===== OBLIGATIONS ===== -->
+  <section id="debts" class="section">
+    <span class="section-hint" data-i18n="debtsHint">* دفع الالتزامات يُخصم من رصيدك الحالي</span>
+    <div class="card">
+      <span class="edit-indicator" id="debEditIndicator" style="display:none" data-i18n="editMode">وضع التعديل</span>
+      <select id="dType" data-i18n="debtTypePlaceholder" onchange="updateDebtFields(this.value)">
+        <option value="" disabled selected>🧾 نوع الالتزام</option>
+        <option value="🏠 إيجار">🏠 إيجار</option>
+        <option value="💡 كهرباء">💡 كهرباء</option>
+        <option value="💧 ماء">💧 ماء</option>
+        <option value="💡 فواتير الخدمات">💡 فواتير الخدمات</option>
+        <option value="📱 الاتصالات والإنترنت">📱 الاتصالات والإنترنت</option>
+        <option value="🏦 قروض وتمويل">🏦 قروض وتمويل</option>
+        <option value="👤 دين شخصي">👤 دين شخصي</option>
+        <option value="🛒 مشتريات بالتقسيط">🛒 مشتريات بالتقسيط</option>
+        <option value="🎓 رسوم تعليمية">🎓 رسوم تعليمية</option>
+        <option value="🏥 مصاريف طبية مستحقة">🏥 مصاريف طبية مستحقة</option>
+        <option value="🚗 تمويل السيارة">🚗 تمويل السيارة</option>
+        <option value="👨‍👩 التزامات عائلية">👨‍👩 التزامات عائلية</option>
+        <option value="📅 اشتراكات دورية">📅 اشتراكات دورية</option>
+        <option value="👨‍💼 رواتب">👨‍💼 رواتب</option>
+        <option value="📦 أخرى">📦 أخرى</option>
+      </select>
+      <input type="text" id="dAmount" inputmode="decimal" oninput="formatAmount(this)" data-i18n-placeholder="billAmount" placeholder="💵 قيمة الفاتورة / القسط الحالي">
+      <input type="text" id="dEntity" style="display:none" data-i18n-placeholder="entityCreditor" placeholder="🏢 الجهة / الدائن">
+      <select id="dStatus" data-i18n="statusPlaceholder">
+        <option value="" disabled selected>✅ الحالة</option>
+        <option value="مدفوع">مدفوع</option>
+        <option value="مدفوع جزئياً">مدفوع جزئياً</option>
+        <option value="غير مدفوع">غير مدفوع</option>
+        <option value="متأخر">متأخر</option>
+      </select>
+      <div id="dDynamicFields"></div>
+      <label class="fl" data-i18n="dueDateHint">تاريخ الاستحقاق المتوقع</label>
+      <div class="datetime-container"><i class="fas fa-calendar cal-icon"></i><input type="date" id="dDueDate"></div>
+      <input type="text" id="dDesc" data-i18n-placeholder="additionalNotes" placeholder="📝 ملاحظات إضافية">
+      <select id="dNotifTiming" data-i18n="notifTimingPlaceholder">
+        <option value="" disabled selected>⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
+        <option value="1">⏱️ قبل ساعة</option>
+        <option value="24">⏱️ قبل 24 ساعة</option>
+        <option value="168">⏱️ قبل 7 أيام</option>
+      </select>
+      <span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
+      <button class="action" type="button" onclick="addDebt()" data-i18n="saveDebt">حفظ الالتزام</button>
+      <button class="secondary" type="button" onclick="openLog('deb')"><i class="fas fa-list"></i> <span data-i18n="debtsLog">سجل الالتزامات</span></button>
+    </div>
+  </section>
 
-<!-- ============ BOTTOM NAVIGATION ============ -->
-<nav class="bottom-nav">
-<button class="nav-item" data-tab="income" onclick="openTabFromNav('income')"><i class="fas fa-arrow-down"></i><span data-i18n="navIncome">الدخل</span></button>
-<button class="nav-item" data-tab="expenses" onclick="openTabFromNav('expenses')"><i class="fas fa-arrow-up"></i><span data-i18n="navExpenses">مصروفات</span></button>
-<button class="nav-item nav-item-home active" data-tab="overview" onclick="openTabFromNav('overview')"><div class="home-icon-wrapper"><i class="fas fa-home"></i></div><span data-i18n="navHome">الرئيسية</span></button>
-<button class="nav-item" data-tab="rights" onclick="openTabFromNav('rights')"><i class="fas fa-hand-holding-usd"></i><span data-i18n="navRights">حقوق</span></button>
-<button class="nav-item" data-tab="debts" onclick="openTabFromNav('debts')"><i class="fas fa-file-invoice-dollar"></i><span data-i18n="navDebts">التزامات</span></button>
-</nav>
-
-<!-- ============ LOG MODAL ============ -->
-<div id="logModal" class="modal">
-<header><button onclick="closeLayer('log')"><i class="fas fa-times"></i></button><div class="title" data-i18n="searchLog">السجل</div></header>
-<div class="modal-content">
-<input id="search" type="text" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderLog()">
-<div class="log-filters">
-<select id="logFilterCat" onchange="setLogFilter('cat', this.value)"></select>
-<select id="logFilterStatus" onchange="setLogFilter('status', this.value)"></select>
-<select id="logFilterPeriod" onchange="setLogFilter('period', this.value)"></select>
-</div>
-<div id="logStatsBar" class="log-stats"></div>
-<div id="logContent"></div>
-</div>
-</div>
-
-<!-- ============ DETAIL MODAL ============ -->
-<div id="detailModal" class="modal">
-<header><button onclick="closeLayer('detail')"><i class="fas fa-times"></i></button><div class="title" data-i18n="transactionDetails">تفاصيل المعاملة</div></header>
-<div class="modal-content" id="detailContent"></div>
-</div>
-
-<!-- ============ BALANCE ACTION MODAL ============ -->
-<div id="balanceActionModal" class="modal">
-<header><button onclick="closeLayer('balanceAction')"><i class="fas fa-times"></i></button><div class="title" id="actionModalTitle" data-i18n="depositTitle">إيداع</div></header>
-<div class="modal-content">
-<p style="text-align:center;"><span data-i18n="currentBalanceLabel">رصيدك الحالي:</span> <span id="currentBalanceInAction"></span></p>
-<input id="bAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
-<input id="bDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
-<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="bDate" type="datetime-local"></div>
-<button class="action" onclick="processBalanceAction()" data-i18n="execute">تنفيذ</button>
-</div>
-</div>
-
-<!-- ============ BALANCE LOG MODAL ============ -->
-<div id="balanceLogModal" class="modal">
-<header><button onclick="closeLayer('balanceLog')"><i class="fas fa-times"></i></button><div class="title" data-i18n="balanceLogTitle">سجل حركات الرصيد</div></header>
-<div class="modal-content">
-<input id="balanceSearch" type="text" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderBalanceLog()">
-<div class="log-filters"><select id="balanceFilterType" onchange="setBalanceFilter('type', this.value)"></select></div>
-<div id="balanceStatsBar" class="log-stats"></div>
-<div id="balanceLogContent"></div>
-</div>
+  <!-- ===== BOTTOM NAV (بدون زر السجل) ===== -->
+  <nav class="bottom-nav">
+    <button class="nav-item" type="button" data-tab="income" onclick="openTabFromNav('income')">
+      <i class="fas fa-sack-dollar"></i><span data-i18n="navIncome">الدخل</span></button>
+    <button class="nav-item" type="button" data-tab="expenses" onclick="openTabFromNav('expenses')">
+      <i class="fas fa-cart-shopping"></i><span data-i18n="navExpenses">مصروفات</span></button>
+    <button class="nav-item nav-item-home active" type="button" data-tab="overview" onclick="openTabFromNav('overview')">
+      <span class="home-icon-wrapper"><i class="fas fa-house"></i></span><span data-i18n="navHome">الرئيسية</span></button>
+    <button class="nav-item" type="button" data-tab="rights" onclick="openTabFromNav('rights')">
+      <i class="fas fa-hand-holding-dollar"></i><span data-i18n="navRights">حقوق</span></button>
+    <button class="nav-item" type="button" data-tab="debts" onclick="openTabFromNav('debts')">
+      <i class="fas fa-file-invoice"></i><span data-i18n="navDebts">التزامات</span></button>
+  </nav>
 </div>
 
-<!-- ============ NOTIFICATIONS MODAL ============ -->
-<div id="notificationsModal" class="modal">
-<header><button onclick="closeLayer('notifications')"><i class="fas fa-times"></i></button><div class="title" data-i18n="notificationsTitle">التنبيهات المالية</div></header>
-<div class="modal-content" id="notificationsContent"></div>
+<!-- ===== SIDEBAR (بدون ملاحظة IndexedDB) ===== -->
+<div class="sidebar-overlay" onclick="closeLayer('sidebar')"></div>
+<aside class="sidebar" id="appSidebar">
+  <div class="sidebar-header"><span data-i18n="menu">القائمة</span>
+    <button type="button" onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button></div>
+  <div class="sidebar-content">
+    <button class="sidebar-menu-item" type="button" onclick="openLanguageModal()">
+      <i class="fas fa-globe"></i><span data-i18n="language">اللغة</span>
+      <span class="currency-label" id="sidebarLanguageLabel">🇸🇦 العربية</span></button>
+
+    <div class="sidebar-menu-item drive-item" id="driveMenuItem" onclick="handleDriveClick()">
+      <i class="fab fa-google-drive"></i><span id="driveMenuText" data-i18n="googleDrive">Google Drive</span>
+      <span class="drive-status-dot" id="driveStatusDot"></span>
+      <span class="drive-email" id="driveMenuEmail"></span>
+      <span class="drive-logout" id="driveLogoutBtn" onclick="event.stopPropagation();signOut()" data-i18n="signOut">تسجيل خروج</span></div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-switch-item">
+      <i class="fas fa-moon"></i><span data-i18n="darkMode">الوضع الليلي</span>
+      <label class="switch"><input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"><span class="slider"></span></label>
+    </div>
+
+    <button class="sidebar-menu-item" type="button" onclick="openCurrencyModal()">
+      <i class="fas fa-coins"></i><span data-i18n="changeCurrency">تغيير العملة</span>
+      <span class="currency-label" id="sidebarCurrencyLabel">﷼</span></button>
+
+    <div class="sidebar-divider"></div>
+
+    <button class="sidebar-menu-item" type="button" onclick="openExportNameModal()">
+      <i class="fas fa-file-export"></i><span data-i18n="exportData">تصدير البيانات</span></button>
+    <button class="sidebar-menu-item" type="button" onclick="document.getElementById('importFileInput').click()">
+      <i class="fas fa-file-import"></i><span data-i18n="importData">استيراد البيانات</span></button>
+    <button class="sidebar-menu-item" type="button" onclick="openAboutModal()">
+      <i class="fas fa-circle-info"></i><span data-i18n="aboutApp">حول التطبيق</span></button>
+
+    <div class="sidebar-divider"></div>
+
+    <button class="sidebar-menu-item danger" type="button" onclick="confirmResetData()">
+      <i class="fas fa-rotate-left"></i><span data-i18n="resetData">إعادة تعيين البيانات</span></button>
+  </div>
+</aside>
+<input type="file" id="importFileInput" accept=".json,application/json" style="display:none" onchange="importData(event)">
+
+<!-- ===== LOG MODAL ===== -->
+<div class="modal" id="logModal">
+  <header>
+    <button type="button" onclick="closeLayer('log')"><i class="fas fa-times"></i></button>
+    <div class="title">السجل</div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content">
+    <input type="text" id="search" oninput="renderLog()" data-i18n-placeholder="searchLog" placeholder="🔍 بحث في السجل...">
+    <div class="log-filters">
+      <select id="logFilterCat" onchange="setLogFilter('cat', this.value)"></select>
+      <select id="logFilterStatus" onchange="setLogFilter('status', this.value)"></select>
+      <select id="logFilterPeriod" onchange="setLogFilter('period', this.value)"></select>
+    </div>
+    <div class="log-stats" id="logStatsBar"></div>
+    <div id="logContent"></div>
+  </div>
 </div>
 
-<!-- ============ IMAGE SOURCE MODAL ============ -->
+<!-- ===== DETAIL MODAL ===== -->
+<div class="modal" id="detailModal">
+  <header>
+    <button type="button" onclick="closeLayer('detail')"><i class="fas fa-times"></i></button>
+    <div class="title" data-i18n="transactionDetails">تفاصيل المعاملة</div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content" id="detailContent"></div>
+</div>
+
+<!-- ===== CURRENCY MODAL (عملات بأعلامها + بحث) ===== -->
+<div class="modal" id="currencyModal">
+  <header>
+    <button type="button" onclick="closeLayer('currency')"><i class="fas fa-times"></i></button>
+    <div class="title" data-i18n="selectCurrency">اختيار العملة</div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content">
+    <input type="text" id="currencySearch" oninput="renderCurrencyList()" data-i18n-placeholder="searchCurrency" placeholder="🔍 ابحث عن العملة...">
+    <div id="currencyList"></div>
+  </div>
+</div>
+
+<!-- ===== ABOUT MODAL ===== -->
+<div class="modal" id="aboutModal">
+  <header>
+    <button type="button" onclick="closeLayer('about')"><i class="fas fa-times"></i></button>
+    <div class="title" data-i18n="aboutTitle">حول ميزانيتك الذكية</div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content">
+    <div class="about-logo"><i class="fas fa-wallet"></i></div>
+    <p class="about-desc" data-i18n="aboutDesc">تطبيق ميزانيتك المالية الذكية يساعدك على تتبع:</p>
+    <ul class="about-list">
+      <li data-i18n="aboutIncome">الدخل.</li>
+      <li data-i18n="aboutExpenses">المصروفات اليومية.</li>
+      <li data-i18n="aboutRights">الحقوق المالية المستحقة لك.</li>
+      <li data-i18n="aboutDebts">الالتزامات المالية المستحقة عليك.</li>
+    </ul>
+    <p class="about-note"><strong data-i18n="aboutNote">ملاحظة:</strong> <span data-i18n="aboutNoteText">تُحفظ البيانات محلياً باستخدام IndexedDB.</span></p>
+    <p class="about-ver" data-i18n="appVersion">الإصدار 5.1 (الدخل)</p>
+  </div>
+</div>
+
+<!-- ===== BALANCE ACTION MODAL ===== -->
+<div class="modal" id="balanceActionModal">
+  <header>
+    <button type="button" onclick="closeLayer('balanceAction')"><i class="fas fa-times"></i></button>
+    <div class="title" id="actionModalTitle">إيداع</div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content">
+    <p class="bal-label" data-i18n="currentBalanceLabel">رصيدك الحالي:</p>
+    <div class="bal-action-value" id="currentBalanceInAction"></div>
+    <input type="text" id="bAmount" inputmode="decimal" oninput="formatAmount(this)" data-i18n-placeholder="amountPlaceholder" placeholder="💵 المبلغ">
+    <input type="text" id="bDesc" data-i18n-placeholder="notesOptional" placeholder="📝 ملاحظات (اختياري)">
+    <div class="datetime-container"><i class="fas fa-calendar cal-icon"></i><input type="datetime-local" id="bDate"></div>
+    <button class="action" type="button" onclick="processBalanceAction()" data-i18n="execute">تنفيذ</button>
+  </div>
+</div>
+
+<!-- ===== BALANCE LOG MODAL ===== -->
+<div class="modal" id="balanceLogModal">
+  <header>
+    <button type="button" onclick="closeLayer('balanceLog')"><i class="fas fa-times"></i></button>
+    <div class="title" data-i18n="balanceLogTitle">سجل حركات الرصيد</div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content">
+    <input type="text" id="balanceSearch" oninput="renderBalanceLog()" data-i18n-placeholder="searchLog" placeholder="🔍 بحث في السجل...">
+    <div class="log-filters"><select id="balanceFilterType" onchange="setBalanceFilter('type', this.value)"></select></div>
+    <div class="log-stats" id="balanceStatsBar"></div>
+    <div id="balanceLogContent"></div>
+  </div>
+</div>
+
+<!-- ===== IMAGE SOURCE MODAL ===== -->
 <div id="imageSourceOverlay" onclick="closeImageSource()"></div>
 <div id="imageSourceModal">
-<h3 data-i18n="chooseImageSource">اختيار مصدر الصورة</h3>
-<button class="action" onclick="openCameraInput()"><i class="fas fa-camera"></i> <span data-i18n="camera">التقاط بالكاميرا</span></button>
-<button class="action" onclick="openGalleryInput()"><i class="fas fa-images"></i> <span data-i18n="gallery">اختيار من المعرض</span></button>
-<button class="secondary" onclick="closeImageSource()" data-i18n="cancel">إلغاء</button>
+  <h3 data-i18n="chooseImageSource">اختيار مصدر الصورة</h3>
+  <button class="action" type="button" onclick="openCameraInput()"><i class="fas fa-camera"></i> <span data-i18n="camera">التقاط بالكاميرا</span></button>
+  <button class="secondary" type="button" onclick="openGalleryInput()"><i class="fas fa-images"></i> <span data-i18n="gallery">اختيار من المعرض</span></button>
+  <button class="secondary" type="button" onclick="closeImageSource()" data-i18n="cancel">إلغاء</button>
 </div>
 
-<!-- ============ CONFIRM BACKUP MODAL ============ -->
-<div id="confirmBackupModal" class="modal">
-<header><button onclick="closeLayer('confirmBackup')"><i class="fas fa-times"></i></button><div class="title" data-i18n="backupTitle">نسخ احتياطي</div></header>
-<div class="modal-content">
-<i class="fab fa-google-drive"></i>
-<p data-i18n="backupConfirmMsg">هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟</p>
-<div class="btn-group">
-<button class="confirm-btn" onclick="handleBackupConfirm()" data-i18n="backupSave">نعم، احفظ النسخة</button>
-<button class="view-btn" onclick="handleViewBackups()"><i class="fas fa-list"></i> <span data-i18n="backupView">عرض النسخ المحفوظة</span></button>
-</div>
-</div>
-</div>
-
-<!-- ============ DRIVE BACKUP MODAL ============ -->
-<div id="driveBackupModal" class="modal">
-<header><button onclick="closeLayer('driveBackup')"><i class="fas fa-times"></i></button><div class="title" data-i18n="backupDriveTitle">النسخ الاحتياطية</div></header>
-<div class="modal-content">
-<div class="drive-modal-header">
-<span id="driveModalStatus" class="status disconnected" data-i18n="driveDisconnectedStatus">❌ غير متصل</span>
-<button class="refresh-btn" onclick="refreshBackupList()"><i class="fas fa-sync-alt"></i> <span data-i18n="refresh">تحديث</span></button>
-</div>
-<button class="drive-backup-btn" onclick="handleDriveBackup()"><i class="fas fa-cloud-upload-alt"></i> <span data-i18n="backupNew">حفظ نسخة احتياطية جديدة</span></button>
-<div id="driveBackupCount" class="backup-count">عدد النسخ المرفوعة: 0</div>
-<div id="driveBackupList"></div>
-</div>
+<!-- ===== CONFIRM BACKUP MODAL ===== -->
+<div class="modal" id="confirmBackupModal">
+  <div class="modal-content">
+    <i class="fab fa-google-drive"></i>
+    <p data-i18n="backupConfirmMsg">هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟</p>
+    <div class="btn-group">
+      <button class="confirm-btn" type="button" onclick="handleBackupConfirm()" data-i18n="backupSave">نعم، احفظ النسخة</button>
+      <button class="view-btn" type="button" onclick="handleViewBackups()" data-i18n="backupView">عرض النسخ المحفوظة <i class="fas fa-folder-open"></i></button>
+    </div>
+    <button class="secondary" type="button" onclick="closeLayer('confirmBackup')" data-i18n="cancel">إلغاء</button>
+  </div>
 </div>
 
-<!-- ============ EXPORT NAME MODAL ============ -->
-<div id="exportNameModal" class="modal">
-<header><button onclick="closeLayer('exportName')"><i class="fas fa-times"></i></button><div class="title" data-i18n="exportData">تصدير البيانات</div></header>
-<div class="modal-content">
-<label data-i18n="enterFileName">أدخل اسم الملف:</label>
-<input id="exportFileName" type="text" placeholder="اسم الملف" data-i18n-placeholder="fileName">
-<div class="btn-group">
-<button class="confirm-btn" onclick="performExport()" data-i18n="export">تصدير</button>
-<button class="cancel-btn" onclick="closeLayer('exportName')" data-i18n="cancel">إلغاء</button>
-</div>
-</div>
-</div>
-
-<!-- ============ CURRENCY MODAL ============ -->
-<div id="currencyModal" class="modal">
-<header><button onclick="closeLayer('currency')"><i class="fas fa-times"></i></button><div class="title" data-i18n="selectCurrency">اختيار العملة</div></header>
-<div class="modal-content">
-<input id="currencySearch" type="text" placeholder="🔍 ابحث عن العملة..." data-i18n-placeholder="searchCurrency" oninput="renderCurrencyList()">
-<div id="currencyList"></div>
-</div>
+<!-- ===== DRIVE BACKUP MODAL ===== -->
+<div class="modal" id="driveBackupModal">
+  <header>
+    <button type="button" onclick="closeLayer('driveBackup')"><i class="fas fa-times"></i></button>
+    <div class="title" data-i18n="backupDriveTitle">النسخ الاحتياطية</div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content">
+    <div class="drive-modal-header">
+      <span class="status disconnected" id="driveModalStatus" data-i18n="driveDisconnectedStatus">❌ غير متصل</span>
+      <button class="refresh-btn" type="button" onclick="refreshBackupList()"><i class="fas fa-arrows-rotate"></i> <span data-i18n="refresh">تحديث</span></button>
+    </div>
+    <button class="drive-backup-btn" type="button" onclick="handleDriveBackup()"><i class="fas fa-cloud-arrow-up"></i><span data-i18n="backupNew">حفظ نسخة احتياطية جديدة</span></button>
+    <div id="driveBackupList"></div>
+    <div class="backup-count" id="driveBackupCount">عدد النسخ المرفوعة: 0</div>
+  </div>
 </div>
 
-<!-- ============ LANGUAGE MODAL ============ -->
-<div id="languageModal" class="modal">
-<header><button onclick="closeLayer('language')"><i class="fas fa-times"></i></button><div class="title" data-i18n="languageSelectTitle">اختر اللغة</div></header>
-<div class="modal-content">
-<button class="secondary" onclick="setLanguage('ar')">🇸🇦 العربية <i id="langCheckAr" class="fas fa-check" style="color:var(--success);"></i></button>
-<button class="secondary" onclick="setLanguage('en')">🇬🇧 English <i id="langCheckEn" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
-<button class="secondary" onclick="setLanguage('ur')">🇵🇰 اردو <i id="langCheckUr" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
-</div>
-</div>
-
-<!-- ============ ABOUT MODAL ============ -->
-<div id="aboutModal" class="modal">
-<header><button onclick="closeLayer('about')"><i class="fas fa-times"></i></button><div class="title" data-i18n="aboutTitle">حول ميزانيتك الذكية</div></header>
-<div class="modal-content">
-<div class="card">
-<p data-i18n="aboutDesc">تطبيق ميزانيتك المالية الذكية يساعدك على تتبع:</p>
-<ul>
-<li data-i18n="aboutIncome">الدخل.</li>
-<li data-i18n="aboutExpenses">المصروفات اليومية.</li>
-<li data-i18n="aboutRights">الحقوق المالية المستحقة لك.</li>
-<li data-i18n="aboutDebts">الالتزامات المالية المستحقة عليك.</li>
-</ul>
-<p><span data-i18n="aboutNote">ملاحظة:</span> <span data-i18n="aboutNoteText">تُحفظ البيانات محلياً باستخدام IndexedDB.</span></p>
-<p data-i18n="appVersion">الإصدار 5.1 (الدخل)</p>
-</div>
-</div>
+<!-- ===== EXPORT NAME MODAL ===== -->
+<div class="modal" id="exportNameModal">
+  <header>
+    <button type="button" onclick="closeLayer('exportName')"><i class="fas fa-times"></i></button>
+    <div class="title" data-i18n="exportData">تصدير البيانات</div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content">
+    <label data-i18n="enterFileName">أدخل اسم الملف:</label>
+    <input type="text" id="exportFileName" data-i18n-placeholder="fileName" placeholder="اسم الملف">
+    <div class="btn-group">
+      <button class="confirm-btn" type="button" onclick="performExport()" data-i18n="export">تصدير</button>
+      <button class="cancel-btn" type="button" onclick="closeLayer('exportName')" data-i18n="cancel">إلغاء</button>
+    </div>
+  </div>
 </div>
 
-<!-- ============ SIDEBAR ============ -->
-<div class="sidebar-overlay" onclick="closeLayer('sidebar')"></div>
-<div id="appSidebar" class="sidebar">
-<div class="sidebar-header"><span data-i18n="menu">القائمة</span><button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button></div>
-<div class="sidebar-content">
-<button class="sidebar-menu-item" onclick="openLanguageModal()"><i class="fas fa-globe"></i><span data-i18n="language">اللغة</span><span id="sidebarLanguageLabel" style="margin-right:auto;font-size:0.85em;color:#888;">🇸🇦 العربية</span></button>
-<button id="driveMenuItem" class="sidebar-menu-item drive-item" onclick="handleDriveClick()"><i class="fab fa-google-drive"></i><span id="driveMenuText" data-i18n="googleDrive">Google Drive</span><span id="driveStatusDot" class="drive-status-dot"></span><span id="driveMenuEmail" class="drive-email"></span><span id="driveLogoutBtn" class="drive-logout" onclick="event.stopPropagation();signOut();" data-i18n="signOut">تسجيل خروج</span></button>
-<div class="sidebar-divider"></div>
-<div class="sidebar-switch-item"><i class="fas fa-moon"></i><span data-i18n="darkMode">الوضع الليلي</span><label class="switch"><input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"><span class="slider"></span></label></div>
-<button class="sidebar-currency-item" onclick="openCurrencyModal()"><i class="fas fa-coins"></i><span data-i18n="changeCurrency">تغيير العملة</span><span id="sidebarCurrencyLabel" class="currency-label">﷼</span></button>
-<div class="sidebar-divider"></div>
-<button class="sidebar-menu-item" onclick="openExportNameModal()"><i class="fas fa-file-export"></i><span data-i18n="exportData">تصدير البيانات</span></button>
-<label class="sidebar-menu-item" style="cursor:pointer;"><i class="fas fa-file-import"></i><span data-i18n="importData">استيراد البيانات</span><input type="file" accept=".json,application/json" style="display:none;" onchange="importData(event)"></label>
-<button class="sidebar-menu-item" onclick="openAboutModal()"><i class="fas fa-info-circle"></i><span data-i18n="aboutApp">حول التطبيق</span></button>
-<div class="sidebar-divider"></div>
-<button class="sidebar-menu-item" style="color:var(--danger);" onclick="confirmResetData()"><i class="fas fa-trash-alt" style="color:var(--danger);"></i><span data-i18n="resetData">إعادة تعيين البيانات</span></button>
-</div>
+<!-- ===== LANGUAGE MODAL ===== -->
+<div class="modal" id="languageModal">
+  <header>
+    <button type="button" onclick="closeLayer('language')"><i class="fas fa-times"></i></button>
+    <div class="title" data-i18n="languageSelectTitle">اختر اللغة</div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content lang-list">
+    <button class="secondary lang-btn" type="button" onclick="setLanguage('ar')">🇸🇦 العربية <i class="fas fa-check lang-check" id="langCheckAr"></i></button>
+    <button class="secondary lang-btn" type="button" onclick="setLanguage('en')">🇬🇧 English <i class="fas fa-check lang-check" id="langCheckEn"></i></button>
+    <button class="secondary lang-btn" type="button" onclick="setLanguage('ur')">🇵🇰 اردو <i class="fas fa-check lang-check" id="langCheckUr"></i></button>
+  </div>
 </div>
 
-<!-- ============ LOADING OVERLAY ============ -->
-<div id="loadingOverlay" class="loading-overlay">
-<div class="loading-spinner">
-<i class="fas fa-circle-notch spinner-icon"></i>
-<p id="loadingMessage" data-i18n="processing">جاري المعالجة...</p>
-<div class="progress-bar"><div class="progress-fill"></div></div>
-</div>
+<!-- ===== NOTIFICATIONS MODAL ===== -->
+<div class="modal" id="notificationsModal">
+  <header>
+    <button type="button" onclick="closeLayer('notifications')"><i class="fas fa-times"></i></button>
+    <div class="title"><i class="fas fa-bell" style="color:var(--p);margin-left:8px"></i><span data-i18n="notificationsTitle">التنبيهات المالية</span></div>
+    <div class="header-spacer"></div>
+  </header>
+  <div class="modal-content" id="notificationsContent"></div>
 </div>
 
-<!-- ============ TOAST ============ -->
-<div id="toast" class="toast"></div>
+<!-- ===== TOAST & LOADING ===== -->
+<div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <i class="fas fa-circle-notch spinner-icon"></i>
+    <p id="loadingMessage" data-i18n="processing">جاري المعالجة...</p>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+</div>
 
-<!-- ============ SCRIPTS ============ -->
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script src="app.js"></script>
