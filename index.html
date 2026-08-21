@@ -1,653 +1,415 @@
-/* ============ ROOT VARIABLES (LIGHT) ============ */
-:root {
---p: #0077b6; --s: #48cae4; --bg: #f7f9fc; --danger: #ef476f; --success: #2a9d8f;
---warning: #fbc02d; --text-dark: #333; --text-light: #f7f9fc;
---shadow-light: 0 4px 8px rgba(0,0,0,0.08); --shadow-hover: 0 6px 15px rgba(0,0,0,0.15);
---card-bg: #fff; --input-bg: #fff; --border-color: #ddd; --tab-active-bg: #fff;
---radius: 14px; --transition: 0.25s ease; --bottom-nav-height: 68px;
-}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="appTitle">ميزانيتك الذكية | Smart Budget</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-/* ============ DARK MODE ============ */
-body.dark-mode {
---p: #90e0ef; --s: #48cae4; --bg: #1f1f1f; --danger: #ff8a80; --success: #66bb6a;
---warning: #fbc02d; --text-dark: #e0e0e0; --text-light: #1f1f1f;
---shadow-light: 0 4px 10px rgba(0,0,0,0.5); --shadow-hover: 0 8px 20px rgba(0,0,0,0.8);
---card-bg: #2d2d2d; --input-bg: #3c3c3c; --border-color: #555; --tab-active-bg: #2d2d2d;
-}
+<!-- ============ HEADER ============ -->
+<header>
+<button onclick="openSidebar()" aria-label="menu"><i class="fas fa-bars"></i></button>
+<div class="title" data-i18n="appTitleShort">ميزانيتك المالية الذكية</div>
+<button id="notificationBell" onclick="openNotifications()" aria-label="notifications"><i class="fas fa-bell"></i><span id="notifBadge" class="notif-badge" style="display:none;">0</span></button>
+</header>
 
-/* ============ RESET & BASE ============ */
-* { box-sizing: border-box; }
-body {
-margin: 0; font-family: 'Tajawal','Arial',sans-serif; background: var(--bg); color: var(--text-dark);
-overflow-x: hidden; line-height: 1.6; transition: background var(--transition), color var(--transition);
-padding-bottom: calc(var(--bottom-nav-height) + 12px);
-}
-.card, .sidebar, .modal { background: var(--card-bg); }
-.modal header { background: var(--card-bg); border-bottom: 1px solid var(--border-color); }
+<!-- ============ OVERVIEW ============ -->
+<div id="overview" class="section active">
+<div class="balance-display">
+<button id="balanceVisibilityToggle" onclick="toggleBalanceVisibility()"><i class="fas fa-eye"></i></button>
+<h2 data-i18n="currentBalance">الرصيد النقدي الحالي</h2>
+<p id="currentBalanceDisplay">0 ﷼</p>
+<div class="balance-actions">
+<button class="action deposit" onclick="openBalanceActionModal('deposit')"><i class="fas fa-arrow-up"></i><span data-i18n="deposit">إيداع</span></button>
+<button class="action withdraw" onclick="openBalanceActionModal('withdraw')"><i class="fas fa-arrow-down"></i><span data-i18n="withdraw">سحب</span></button>
+<button class="action balance-log" onclick="openBalanceLogModal()"><i class="fas fa-history"></i><span data-i18n="balanceLog">سجل حركات الرصيد</span></button>
+</div>
+</div>
 
-/* ============ HEADER ============ */
-header {
-background: var(--p); color: var(--text-light); padding: 14px 16px; font-size: 20px;
-display: flex; justify-content: space-between; align-items: center;
-box-shadow: var(--shadow-hover); position: sticky; top: 0; z-index: 10;
-}
-header .title { flex-grow: 1; text-align: center; font-weight: 800; }
-header button { background: none; border: none; color: var(--text-light); font-size: 20px; cursor: pointer; padding: 0 10px; transition: transform 0.2s; }
-header button:hover { transform: scale(1.1); }
-header .header-spacer { width: 40px; }
+<!-- ✔ ملخص الإحصائيات — التصميم الجديد -->
+<div class="stats-summary">
+<div class="stats-head">
+<h3 class="stats-title"><i class="fas fa-chart-line"></i> <span data-i18n="statsSummary">ملخص الإحصائيات</span></h3>
+<div class="stats-period-wrap">
+<i class="far fa-calendar-alt"></i>
+<select id="statsPeriod" onchange="setStatsPeriod(this.value)">
+<option value="all" selected data-i18n="periodAll">الكل</option>
+<option value="today" data-i18n="periodToday">اليوم</option>
+<option value="week" data-i18n="periodWeek">هذا الأسبوع</option>
+<option value="month" data-i18n="periodMonth">هذا الشهر</option>
+<option value="year" data-i18n="periodYear">هذه السنة</option>
+</select>
+<i class="fas fa-chevron-down"></i>
+</div>
+</div>
 
-/* ============ SECTIONS ============ */
-.section { display: none; padding: 15px 15px calc(15px + 20px); }
-.section.active { display: block; }
-.card {
-padding: 20px; border-radius: var(--radius); box-shadow: var(--shadow-light);
-margin-bottom: 15px; border-top: 5px solid var(--s);
-transition: background var(--transition), border-color var(--transition);
-}
+<div class="stat-big c-income">
+<div class="stat-big-icon"><i class="fas fa-chart-line"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="totalIncome">إجمالي الدخل</div>
+<div class="stat-big-value" id="sIncTotal">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sIncBar"></div></div>
+<div class="stat-big-sub" id="sIncSub"></div>
+</div>
+<div class="stat-big-pct" id="sIncPct">0%</div>
+</div>
 
-/* ============ OVERVIEW — بطاقة الرصيد (محدّثة بالتدرّج) ============ */
-#overview .balance-display {
-text-align: center; padding: 34px 20px 28px; margin-bottom: 18px; border-radius: 26px;
-background: linear-gradient(135deg, #0077b6 0%, #0096c7 45%, #48cae4 100%);
-box-shadow: var(--shadow-hover); border: none;
-display: flex; flex-direction: column; align-items: center; position: relative;
-transition: background var(--transition); overflow: hidden;
-}
-#overview .balance-display::before {
-content: ''; position: absolute; width: 240px; height: 240px; border-radius: 50%;
-background: rgba(255,255,255,0.12); top: -110px; left: -80px; pointer-events: none;
-}
-#overview .balance-display::after {
-content: ''; position: absolute; width: 180px; height: 180px; border-radius: 50%;
-background: rgba(255,255,255,0.10); bottom: -70px; right: -60px; pointer-events: none;
-}
-body.dark-mode #overview .balance-display {
-background: linear-gradient(135deg, #123a4d 0%, #0e3a4d 55%, #10516b 100%);
-}
-#overview .balance-display h2 {
-margin: 0 0 10px; font-size: 17px; font-weight: 700;
-color: rgba(255,255,255,0.92); position: relative; z-index: 1;
-}
-body.dark-mode #overview .balance-display h2 { color: rgba(255,255,255,0.85); }
-#overview .balance-display p {
-font-size: 44px; font-weight: 800; margin: 0 0 26px; color: #fff;
-display: flex; justify-content: center; align-items: center; gap: 10px;
-position: relative; z-index: 1;
-}
-#overview .balance-display .balance-positive,
-#overview .balance-display .balance-negative,
-#overview .balance-display .balance-zero,
-#overview .balance-display .hidden-balance,
-#overview .balance-display .currency-symbol { color: #fff; }
-#overview .balance-display #balanceVisibilityToggle {
-position: absolute; left: 16px; top: 16px; background: none; border: none;
-color: rgba(255,255,255,0.95); font-size: 26px; cursor: pointer;
-transition: color 0.2s, transform 0.2s; z-index: 2;
-}
-#overview .balance-display #balanceVisibilityToggle:hover { color: #fff; transform: scale(1.1); }
+<div class="stat-big c-expense">
+<div class="stat-big-icon"><i class="fas fa-shopping-cart"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="totalExpenses">إجمالي المصروفات</div>
+<div class="stat-big-value" id="sExpTotal">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sExpBar"></div></div>
+<div class="stat-big-sub" id="sExpSub"></div>
+</div>
+<div class="stat-big-pct" id="sExpPct">0%</div>
+</div>
 
-/* ----- أزرار الإجراءات (زجاجية فوق التدرّج) ----- */
-.balance-actions { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 6px; width: 100%; }
-#overview .balance-display .balance-actions { position: relative; z-index: 1; }
-.balance-actions .action {
-width: 100%; min-height: 130px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-gap: 12px; padding: 20px 10px; margin-top: 0; color: var(--text-dark); background: var(--card-bg);
-border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-light);
-transition: all 0.2s; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 700; line-height: 1.5;
-}
-#overview .balance-display .balance-actions .action {
-color: #fff; background: rgba(255,255,255,0.14);
-border: 1px solid rgba(255,255,255,0.30); box-shadow: none;
-backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-}
-.balance-actions .action:hover { box-shadow: var(--shadow-hover); transform: translateY(-3px); border-color: var(--p); background: var(--card-bg); }
-#overview .balance-display .balance-actions .action:hover {
-box-shadow: 0 6px 18px rgba(0,0,0,0.18); transform: translateY(-3px);
-border-color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.24);
-}
-.balance-actions .action:active { transform: scale(0.96); }
-.balance-actions .action i { font-size: 28px; margin: 0; }
-.balance-actions .deposit i { color: var(--success); }
-.balance-actions .withdraw i { color: var(--danger); }
-.balance-actions .balance-log i { color: var(--p); }
-#overview .balance-display .balance-actions .deposit i { color: #b9f6ca; }
-#overview .balance-display .balance-actions .withdraw i { color: #ffd0dc; }
-#overview .balance-display .balance-actions .balance-log i { color: #ffffff; }
+<div class="stat-big c-debt">
+<div class="stat-big-icon"><i class="fas fa-credit-card"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="debtsPaid">المدفوع من الالتزامات</div>
+<div class="stat-big-value" id="sDebPaid">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sDebBar"></div></div>
+<div class="stat-big-sub" id="sDebSub"></div>
+</div>
+<div class="stat-big-pct" id="sDebPct">0%</div>
+</div>
 
-/* ============ OVERVIEW — ملخص الإحصائيات ============ */
-.stats-summary { margin-bottom: 15px; }
-.stats-title { font-size: 18px; font-weight: 800; margin: 0 0 12px; color: var(--text-dark); }
+<div class="stat-big c-right">
+<div class="stat-big-icon"><i class="fas fa-handshake"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="rightsCollected">المحصل من الحقوق</div>
+<div class="stat-big-value" id="sRigPaid">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sRigBar"></div></div>
+<div class="stat-big-sub" id="sRigSub"></div>
+</div>
+<div class="stat-big-pct" id="sRigPct">0%</div>
+</div>
 
-/* ============ NEW STATS SUMMARY ============ */
-.stats-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.stats-head .stats-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; font-weight: 800; color: var(--text-dark); }
-.stats-head .stats-title i { color: var(--p); font-size: 1.2em; }
-.stats-period-wrap {
-display: flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1px solid var(--border-color);
-border-radius: 12px; padding: 8px 12px; box-shadow: var(--shadow-light); color: var(--text-dark); font-weight: 700; font-size: 14px;
-}
-.stats-period-wrap > .fa-calendar-alt { color: var(--p); }
-.stats-period-wrap .fa-chevron-down { font-size: .8em; color: #888; }
-.stats-period-wrap select {
-border: none; background: transparent; color: var(--text-dark); font-weight: 700; font-size: 14px;
-font-family: inherit; cursor: pointer; outline: none; padding: 2px 4px;
--webkit-appearance: none; -moz-appearance: none; appearance: none;
-}
-.stats-period-wrap select option { background: var(--card-bg); color: var(--text-dark); font-weight: 700; }
-body.dark-mode .stats-period-wrap select { color: var(--text-dark); }
+<div class="stat-status good" id="sStatusBanner">
+<div class="stat-status-icon"><i class="fas fa-lightbulb"></i></div>
+<div class="stat-status-body">
+<div class="stat-status-title"><i class="fas fa-check-circle" id="sStatusIcon"></i> <span id="sStatusTitle"></span></div>
+<div class="stat-status-msg" id="sStatusMsg"></div>
+</div>
+<i class="fas fa-chevron-left stat-status-arrow"></i>
+</div>
+</div>
+</div>
 
-.stat-big {
-display: flex; align-items: center; gap: 12px; border-radius: 18px; padding: 16px; margin-bottom: 12px;
-box-shadow: var(--shadow-light); border: 1px solid var(--border-color);
-}
-.stat-big .stat-big-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4em; color: #fff; flex-shrink: 0; }
-.stat-big-body { flex: 1; min-width: 0; }
-.stat-big-title { font-size: 15px; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; }
-.stat-big-value { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
-.stat-big-bar { height: 8px; border-radius: 8px; background: color-mix(in srgb, var(--border-color) 40%, transparent); overflow: hidden; margin-bottom: 6px; }
-.stat-big-fill { height: 100%; border-radius: 8px; width: 0%; transition: width .5s; }
-.stat-big-sub { font-size: 12px; color: #888; }
-body.dark-mode .stat-big-sub { color: #aaa; }
-.stat-big-pct { min-width: 52px; height: 32px; padding: 0 10px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; }
+<!-- ============ INCOME ============ -->
+<div id="income" class="section">
+<span class="edit-indicator" id="incEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
+<span class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</span>
+<input id="iAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<select id="iType">
+<option value="" disabled selected data-i18n="incomeCategoryPlaceholder">📂 فئة الدخل</option>
+<option value="راتب" data-i18n="incomeSalary">💼 راتب</option>
+<option value="عمل حر" data-i18n="incomeFreelance">💻 عمل حر</option>
+<option value="تجارة" data-i18n="incomeBusiness">🏪 تجارة</option>
+<option value="استثمار" data-i18n="incomeInvestment">📈 استثمار</option>
+<option value="عمولة" data-i18n="incomeCommission">💰 عمولة</option>
+<option value="هدية" data-i18n="incomeGift">🎁 هدية</option>
+<option value="مكافأة" data-i18n="incomeBonus">🏆 مكافأة</option>
+<option value="الضمان الاجتماعي" data-i18n="incomeSocialSecurity">🛡️ الضمان الاجتماعي</option>
+<option value="المعاش التقاعدي" data-i18n="incomePension">🧓 المعاش التقاعدي</option>
+<option value="دخل آخر" data-i18n="incomeOther">📦 دخل آخر</option>
+</select>
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="iDate" type="date"></div>
+<input id="iDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
+<button class="action" onclick="addIncome()" data-i18n="saveIncome">حفظ الدخل</button>
+<button class="secondary" onclick="openLog('inc')" data-i18n="incomeLog">سجل الدخل</button>
+</div>
 
-.c-income { background: color-mix(in srgb, var(--success) 8%, var(--card-bg)); }
-.c-income .stat-big-icon { background: var(--success); }
-.c-income .stat-big-fill { background: var(--success); }
-.c-income .stat-big-value, .c-income .stat-big-value span { color: var(--success) !important; }
-.c-income .stat-big-pct { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+<!-- ============ EXPENSES ============ -->
+<div id="expenses" class="section">
+<span class="edit-indicator" id="expEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
+<span class="section-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</span>
+<input id="eAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<select id="eType">
+<option value="" disabled selected data-i18n="expenseCategoryPlaceholder">🛒 الفئة (نفقات متغيرة)</option>
+<option value="طعام" data-i18n="expenseFood">🍽️ طعام</option>
+<option value="مواصلات" data-i18n="expenseTransport">🚗 مواصلات</option>
+<option value="وقود" data-i18n="expenseFuel">⛽ وقود</option>
+<option value="مقاهي" data-i18n="expenseCafe">☕ مقاهي</option>
+<option value="رعاية شخصية" data-i18n="expensePersonalCare">🧴 رعاية شخصية</option>
+<option value="أجهزة إلكترونية" data-i18n="expenseElectronics">📱 أجهزة إلكترونية</option>
+<option value="صحة" data-i18n="expenseHealth">🏥 صحة</option>
+<option value="ترفيه" data-i18n="expenseEntertainment">🎮 ترفيه</option>
+<option value="تسوق" data-i18n="expenseShopping">🛍️ تسوق</option>
+<option value="تعليم" data-i18n="expenseEducation">📚 تعليم</option>
+<option value="صيانة وإصلاح" data-i18n="expenseMaintenance">🔧 صيانة وإصلاح</option>
+<option value="أخرى" data-i18n="expenseOther">📦 أخرى</option>
+</select>
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="eDate" type="date"></div>
+<input id="eDesc" type="text" placeholder="📝 وصف / ملاحظة" data-i18n-placeholder="descriptionNotes">
+<button class="secondary" onclick="showImageSourceModal()" data-i18n="attachInvoice">إرفاق صورة الفاتورة (اختياري)</button>
+<span id="eImgName" style="font-size:0.85em;color:#888;display:block;"></span>
+<input type="file" id="eImgCamera" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(this)">
+<input type="file" id="eImgGallery" accept="image/*" style="display:none;" onchange="handleImageSelect(this)">
+<button class="action" onclick="addExpense()" data-i18n="saveExpense">حفظ المصروف</button>
+<button class="secondary" onclick="openLog('exp')" data-i18n="expenseLog">سجل المصروفات</button>
+</div>
 
-.c-expense { background: color-mix(in srgb, var(--danger) 8%, var(--card-bg)); }
-.c-expense .stat-big-icon { background: var(--danger); }
-.c-expense .stat-big-fill { background: var(--danger); }
-.c-expense .stat-big-value, .c-expense .stat-big-value span { color: var(--danger) !important; }
-.c-expense .stat-big-pct { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+<!-- ============ RIGHTS ============ -->
+<div id="rights" class="section">
+<span class="edit-indicator" id="rigEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
+<span class="section-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل «المبلغ المحصل»</span>
+<span class="section-hint warning" data-i18n="rightsWarning">⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</span>
+<select id="rType" onchange="updateRightFields(this.value)">
+<option value="" disabled selected data-i18n="rightTypePlaceholder">🤝 نوع الحق</option>
+<option value="بيع آجل" data-i18n="rightCreditSale">🛒 بيع آجل</option>
+<option value="سلفة" data-i18n="rightLoan">💸 سلفة</option>
+<option value="إيجار مستحق" data-i18n="rightRentDue">🏠 إيجار مستحق</option>
+<option value="شراكة" data-i18n="rightPartnership">🤝 شراكة</option>
+<option value="حق آخر" data-i18n="rightOther">📦 حق آخر</option>
+</select>
+<input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" data-i18n-placeholder="totalDueAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<div id="rDynamicFields"></div>
+<input id="rEntity" type="text" placeholder="👤 الجهة / المدين (اسم الشخص أو المؤسسة)" data-i18n-placeholder="entityDebtor">
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="rDueDate" type="date"></div>
+<span class="field-hint" data-i18n="dueDateHint">تاريخ الاستحقاق المتوقع</span>
+<select id="rNotifTiming">
+<option value="" disabled selected data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
+<option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
+<option value="24" data-i18n="notif24Hours">⏱️ قبل 24 ساعة</option>
+<option value="168" data-i18n="notif7Days">⏱️ قبل 7 أيام</option>
+</select>
+<span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
+<input id="rDesc" type="text" placeholder="📝 ملاحظات إضافية" data-i18n-placeholder="additionalNotes">
+<button class="action" onclick="addRight()" data-i18n="saveRight">حفظ الحق</button>
+<button class="secondary" onclick="openLog('rig')" data-i18n="rightsLog">سجل الحقوق</button>
+</div>
 
-.c-debt { background: color-mix(in srgb, #f59e0b 10%, var(--card-bg)); }
-.c-debt .stat-big-icon { background: #f59e0b; }
-.c-debt .stat-big-fill { background: #f59e0b; }
-.c-debt .stat-big-value, .c-debt .stat-big-value span { color: #f59e0b !important; }
-.c-debt .stat-big-pct { background: color-mix(in srgb, #f59e0b 18%, transparent); color: #b26a00; }
-body.dark-mode .c-debt .stat-big-pct { color: #fbbf24; }
+<!-- ============ DEBTS ============ -->
+<div id="debts" class="section">
+<span class="edit-indicator" id="debEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
+<span class="section-hint" data-i18n="debtsHint">* دفع الالتزامات يُخصم من رصيدك الحالي</span>
+<select id="dType" onchange="updateDebtFields(this.value)">
+<option value="" disabled selected data-i18n="debtTypePlaceholder">🧾 نوع الالتزام</option>
+<option value="🏠 إيجار" data-i18n="debtRent">🏠 إيجار</option>
+<option value="💡 كهرباء" data-i18n="debtElectricity">💡 كهرباء</option>
+<option value="💧 ماء" data-i18n="debtWater">💧 ماء</option>
+<option value="💡 فواتير الخدمات" data-i18n="debtUtilities">💡 فواتير الخدمات</option>
+<option value="📱 الاتصالات والإنترنت" data-i18n="debtInternet">📱 الاتصالات والإنترنت</option>
+<option value="🏦 قروض وتمويل" data-i18n="debtLoans">🏦 قروض وتمويل</option>
+<option value="👤 دين شخصي" data-i18n="debtPersonal">👤 دين شخصي</option>
+<option value="🛒 مشتريات بالتقسيط" data-i18n="debtInstallments">🛒 مشتريات بالتقسيط</option>
+<option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
+<option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
+<option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
+<option value="👨‍👩 التزامات عائلية" data-i18n="debtFamily">👨‍👩 التزامات عائلية</option>
+<option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
+<option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
+<option value="أخرى" data-i18n="debtOther">📦 أخرى</option>
+</select>
+<input id="dAmount" type="text" placeholder="💵 قيمة الفاتورة / القسط الحالي" data-i18n-placeholder="billAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<input id="dEntity" type="text" placeholder="🏢 الجهة / الدائن" data-i18n-placeholder="entityCreditor" style="display:none;">
+<select id="dStatus">
+<option value="" disabled selected data-i18n="statusPlaceholder">✅ الحالة</option>
+<option value="مدفوع" data-i18n="statusPaid">مدفوع</option>
+<option value="مدفوع جزئياً" data-i18n="statusPartiallyPaid">مدفوع جزئياً</option>
+<option value="غير مدفوع" data-i18n="statusUnpaid">غير مدفوع</option>
+<option value="متأخر" data-i18n="statusOverdue">متأخر</option>
+</select>
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="dDueDate" type="date"></div>
+<select id="dNotifTiming">
+<option value="" disabled selected data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
+<option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
+<option value="24" data-i18n="notif24Hours">⏱️ قبل 24 ساعة</option>
+<option value="168" data-i18n="notif7Days">⏱️ قبل 7 أيام</option>
+</select>
+<span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
+<input id="dDesc" type="text" placeholder="📝 ملاحظات إضافية" data-i18n-placeholder="additionalNotes">
+<div id="dDynamicFields"></div>
+<button class="action" onclick="addDebt()" data-i18n="saveDebt">حفظ الالتزام</button>
+<button class="secondary" onclick="openLog('deb')" data-i18n="debtsLog">سجل الالتزامات</button>
+</div>
 
-.c-right { background: color-mix(in srgb, #10b981 8%, var(--card-bg)); }
-.c-right .stat-big-icon { background: #10b981; }
-.c-right .stat-big-fill { background: #10b981; }
-.c-right .stat-big-value, .c-right .stat-big-value span { color: #10b981 !important; }
-.c-right .stat-big-pct { background: color-mix(in srgb, #10b981 15%, transparent); color: #10b981; }
+<!-- ============ BOTTOM NAVIGATION ============ -->
+<nav class="bottom-nav">
+<button class="nav-item" data-tab="income" onclick="openTabFromNav('income')"><i class="fas fa-arrow-down"></i><span data-i18n="navIncome">الدخل</span></button>
+<button class="nav-item" data-tab="expenses" onclick="openTabFromNav('expenses')"><i class="fas fa-arrow-up"></i><span data-i18n="navExpenses">مصروفات</span></button>
+<button class="nav-item nav-item-home active" data-tab="overview" onclick="openTabFromNav('overview')"><div class="home-icon-wrapper"><i class="fas fa-home"></i></div><span data-i18n="navHome">الرئيسية</span></button>
+<button class="nav-item" data-tab="rights" onclick="openTabFromNav('rights')"><i class="fas fa-hand-holding-usd"></i><span data-i18n="navRights">حقوق</span></button>
+<button class="nav-item" data-tab="debts" onclick="openTabFromNav('debts')"><i class="fas fa-file-invoice-dollar"></i><span data-i18n="navDebts">التزامات</span></button>
+</nav>
 
-/* ✨ إبراز إجمالي الالتزامات والحقوق بخط واضح */
-.c-debt .stat-big-sub,
-.c-right .stat-big-sub { font-size: 13px; font-weight: 700; color: var(--text-dark); }
-.c-debt .stat-big-sub strong,
-.c-right .stat-big-sub strong { font-weight: 800; }
-body.dark-mode .c-debt .stat-big-sub,
-body.dark-mode .c-right .stat-big-sub { color: var(--text-dark); }
+<!-- ============ LOG MODAL ============ -->
+<div id="logModal" class="modal">
+<header><button onclick="closeLayer('log')"><i class="fas fa-times"></i></button><div class="title" data-i18n="searchLog">السجل</div></header>
+<div class="modal-content">
+<input id="search" type="text" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderLog()">
+<div class="log-filters">
+<select id="logFilterCat" onchange="setLogFilter('cat', this.value)"></select>
+<select id="logFilterStatus" onchange="setLogFilter('status', this.value)"></select>
+<select id="logFilterPeriod" onchange="setLogFilter('period', this.value)"></select>
+</div>
+<div id="logStatsBar" class="log-stats"></div>
+<div id="logContent"></div>
+</div>
+</div>
 
-.stat-status { display: flex; align-items: center; gap: 12px; border-radius: 18px; padding: 14px 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-light); }
-.stat-status.good { background: color-mix(in srgb, var(--p) 10%, var(--card-bg)); }
-.stat-status.bad { background: color-mix(in srgb, var(--danger) 10%, var(--card-bg)); }
-.stat-status-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2em; flex-shrink: 0; }
-.stat-status.good .stat-status-icon { background: color-mix(in srgb, var(--p) 15%, transparent); color: #fbbf24; }
-.stat-status.bad .stat-status-icon { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
-.stat-status-body { flex: 1; }
-.stat-status-title { font-weight: 800; font-size: 15px; color: var(--text-dark); display: flex; align-items: center; gap: 6px; }
-.stat-status.good .stat-status-title i { color: var(--success); }
-.stat-status.bad .stat-status-title i { color: var(--danger); }
-.stat-status-msg { font-size: 12.5px; color: #666; margin-top: 2px; }
-body.dark-mode .stat-status-msg { color: #aaa; }
-.stat-status-arrow { color: #888; }
+<!-- ============ DETAIL MODAL ============ -->
+<div id="detailModal" class="modal">
+<header><button onclick="closeLayer('detail')"><i class="fas fa-times"></i></button><div class="title" data-i18n="transactionDetails">تفاصيل المعاملة</div></header>
+<div class="modal-content" id="detailContent"></div>
+</div>
 
-/* ============ SECTION HINTS ============ */
-.section-hint {
-display: block; padding: 10px 14px; margin: 6px 0 12px; border-radius: 10px;
-font-size: 0.95em; font-weight: 700; line-height: 1.7;
-background: rgba(0, 119, 182, 0.08); color: #0077b6; border-right: 4px solid #0077b6;
-transition: background var(--transition), color var(--transition);
-}
-body.dark-mode .section-hint { background: rgba(144, 224, 239, 0.12); color: #90e0ef; border-right-color: #90e0ef; }
-.section-hint.warning { background: rgba(251, 192, 45, 0.15); color: #8a6d00; border-right-color: #fbc02d; }
-body.dark-mode .section-hint.warning { background: rgba(251, 192, 45, 0.12); color: #ffd54f; border-right-color: #fbc02d; }
+<!-- ============ BALANCE ACTION MODAL ============ -->
+<div id="balanceActionModal" class="modal">
+<header><button onclick="closeLayer('balanceAction')"><i class="fas fa-times"></i></button><div class="title" id="actionModalTitle" data-i18n="depositTitle">إيداع</div></header>
+<div class="modal-content">
+<p style="text-align:center;"><span data-i18n="currentBalanceLabel">رصيدك الحالي:</span> <span id="currentBalanceInAction"></span></p>
+<input id="bAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<input id="bDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="bDate" type="datetime-local"></div>
+<button class="action" onclick="processBalanceAction()" data-i18n="execute">تنفيذ</button>
+</div>
+</div>
 
-/* ============ LOG TOOLBAR ============ */
-.log-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 8px; margin: 4px 0 10px; }
-.log-stat-chip {
-background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px;
-padding: 8px 10px; display: flex; flex-direction: column; gap: 2px;
-box-shadow: var(--shadow-light); transition: background var(--transition);
-}
-.log-stat-chip .stat-label { font-size: 0.72em; color: #888; font-weight: 600; }
-body.dark-mode .log-stat-chip .stat-label { color: #aaa; }
-.log-stat-chip .stat-value { font-size: 0.95em; font-weight: 800; color: var(--p); word-break: break-word; }
-.log-filters { display: flex; gap: 8px; margin: 0 0 10px; flex-wrap: wrap; }
-.log-filters select { flex: 1; min-width: 90px; margin: 0; font-size: 14px; padding: 10px 12px; }
+<!-- ============ BALANCE LOG MODAL ============ -->
+<div id="balanceLogModal" class="modal">
+<header><button onclick="closeLayer('balanceLog')"><i class="fas fa-times"></i></button><div class="title" data-i18n="balanceLogTitle">سجل حركات الرصيد</div></header>
+<div class="modal-content">
+<input id="balanceSearch" type="text" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderBalanceLog()">
+<div class="log-filters"><select id="balanceFilterType" onchange="setBalanceFilter('type', this.value)"></select></div>
+<div id="balanceStatsBar" class="log-stats"></div>
+<div id="balanceLogContent"></div>
+</div>
+</div>
 
-/* ============ FORM ELEMENTS ============ */
-input, select,
-.datetime-container input[type="date"],
-.datetime-container input[type="datetime-local"] {
-width: 100%; padding: 14px 16px; margin: 8px 0; font-size: 16px; border-radius: 10px;
-border: 1px solid var(--border-color); box-sizing: border-box; background: var(--input-bg);
-color: var(--text-dark); transition: all var(--transition); font-family: inherit;
--webkit-appearance: none; appearance: none;
-}
-.stats-period-wrap select { width: auto; padding: 2px 4px; margin: 0; font-size: 14px; border: none; box-shadow: none; }
-input:focus, select:focus,
-.datetime-container input[type="date"]:focus,
-.datetime-container input[type="datetime-local"]:focus {
-border-color: var(--s); box-shadow: 0 0 0 3px rgba(72,202,228,0.2); outline: none;
-}
-.stats-period-wrap select:focus { border-color: transparent; box-shadow: none; }
-body.dark-mode input:focus, body.dark-mode select:focus,
-body.dark-mode .datetime-container input[type="date"]:focus,
-body.dark-mode .datetime-container input[type="datetime-local"]:focus {
-box-shadow: 0 0 0 3px rgba(72,202,228,0.3);
-}
-.datetime-container { position: relative; width: 100%; margin: 8px 0; }
-.datetime-container input[type="date"], .datetime-container input[type="datetime-local"] { margin: 0; padding-left: 44px; }
-.datetime-container .cal-icon {
-position: absolute; top: 50%; left: 14px; transform: translateY(-50%);
-font-size: 1.3em; color: var(--p); pointer-events: none; z-index: 2;
-}
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-opacity: 0; position: absolute; left: 0; top: 0; width: 100%; height: 100%; cursor: pointer;
-}
+<!-- ============ NOTIFICATIONS MODAL ============ -->
+<div id="notificationsModal" class="modal">
+<header><button onclick="closeLayer('notifications')"><i class="fas fa-times"></i></button><div class="title" data-i18n="notificationsTitle">التنبيهات المالية</div></header>
+<div class="modal-content" id="notificationsContent"></div>
+</div>
 
-/* ============ BUTTONS ============ */
-button.action {
-background: var(--p); color: var(--text-light); border: none; padding: 16px; width: 100%;
-border-radius: 10px; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer;
-transition: background var(--transition), transform 0.2s; box-shadow: var(--shadow-light); font-family: inherit;
-}
-button.action:hover { background: color-mix(in srgb, var(--p) 85%, black); transform: translateY(-2px); }
-button.secondary {
-background: var(--input-bg); color: var(--text-dark); padding: 12px; width: 100%;
-border: 1px solid var(--border-color); border-radius: 10px; margin-top: 8px; font-size: 16px;
-cursor: pointer; transition: background var(--transition); font-family: inherit;
-}
-button.secondary:hover { background: color-mix(in srgb, var(--input-bg) 80%, #999); }
+<!-- ============ IMAGE SOURCE MODAL ============ -->
+<div id="imageSourceOverlay" onclick="closeImageSource()"></div>
+<div id="imageSourceModal">
+<h3 data-i18n="chooseImageSource">اختيار مصدر الصورة</h3>
+<button class="action" onclick="openCameraInput()"><i class="fas fa-camera"></i> <span data-i18n="camera">التقاط بالكاميرا</span></button>
+<button class="action" onclick="openGalleryInput()"><i class="fas fa-images"></i> <span data-i18n="gallery">اختيار من المعرض</span></button>
+<button class="secondary" onclick="closeImageSource()" data-i18n="cancel">إلغاء</button>
+</div>
 
-/* ============ TOAST ============ */
-.toast {
-position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
-background: var(--card-bg); color: var(--text-dark); padding: 16px 32px; border-radius: 16px;
-display: none; z-index: 200; font-size: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-border: 1px solid var(--border-color); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-min-width: 200px; max-width: 90%; text-align: center; font-weight: 500; letter-spacing: 0.3px;
-transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
-}
-.toast.show {
-display: block;
-animation: toastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards, toastOut 0.5s cubic-bezier(0.34,1.56,0.64,1) 3.5s forwards;
-}
-.toast.success { border-right: 5px solid var(--success); }
-.toast.error { border-right: 5px solid var(--danger); }
-.toast.info { border-right: 5px solid var(--s); }
-.toast .toast-icon { margin-left: 10px; font-size: 1.2em; }
-.toast .toast-icon.success { color: var(--success); }
-.toast .toast-icon.error { color: var(--danger); }
-.toast .toast-icon.info { color: var(--s); }
-@keyframes toastIn { 0% { opacity: 0; transform: translateX(-50%) translateY(30px) scale(0.95); } 100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
-@keyframes toastOut { 0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } 100% { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.95); } }
+<!-- ============ CONFIRM BACKUP MODAL ============ -->
+<div id="confirmBackupModal" class="modal">
+<header><button onclick="closeLayer('confirmBackup')"><i class="fas fa-times"></i></button><div class="title" data-i18n="backupTitle">نسخ احتياطي</div></header>
+<div class="modal-content">
+<i class="fab fa-google-drive"></i>
+<p data-i18n="backupConfirmMsg">هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟</p>
+<div class="btn-group">
+<button class="confirm-btn" onclick="handleBackupConfirm()" data-i18n="backupSave">نعم، احفظ النسخة</button>
+<button class="view-btn" onclick="handleViewBackups()"><i class="fas fa-list"></i> <span data-i18n="backupView">عرض النسخ المحفوظة</span></button>
+</div>
+</div>
+</div>
 
-/* ============ CURRENCY & HIDDEN BALANCE ============ */
-.currency-symbol { color: var(--p); font-weight: bold; font-size: 1.1em; margin-right: 5px; }
-.hidden-balance { font-size: 38px; font-weight: 800; letter-spacing: 5px; color: var(--p); }
+<!-- ============ DRIVE BACKUP MODAL ============ -->
+<div id="driveBackupModal" class="modal">
+<header><button onclick="closeLayer('driveBackup')"><i class="fas fa-times"></i></button><div class="title" data-i18n="backupDriveTitle">النسخ الاحتياطية</div></header>
+<div class="modal-content">
+<div class="drive-modal-header">
+<span id="driveModalStatus" class="status disconnected" data-i18n="driveDisconnectedStatus">❌ غير متصل</span>
+<button class="refresh-btn" onclick="refreshBackupList()"><i class="fas fa-sync-alt"></i> <span data-i18n="refresh">تحديث</span></button>
+</div>
+<button class="drive-backup-btn" onclick="handleDriveBackup()"><i class="fas fa-cloud-upload-alt"></i> <span data-i18n="backupNew">حفظ نسخة احتياطية جديدة</span></button>
+<div id="driveBackupCount" class="backup-count">عدد النسخ المرفوعة: 0</div>
+<div id="driveBackupList"></div>
+</div>
+</div>
 
-/* ============ MODALS ============ */
-.modal {
-position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg);
-display: none; flex-direction: column; z-index: 30; overflow-y: auto;
-}
-.modal header {
-display: flex; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border-color);
-background: var(--card-bg); color: var(--text-dark);
-align-items: center; box-shadow: var(--shadow-light);
-position: sticky; top: 0; z-index: 35;
-}
-.modal header .title { flex-grow: 1; text-align: center; font-weight: 700; color: var(--text-dark); }
-.modal header button { background: none; border: none; color: var(--text-dark); font-size: 20px; cursor: pointer; padding: 0 10px; }
-.modal-content { flex-grow: 1; padding: 15px; padding-bottom: calc(15px + 80px); }
+<!-- ============ EXPORT NAME MODAL ============ -->
+<div id="exportNameModal" class="modal">
+<header><button onclick="closeLayer('exportName')"><i class="fas fa-times"></i></button><div class="title" data-i18n="exportData">تصدير البيانات</div></header>
+<div class="modal-content">
+<label data-i18n="enterFileName">أدخل اسم الملف:</label>
+<input id="exportFileName" type="text" placeholder="اسم الملف" data-i18n-placeholder="fileName">
+<div class="btn-group">
+<button class="confirm-btn" onclick="performExport()" data-i18n="export">تصدير</button>
+<button class="cancel-btn" onclick="closeLayer('exportName')" data-i18n="cancel">إلغاء</button>
+</div>
+</div>
+</div>
 
-/* ============ SIDEBAR ============ */
-.sidebar {
-position: fixed; top: 0; right: 0; width: 300px; max-width: 85%; height: 100%;
-background: var(--card-bg); box-shadow: -4px 0 12px rgba(0,0,0,0.2);
-transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
-z-index: 25; display: flex; flex-direction: column;
-}
-.sidebar.open { transform: translateX(0); }
-.sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 24; }
-.sidebar-overlay.open { display: block; }
-.sidebar-header {
-padding: 15px; background: var(--p); color: var(--text-light); font-size: 20px;
-display: flex; justify-content: space-between; align-items: center; font-weight: bold;
-}
-.sidebar-content { flex-grow: 1; padding: 15px 0; overflow-y: auto; }
-.sidebar-menu-item {
-padding: 14px 20px; margin: 2px 0; display: flex; align-items: center; gap: 15px;
-font-size: 17px; color: var(--text-dark); cursor: pointer; transition: all 0.2s;
-border-right: 3px solid transparent; background: var(--card-bg);
-border-left: none; border-top: none; border-bottom: none; width: 100%; text-align: right; font-family: inherit;
-}
-.sidebar-menu-item:hover { background: color-mix(in srgb, var(--bg) 85%, var(--p)); border-right-color: var(--p); }
-.sidebar-menu-item i { font-size: 1.2em; width: 28px; text-align: center; color: var(--p); }
-.sidebar-menu-item.drive-item { border-right-color: #4285F4; }
-.sidebar-menu-item.drive-item i { color: #4285F4; }
-.sidebar-menu-item.drive-item.connected { border-right-color: var(--success); }
-.sidebar-menu-item.drive-item.connected i { color: var(--success); }
-.sidebar-menu-item.drive-item .drive-status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; background: #999; flex-shrink: 0; }
-.sidebar-menu-item.drive-item.connected .drive-status-dot { background: var(--success); }
-.sidebar-menu-item.drive-item .drive-email { font-size: 0.75em; color: #888; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px; }
-.sidebar-menu-item.drive-item .drive-logout {
-font-size: 0.7em; color: var(--danger); cursor: pointer; padding: 2px 8px; border-radius: 4px;
-background: color-mix(in srgb, var(--danger) 15%, transparent); transition: background 0.2s; display: none;
-}
-.sidebar-menu-item.drive-item .drive-logout:hover { background: color-mix(in srgb, var(--danger) 30%, transparent); }
-.sidebar-menu-item.drive-item.connected .drive-logout { display: inline-block; }
-.sidebar-divider { height: 1px; background: var(--border-color); margin: 6px 20px; }
-.sidebar-switch-item { padding: 12px 20px; display: flex; align-items: center; gap: 15px; font-size: 17px; color: var(--text-dark); background: var(--card-bg); }
-.sidebar-switch-item i { font-size: 1.2em; width: 28px; text-align: center; color: var(--p); }
-.sidebar-switch-item .switch { margin-right: auto; position: relative; display: inline-block; width: 45px; height: 25px; }
-.sidebar-switch-item .switch input { opacity: 0; width: 0; height: 0; }
-.sidebar-switch-item .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); transition: .4s; border-radius: 25px; }
-.sidebar-switch-item .slider:before { position: absolute; content: ""; height: 19px; width: 19px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-.sidebar-switch-item input:checked+.slider { background-color: var(--p); }
-.sidebar-switch-item input:checked+.slider:before { transform: translateX(20px); }
-.sidebar-currency-item {
-padding: 12px 20px; display: flex; align-items: center; gap: 15px; font-size: 17px;
-color: var(--text-dark); cursor: pointer; transition: all 0.2s; background: var(--card-bg);
-border: none; width: 100%; text-align: right; font-family: inherit;
-}
-.sidebar-currency-item:hover { background: color-mix(in srgb, var(--bg) 85%, var(--p)); }
-.sidebar-currency-item i { font-size: 1.2em; width: 28px; text-align: center; color: var(--p); }
-.sidebar-currency-item .currency-label { margin-right: auto; font-size: 0.85em; color: #888; }
+<!-- ============ CURRENCY MODAL ============ -->
+<div id="currencyModal" class="modal">
+<header><button onclick="closeLayer('currency')"><i class="fas fa-times"></i></button><div class="title" data-i18n="selectCurrency">اختيار العملة</div></header>
+<div class="modal-content">
+<input id="currencySearch" type="text" placeholder="🔍 ابحث عن العملة..." data-i18n-placeholder="searchCurrency" oninput="renderCurrencyList()">
+<div id="currencyList"></div>
+</div>
+</div>
 
-/* ============ DRIVE BACKUP TABLE ============ */
-.backup-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.85em; }
-.backup-table th { text-align: right; padding: 10px 8px; border-bottom: 2px solid var(--border-color); color: #888; font-weight: 700; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px; }
-.backup-table td { padding: 12px 8px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-.backup-table tr:hover td { background: color-mix(in srgb, var(--input-bg) 90%, var(--p)); }
-.backup-table .file-name { font-weight: 600; color: var(--p); font-size: 0.85em; }
-.backup-table .file-date { color: var(--text-dark); font-size: 0.8em; }
-.backup-table .file-size { color: #888; font-size: 0.8em; }
-.backup-table .file-actions { display: flex; gap: 4px; justify-content: flex-end; }
-.backup-table .file-actions button { background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 0.9em; transition: all 0.2s; }
-.backup-table .file-actions .restore-btn { color: var(--success); }
-.backup-table .file-actions .restore-btn:hover { background: var(--success); color: #fff; }
-.backup-table .file-actions .delete-btn { color: var(--danger); }
-.backup-table .file-actions .delete-btn:hover { background: var(--danger); color: #fff; }
-.backup-count { text-align: center; font-size: 0.85em; color: #888; margin-top: 12px; padding: 8px; background: var(--input-bg); border-radius: 8px; }
-.drive-empty { text-align: center; color: #999; padding: 25px 0; }
-.drive-empty i { font-size: 2.5em; display: block; margin-bottom: 10px; color: var(--border-color); }
-#confirmBackupModal .modal-content { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 20px; text-align: center; }
-#confirmBackupModal .modal-content i { font-size: 3em; color: #4285F4; margin-bottom: 15px; }
-#confirmBackupModal .modal-content p { font-size: 1.1em; margin-bottom: 20px; line-height: 1.8; }
-#confirmBackupModal .modal-content .btn-group { display: flex; gap: 12px; width: 100%; }
-#confirmBackupModal .modal-content .btn-group .confirm-btn { flex: 1; padding: 14px; border-radius: 10px; font-size: 17px; font-weight: bold; border: none; cursor: pointer; transition: all 0.2s; font-family: inherit; background: #4285F4; color: #fff; }
-#confirmBackupModal .modal-content .btn-group .confirm-btn:hover { background: #3367d6; }
-#confirmBackupModal .modal-content .btn-group .view-btn { flex: 1; padding: 14px; border-radius: 10px; font-size: 17px; font-weight: bold; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; font-family: inherit; background: var(--input-bg); color: var(--text-dark); }
-#confirmBackupModal .modal-content .btn-group .view-btn:hover { background: color-mix(in srgb, var(--input-bg) 80%, var(--p)); border-color: var(--p); }
-#confirmBackupModal .modal-content .btn-group .view-btn i { margin-left: 6px; }
-#driveBackupModal .modal-content { padding: 15px; }
-#driveBackupModal .drive-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 5px 0 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 12px; }
-#driveBackupModal .drive-modal-header .status { font-size: 0.9em; color: #888; }
-#driveBackupModal .drive-modal-header .status.connected { color: var(--success); }
-#driveBackupModal .drive-modal-header .status.disconnected { color: var(--danger); }
-#driveBackupModal .drive-modal-header .refresh-btn { background: none; border: none; color: var(--p); font-size: 1.1em; cursor: pointer; padding: 4px 12px; border-radius: 6px; transition: background 0.2s; }
-#driveBackupModal .drive-modal-header .refresh-btn:hover { background: color-mix(in srgb, var(--input-bg) 80%, var(--p)); }
-.drive-backup-btn {
-background: #4285F4; color: #fff; border: none; padding: 14px; width: 100%; border-radius: 10px;
-font-size: 17px; font-weight: bold; margin-top: 15px; cursor: pointer; transition: all 0.2s;
-font-family: inherit; box-shadow: 0 4px 12px rgba(66,133,244,0.3);
-}
-.drive-backup-btn:hover { background: #3367d6; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(66,133,244,0.4); }
-.drive-backup-btn i { margin-left: 8px; }
-.list-item {
-background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 10px; cursor: pointer;
-transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-right: 5px solid var(--s); color: var(--text-dark);
-}
-.list-item:hover { background: color-mix(in srgb, var(--card-bg) 95%, #999); box-shadow: var(--shadow-light); }
-.list-item .details { font-size: 0.9em; color: #666; text-align: right; display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-body.dark-mode .list-item .details { color: #aaa; }
+<!-- ============ LANGUAGE MODAL ============ -->
+<div id="languageModal" class="modal">
+<header><button onclick="closeLayer('language')"><i class="fas fa-times"></i></button><div class="title" data-i18n="languageSelectTitle">اختر اللغة</div></header>
+<div class="modal-content">
+<button class="secondary" onclick="setLanguage('ar')">🇸🇦 العربية <i id="langCheckAr" class="fas fa-check" style="color:var(--success);"></i></button>
+<button class="secondary" onclick="setLanguage('en')">🇬🇧 English <i id="langCheckEn" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
+<button class="secondary" onclick="setLanguage('ur')">🇵🇰 اردو <i id="langCheckUr" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
+</div>
+</div>
 
-/* ============ IMAGE SOURCE MODAL ============ */
-#imageSourceOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 140; }
-#imageSourceOverlay.open { display: block; }
-#imageSourceModal {
-position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 80%; max-width: 350px;
-background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow-hover);
-padding: 24px 20px 16px; z-index: 150; display: none; flex-direction: column; align-items: center;
-}
-#imageSourceModal.open { display: flex !important; }
-#imageSourceModal h3 { margin: 0 0 16px; color: var(--p); text-align: center; }
-#imageSourceModal button { margin: 6px 0; padding: 14px; font-size: 16px; border-radius: 10px; width: 100%; }
+<!-- ============ ABOUT MODAL ============ -->
+<div id="aboutModal" class="modal">
+<header><button onclick="closeLayer('about')"><i class="fas fa-times"></i></button><div class="title" data-i18n="aboutTitle">حول ميزانيتك الذكية</div></header>
+<div class="modal-content">
+<div class="card">
+<p data-i18n="aboutDesc">تطبيق ميزانيتك المالية الذكية يساعدك على تتبع:</p>
+<ul>
+<li data-i18n="aboutIncome">الدخل.</li>
+<li data-i18n="aboutExpenses">المصروفات اليومية.</li>
+<li data-i18n="aboutRights">الحقوق المالية المستحقة لك.</li>
+<li data-i18n="aboutDebts">الالتزامات المالية المستحقة عليك.</li>
+</ul>
+<p><span data-i18n="aboutNote">ملاحظة:</span> <span data-i18n="aboutNoteText">تُحفظ البيانات محلياً باستخدام IndexedDB.</span></p>
+<p data-i18n="appVersion">الإصدار 5.1 (الدخل)</p>
+</div>
+</div>
+</div>
 
-/* ============ EXPORT NAME MODAL ============ */
-#exportNameModal .modal-content { display: flex; flex-direction: column; padding: 20px; }
-#exportNameModal .modal-content label { font-weight: bold; margin-bottom: 5px; color: var(--text-dark); }
-#exportNameModal .modal-content input { margin-bottom: 15px; }
-#exportNameModal .modal-content .btn-group { display: flex; gap: 12px; width: 100%; }
-#exportNameModal .modal-content .btn-group .confirm-btn { flex: 1; padding: 14px; border-radius: 10px; font-size: 17px; font-weight: bold; border: none; cursor: pointer; transition: all 0.2s; font-family: inherit; background: var(--p); color: #fff; }
-#exportNameModal .modal-content .btn-group .confirm-btn:hover { background: color-mix(in srgb, var(--p) 85%, black); }
-#exportNameModal .modal-content .btn-group .cancel-btn { flex: 1; padding: 14px; border-radius: 10px; font-size: 17px; font-weight: bold; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; font-family: inherit; background: var(--input-bg); color: var(--text-dark); }
-#exportNameModal .modal-content .btn-group .cancel-btn:hover { background: color-mix(in srgb, var(--input-bg) 80%, #999); }
-@media (max-width: 450px) {
-#overview .balance-display p { font-size: 30px; }
-.hidden-balance { font-size: 30px; }
-.balance-actions { gap: 10px; }
-.balance-actions .action { min-height: 110px; font-size: 14px; }
-}
+<!-- ============ SIDEBAR ============ -->
+<div class="sidebar-overlay" onclick="closeLayer('sidebar')"></div>
+<div id="appSidebar" class="sidebar">
+<div class="sidebar-header"><span data-i18n="menu">القائمة</span><button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button></div>
+<div class="sidebar-content">
+<button class="sidebar-menu-item" onclick="openLanguageModal()"><i class="fas fa-globe"></i><span data-i18n="language">اللغة</span><span id="sidebarLanguageLabel" style="margin-right:auto;font-size:0.85em;color:#888;">🇸🇦 العربية</span></button>
+<button id="driveMenuItem" class="sidebar-menu-item drive-item" onclick="handleDriveClick()"><i class="fab fa-google-drive"></i><span id="driveMenuText" data-i18n="googleDrive">Google Drive</span><span id="driveStatusDot" class="drive-status-dot"></span><span id="driveMenuEmail" class="drive-email"></span><span id="driveLogoutBtn" class="drive-logout" onclick="event.stopPropagation();signOut();" data-i18n="signOut">تسجيل خروج</span></button>
+<div class="sidebar-divider"></div>
+<div class="sidebar-switch-item"><i class="fas fa-moon"></i><span data-i18n="darkMode">الوضع الليلي</span><label class="switch"><input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"><span class="slider"></span></label></div>
+<button class="sidebar-currency-item" onclick="openCurrencyModal()"><i class="fas fa-coins"></i><span data-i18n="changeCurrency">تغيير العملة</span><span id="sidebarCurrencyLabel" class="currency-label">﷼</span></button>
+<div class="sidebar-divider"></div>
+<button class="sidebar-menu-item" onclick="openExportNameModal()"><i class="fas fa-file-export"></i><span data-i18n="exportData">تصدير البيانات</span></button>
+<label class="sidebar-menu-item" style="cursor:pointer;"><i class="fas fa-file-import"></i><span data-i18n="importData">استيراد البيانات</span><input type="file" accept=".json,application/json" style="display:none;" onchange="importData(event)"></label>
+<button class="sidebar-menu-item" onclick="openAboutModal()"><i class="fas fa-info-circle"></i><span data-i18n="aboutApp">حول التطبيق</span></button>
+<div class="sidebar-divider"></div>
+<button class="sidebar-menu-item" style="color:var(--danger);" onclick="confirmResetData()"><i class="fas fa-trash-alt" style="color:var(--danger);"></i><span data-i18n="resetData">إعادة تعيين البيانات</span></button>
+</div>
+</div>
 
-/* ============ STATUS BADGES & MISC ============ */
-.status-badge { display: inline-block; padding: 2px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 700; }
-.status-badge.paid { background: var(--success); color: #fff; }
-.status-badge.partial { background: var(--warning); color: #333; }
-.status-badge.unpaid { background: var(--danger); color: #fff; }
-.status-badge.late { background: #e67e22; color: #fff; }
-.status-badge.other { background: var(--s); color: #fff; }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.form-grid .full { grid-column: 1 / -1; }
-@media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
-.field-hint { font-size: 0.8em; color: #888; margin-top: -4px; margin-bottom: 6px; display: block; }
-body.dark-mode .field-hint { color: #aaa; }
-#search {
-padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border-color);
-background: var(--input-bg); color: var(--text-dark); font-size: 15px; width: 100%;
-flex-grow: 1; font-family: inherit;
-}
-#search:focus { outline: none; border-color: var(--s); box-shadow: 0 0 0 3px rgba(72,202,228,0.2); }
-#currencyList button { text-align: right; display: flex; justify-content: space-between; align-items: center; }
-.edit-indicator { background: var(--warning); color: #333; padding: 6px 14px; border-radius: 20px; font-size: 0.8em; font-weight: 700; display: inline-block; margin-bottom: 10px; }
-.log-item-hint { font-size: 0.75em; color: var(--s); margin-top: 4px; display: block; text-align: left; }
-body.dark-mode .log-item-hint { color: #90e0ef; }
+<!-- ============ LOADING OVERLAY ============ -->
+<div id="loadingOverlay" class="loading-overlay">
+<div class="loading-spinner">
+<i class="fas fa-circle-notch spinner-icon"></i>
+<p id="loadingMessage" data-i18n="processing">جاري المعالجة...</p>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+</div>
+</div>
 
-/* ============ LOADING OVERLAY ============ */
-.loading-overlay {
-position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6);
-display: none; justify-content: center; align-items: center; z-index: 300;
-backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-}
-.loading-overlay.show { display: flex; }
-.loading-spinner {
-background: var(--card-bg); padding: 40px 50px; border-radius: 20px; text-align: center;
-box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 90%; animation: modalPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
-}
-@keyframes modalPop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-.loading-spinner .spinner-icon { font-size: 3.5em; color: #4285F4; animation: spin 1s linear infinite; display: block; margin-bottom: 15px; }
-.loading-spinner .progress-bar { width: 100%; height: 4px; background: var(--border-color); border-radius: 4px; margin-top: 15px; overflow: hidden; }
-.loading-spinner .progress-bar .progress-fill { height: 100%; background: linear-gradient(90deg,#4285F4,#34A853,#FBBC04,#EA4335); width: 0%; border-radius: 4px; animation: progressAnim 2s ease-in-out infinite; }
-@keyframes progressAnim { 0% { width: 0%; } 50% { width: 70%; } 100% { width: 100%; } }
-.loading-spinner p { margin-top: 15px; font-size: 1.1em; color: var(--text-dark); font-weight: 500; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+<!-- ============ TOAST ============ -->
+<div id="toast" class="toast"></div>
 
-/* ============ BOTTOM NAVIGATION ============ */
-.bottom-nav {
-position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; background: var(--card-bg);
-box-shadow: 0 -4px 20px rgba(0,0,0,0.12); border-top: 1px solid var(--border-color);
-display: flex; justify-content: space-around; align-items: center; height: var(--bottom-nav-height);
-padding: 0 6px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-background: rgba(255,255,255,0.92); transition: background 0.3s;
-}
-body.dark-mode .bottom-nav { background: rgba(45,45,45,0.92); border-top-color: #444; }
-.bottom-nav .nav-item {
-display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;
-padding: 6px 0; border: none; background: transparent; color: var(--text-dark); font-family: inherit;
-font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
-position: relative; border-radius: 12px; min-height: 56px; gap: 2px; opacity: 0.6;
-}
-.bottom-nav .nav-item i { font-size: 24px; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); margin-bottom: 1px; }
-.bottom-nav .nav-item span { font-size: 13px; line-height: 1.3; font-weight: 700; letter-spacing: 0.3px; }
-.bottom-nav .nav-item.active { color: var(--p); opacity: 1; transform: translateY(-2px); }
-.bottom-nav .nav-item.active i { transform: scale(1.1); filter: drop-shadow(0 2px 6px rgba(0,119,182,0.25)); }
-.bottom-nav .nav-item::after {
-content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%) scaleX(0);
-width: 30px; height: 3px; background: var(--p); border-radius: 0 0 4px 4px;
-transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-}
-.bottom-nav .nav-item.active::after { transform: translateX(-50%) scaleX(1); }
-.bottom-nav .nav-item:active { transform: scale(0.92); }
-.bottom-nav .nav-item:active i { transform: scale(0.9); }
-.bottom-nav .nav-item-home { position: relative; }
-.bottom-nav .nav-item-home .home-icon-wrapper {
-display: flex; align-items: center; justify-content: center; width: 48px; height: 48px;
-border-radius: 50%; background: rgba(72,202,228,0.2); transition: background 0.3s, transform 0.3s; margin-bottom: 2px;
-}
-.bottom-nav .nav-item-home.active .home-icon-wrapper { background: linear-gradient(135deg,#0077b6,#48cae4); box-shadow: 0 4px 12px rgba(0,119,182,0.3); }
-.bottom-nav .nav-item-home.active .home-icon-wrapper i { color: #fff; transform: scale(1.1); filter: none; }
-.bottom-nav .nav-item-home .home-icon-wrapper i { font-size: 22px; color: var(--p); transition: color 0.3s, transform 0.3s; }
-.bottom-nav .nav-item-home.active { transform: translateY(0); opacity: 1; }
-.bottom-nav .nav-item-home.active::after { display: none; }
-.bottom-nav .nav-item-home .home-icon-wrapper:hover { transform: scale(1.05); }
-
-/* ============ PULSE DOT ============ */
-.pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-inline-end: 6px; animation: pulse 1.5s infinite; vertical-align: middle; }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); } 70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
-
-/* ============================================================
-   🔔 NOTIFICATION SYSTEM — نظام التنبيهات الكامل
-============================================================ */
-#notificationBell { position: relative; }
-#notificationBell i { display: inline-block; animation: bellRing 4s ease-in-out infinite; transform-origin: top center; }
-@keyframes bellRing {
-0%, 80%, 100% { transform: rotate(0); }
-82% { transform: rotate(14deg); }
-84% { transform: rotate(-12deg); }
-86% { transform: rotate(9deg); }
-88% { transform: rotate(-6deg); }
-90% { transform: rotate(3deg); }
-92% { transform: rotate(0); }
-}
-.notif-badge {
-position: absolute; top: -5px; right: -2px;
-background: var(--danger); color: #fff;
-font-size: 10px; font-weight: 800;
-min-width: 18px; height: 18px; padding: 0 4px;
-border-radius: 10px; display: flex; align-items: center; justify-content: center;
-box-shadow: 0 2px 6px rgba(239,71,111,0.45);
-border: 2px solid var(--p);
-animation: pulse 1.5s infinite;
-pointer-events: none; z-index: 2;
-}
-.notif-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 4px 0 14px; }
-.notif-summary .notif-sum-card {
-background: var(--input-bg); border: 1px solid var(--border-color);
-border-radius: 14px; padding: 14px 12px; text-align: center;
-box-shadow: var(--shadow-light); transition: background var(--transition);
-}
-.notif-summary .notif-sum-card .sum-label { display: block; font-size: 0.78em; color: #888; font-weight: 700; margin-bottom: 6px; }
-body.dark-mode .notif-summary .notif-sum-card .sum-label { color: #aaa; }
-.notif-summary .notif-sum-card .sum-value { font-size: 1.3em; font-weight: 800; }
-.notif-summary .notif-sum-card.overdue-card { border-top: 4px solid var(--danger); }
-.notif-summary .notif-sum-card.overdue-card .sum-value { color: var(--danger); }
-.notif-summary .notif-sum-card.upcoming-card { border-top: 4px solid var(--warning); }
-.notif-summary .notif-sum-card.upcoming-card .sum-value { color: #8a6d00; }
-body.dark-mode .notif-summary .notif-sum-card.upcoming-card .sum-value { color: var(--warning); }
-.notif-group-title {
-font-size: 0.95em; font-weight: 800; margin: 16px 0 8px;
-display: flex; align-items: center; gap: 8px; color: var(--text-dark);
-}
-.notif-group-title.unread-title { color: var(--danger); }
-.notif-group-title.read-title { color: #888; }
-body.dark-mode .notif-group-title.read-title { color: #aaa; }
-.notif-group-title .count-pill {
-background: var(--input-bg); border: 1px solid var(--border-color);
-border-radius: 12px; padding: 1px 10px; font-size: 0.85em;
-}
-.notif-item {
-background: var(--card-bg); padding: 16px; border-radius: 14px; margin-bottom: 10px;
-box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-right: 5px solid var(--s);
-transition: all 0.2s; color: var(--text-dark);
-}
-.notif-item.overdue, .notif-item.upcoming { cursor: pointer; }
-.notif-item.overdue { border-right-color: var(--danger); background: color-mix(in srgb, var(--danger) 5%, var(--card-bg)); }
-.notif-item.upcoming { border-right-color: var(--warning); background: color-mix(in srgb, var(--warning) 6%, var(--card-bg)); }
-.notif-item.overdue:hover, .notif-item.upcoming:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
-.notif-item.read {
-border-right-color: #ccc;
-background: color-mix(in srgb, var(--card-bg) 95%, #999);
-opacity: 0.65; cursor: default;
-}
-.notif-item.read:hover { transform: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.notif-item.read .notif-name { color: #888; }
-.notif-item.read .notif-name i { color: #aaa; }
-.notif-item.read .notif-amount { color: #888; }
-.notif-item.read .notif-body { color: #aaa; }
-.notif-item.read .notif-entity { color: #bbb; }
-body.dark-mode .notif-item.read { border-right-color: #555; background: color-mix(in srgb, var(--card-bg) 90%, #666); }
-.notif-item .notif-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-.notif-item .notif-name { font-weight: 800; font-size: 1em; }
-.notif-item .notif-name i { margin-left: 7px; }
-.notif-item.overdue .notif-name i { color: var(--danger); }
-.notif-item.upcoming .notif-name i { color: #b8860b; }
-body.dark-mode .notif-item.upcoming .notif-name i { color: var(--warning); }
-.notif-item .notif-tag { font-size: 0.72em; font-weight: 800; padding: 3px 12px; border-radius: 20px; white-space: nowrap; }
-.notif-item.overdue .notif-tag { background: var(--danger); color: #fff; }
-.notif-item.upcoming .notif-tag { background: var(--warning); color: #333; }
-.notif-tag.read-tag { background: #e0e0e0; color: #666; }
-.notif-item.read .notif-tag.read-tag { background: #e0e0e0; color: #666; }
-body.dark-mode .notif-tag.read-tag,
-body.dark-mode .notif-item.read .notif-tag.read-tag { background: #444; color: #aaa; }
-.notif-type-badge {
-display: inline-flex; align-items: center; gap: 6px;
-color: #fff; font-size: 0.8em; font-weight: 800;
-padding: 4px 14px; border-radius: 14px;
-margin: 6px 0 10px; white-space: nowrap;
-}
-.notif-type-badge i { font-size: 0.9em; }
-.notif-item.read .notif-type-badge { opacity: 0.5; }
-.notif-item .notif-body { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.9em; color: #666; flex-wrap: wrap; }
-body.dark-mode .notif-item .notif-body { color: #aaa; }
-.notif-item .notif-amount { font-weight: 800; color: var(--text-dark); }
-.notif-item.overdue .notif-amount { color: var(--danger); }
-.notif-item .notif-date i, .notif-item .notif-entity i { margin-left: 5px; }
-.notif-item .notif-entity { font-size: 0.85em; color: #888; margin-top: 6px; display: block; }
-body.dark-mode .notif-item .notif-entity { color: #aaa; }
-.notif-read-hint { font-size: 0.75em; color: var(--p); margin-top: 8px; display: block; font-weight: 700; }
-body.dark-mode .notif-read-hint { color: #90e0ef; }
-.notif-empty-state { text-align: center; color: #999; padding: 40px 10px; }
-.notif-empty-state i {
-font-size: 3.2em; display: block; margin-bottom: 16px; color: var(--success);
-background: color-mix(in srgb, var(--success) 12%, transparent);
-width: 90px; height: 90px; line-height: 90px; border-radius: 50%; margin: 0 auto 16px;
-}
-.notif-empty-state p { font-size: 1.1em; font-weight: 700; margin: 0 0 6px; }
-.notif-empty-state small { font-size: 0.85em; color: #aaa; }
-@media (max-width: 380px) {
-.notif-summary { grid-template-columns: 1fr; }
-.notif-item .notif-head { flex-direction: column; align-items: flex-start; }
-}
-
-/* ============ RESPONSIVE ============ */
-@media (max-width: 400px) {
-.bottom-nav .nav-item span { font-size: 11px; }
-.bottom-nav .nav-item i { font-size: 20px; }
-.bottom-nav .nav-item { min-height: 48px; padding: 4px 0; }
-.bottom-nav .nav-item-home .home-icon-wrapper { width: 40px; height: 40px; }
-.bottom-nav .nav-item-home .home-icon-wrapper i { font-size: 18px; }
-:root { --bottom-nav-height: 60px; }
-body { padding-bottom: calc(var(--bottom-nav-height) + 8px); }
-}
-@media (min-width: 768px) {
-.bottom-nav { max-width: 480px; left: 50%; transform: translateX(-50%); border-radius: 20px 20px 0 0; }
-}
+<!-- ============ SCRIPTS ============ -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<script src="app.js"></script>
+</body>
+</html>
