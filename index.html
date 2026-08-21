@@ -2,927 +2,411 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0077b6">
-<title>ميزانيتك الذكية | Smart Budget</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="appTitle">ميزانيتك الذكية | Smart Budget</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ====== HEADER (NEW DESIGN) ====== -->
-<header class="app-header">
-  <button class="hbtn" id="menuBtn" aria-label="menu"><i class="fa-solid fa-bars"></i></button>
-  <div class="htitle" data-i="appTitle">ميزانيتك المالية الذكية</div>
-  <button class="hbtn" id="notificationBell" aria-label="alerts">
-    <i class="fa-solid fa-bell"></i>
-    <span class="notif-badge" id="notifBadge">0</span>
-  </button>
+<!-- ============ HEADER ============ -->
+<header>
+<button onclick="openSidebar()" aria-label="menu"><i class="fas fa-bars"></i></button>
+<div class="title" data-i18n="appTitleShort">ميزانيتك المالية الذكية</div>
+<button id="notificationBell" onclick="openNotifications()" aria-label="notifications"><i class="fas fa-bell"></i><span id="notifBadge" class="notif-badge" style="display:none;">0</span></button>
 </header>
 
-<main>
-<!-- OVERVIEW -->
-<section class="section active" id="overview">
-  <!-- HERO / BALANCE CARD (NEW DESIGN) -->
-  <div class="hero">
-    <div class="hero-top">
-      <span data-i="currentBalance">الرصيد النقدي الحالي</span>
-      <button id="balanceVisibilityToggle"><i class="fa-solid fa-eye"></i></button>
-    </div>
-    <div class="hero-amt" id="balanceAmount">0 <span class="currency-symbol">﷼</span></div>
-    <div class="hero-actions">
-      <button class="hact dep" id="btnDeposit">
-        <i class="fa-solid fa-circle-plus"></i>
-        <span data-i="deposit">إيداع</span>
-      </button>
-      <button class="hact wd" id="btnWithdraw">
-        <i class="fa-solid fa-circle-minus"></i>
-        <span data-i="withdraw">سحب</span>
-      </button>
-      <button class="hact log" id="btnMoveLog">
-        <i class="fa-solid fa-clock-rotate-left"></i>
-        <span data-i="moveLog">سجل حركات الرصيد</span>
-      </button>
-    </div>
-  </div>
+<!-- ============ OVERVIEW ============ -->
+<div id="overview" class="section active">
+<div class="balance-display">
+<button id="balanceVisibilityToggle" onclick="toggleBalanceVisibility()"><i class="fas fa-eye"></i></button>
+<h2 data-i18n="currentBalance">الرصيد النقدي الحالي</h2>
+<p id="currentBalanceDisplay">0 ﷼</p>
+<div class="balance-actions">
+<button class="action deposit" onclick="openBalanceActionModal('deposit')"><i class="fas fa-arrow-up"></i><span data-i18n="deposit">إيداع</span></button>
+<button class="action withdraw" onclick="openBalanceActionModal('withdraw')"><i class="fas fa-arrow-down"></i><span data-i18n="withdraw">سحب</span></button>
+<button class="action balance-log" onclick="openBalanceLogModal()"><i class="fas fa-history"></i><span data-i18n="balanceLog">سجل حركات الرصيد</span></button>
+</div>
+</div>
 
-  <!-- STATS SUMMARY (NEW DESIGN - بدون بطاقات) -->
-  <div class="card stats-card">
-    <div class="stats-head">
-      <h3 class="stats-title"><i class="fa-solid fa-chart-pie"></i><span data-i="statsSummary">ملخص الإحصائيات</span></h3>
-      <span class="pill"><i class="fa-regular fa-calendar"></i><span data-i="thisMonth">هذا الشهر</span></span>
-    </div>
-    <div class="stat-big c-income">
-      <div class="stat-big-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
-      <div class="stat-big-body">
-        <div class="stat-big-title" data-i="totalIncome">إجمالي الدخل</div>
-        <div class="stat-big-value"><span id="sInc">0</span> <span class="currency-symbol">﷼</span></div>
-        <div class="stat-big-bar"><i class="stat-big-fill" id="sIncBar"></i></div>
-      </div>
-      <span class="stat-big-pct" id="sIncPct">0%</span>
-    </div>
-    <div class="stat-big c-expense">
-      <div class="stat-big-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
-      <div class="stat-big-body">
-        <div class="stat-big-title" data-i="totalExpenses">إجمالي المصروفات</div>
-        <div class="stat-big-value"><span id="sExp">0</span> <span class="currency-symbol">﷼</span></div>
-        <div class="stat-big-bar"><i class="stat-big-fill" id="sExpBar"></i></div>
-      </div>
-      <span class="stat-big-pct" id="sExpPct">0%</span>
-    </div>
-    <div class="stat-big c-debt">
-      <div class="stat-big-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-      <div class="stat-big-body">
-        <div class="stat-big-title" data-i="paidObligations">المدفوع من الالتزامات</div>
-        <div class="stat-big-value"><span id="sDeb">0</span> <span class="currency-symbol">﷼</span></div>
-        <div class="stat-big-bar"><i class="stat-big-fill" id="sDebBar"></i></div>
-      </div>
-      <span class="stat-big-pct" id="sDebPct">0%</span>
-    </div>
-    <div class="stat-big c-right">
-      <div class="stat-big-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-      <div class="stat-big-body">
-        <div class="stat-big-title" data-i="collectedRights">المحصل من الحقوق</div>
-        <div class="stat-big-value"><span id="sRig">0</span> <span class="currency-symbol">﷼</span></div>
-        <div class="stat-big-bar"><i class="stat-big-fill" id="sRigBar"></i></div>
-      </div>
-      <span class="stat-big-pct" id="sRigPct">0%</span>
-    </div>
-  </div>
-</section>
+<!-- ✔ ملخص الإحصائيات — التصميم الجديد -->
+<div class="stats-summary">
+<div class="stats-head">
+<h3 class="stats-title"><i class="fas fa-chart-line"></i> <span data-i18n="statsSummary">ملخص الإحصائيات</span></h3>
+<div class="stats-period-wrap"><i class="far fa-calendar-alt"></i><span data-i18n="periodMonth">هذا الشهر</span><i class="fas fa-chevron-down"></i></div>
+</div>
 
-<!-- INCOME -->
-<section class="section" id="income">
-  <div class="section-hint">
-    <i class="fa-solid fa-circle-info"></i>
-    <span data-i="incHint">الدخل يُضاف إلى رصيدك فوراً</span>
-  </div>
-  <div class="card">
-    <label>📂 <span data-i="incomeCat">فئة الدخل</span></label>
-    <select id="incCat" required>
-      <option value="" disabled selected data-i="selectCat">اختر الفئة</option>
-    </select>
-    <label data-i="amount">المبلغ</label>
-    <input id="incAmount" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00" required>
-    <label data-i="noteOpt">ملاحظة (اختياري)</label>
-    <input id="incNote" type="text" maxlength="80">
-    <button class="action" id="incSave" data-i="saveIncome">حفظ الدخل</button>
-    <button class="secondary hidden" id="incCancel" data-i="cancel">إلغاء</button>
-  </div>
-  <div class="card" id="incCard">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-list"></i><span data-i="incomeLog">سجل الدخل</span> <span class="cnt" id="incCnt">0</span></h3>
-      <button class="edit-toggle" id="incEdit"><i class="fa-solid fa-pen"></i><span data-i="editMode">وضع التعديل</span></button>
-    </div>
-    <div id="incList"></div>
-  </div>
-</section>
+<div class="stat-big c-income">
+<div class="stat-big-icon"><i class="fas fa-chart-line"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="totalIncome">إجمالي الدخل</div>
+<div class="stat-big-value" id="sIncTotal">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sIncBar"></div></div>
+<div class="stat-big-sub" id="sIncSub"></div>
+</div>
+<div class="stat-big-pct" id="sIncPct">0%</div>
+</div>
 
-<!-- EXPENSES -->
-<section class="section" id="expense">
-  <div class="section-hint">
-    <i class="fa-solid fa-circle-info"></i>
-    <span data-i="expHint">المصروفات تُخصم من رصيدك فوراً</span>
-  </div>
-  <div class="card">
-    <label>🛒 <span data-i="expCat">الفئة (نفقات متغيرة)</span></label>
-    <select id="expCat" required>
-      <option value="" disabled selected data-i="selectCat">اختر الفئة</option>
-    </select>
-    <label data-i="amount">المبلغ</label>
-    <input id="expAmount" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00" required>
-    <label data-i="noteOpt">ملاحظة (اختياري)</label>
-    <input id="expNote" type="text" maxlength="80">
-    <label data-i="attachReceipt">إرفاق صورة الفاتورة (اختياري)</label>
-    <button class="attach-btn" id="btnAttach">
-      <i class="fa-solid fa-camera"></i>
-      <span data-i="attachBtn">إرفاق صورة الفاتورة</span>
-    </button>
-    <div class="prev hidden" id="expPrev">
-      <img id="expPrevImg" alt="">
-      <button id="expPrevRm" type="button"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <button class="action" id="expSave" data-i="saveExpense">حفظ المصروف</button>
-    <button class="secondary hidden" id="expCancel" data-i="cancel">إلغاء</button>
-  </div>
-  <div class="card" id="expCard">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-list"></i><span data-i="expenseLog">سجل المصروفات</span> <span class="cnt" id="expCnt">0</span></h3>
-      <button class="edit-toggle" id="expEdit"><i class="fa-solid fa-pen"></i><span data-i="editMode">وضع التعديل</span></button>
-    </div>
-    <div id="expList"></div>
-  </div>
-</section>
+<div class="stat-big c-expense">
+<div class="stat-big-icon"><i class="fas fa-shopping-cart"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="totalExpenses">إجمالي المصروفات</div>
+<div class="stat-big-value" id="sExpTotal">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sExpBar"></div></div>
+<div class="stat-big-sub" id="sExpSub"></div>
+</div>
+<div class="stat-big-pct" id="sExpPct">0%</div>
+</div>
 
-<!-- RIGHTS -->
-<section class="section" id="rights">
-  <div class="section-hint">
-    <i class="fa-solid fa-circle-info"></i>
-    <span data-i="rigHint">تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل «المبلغ المحصل»</span>
-  </div>
-  <div class="section-hint warning">
-    <i class="fa-solid fa-triangle-exclamation"></i>
-    <span data-i="rigWarn">عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</span>
-  </div>
-  <div class="card">
-    <label>🤝 <span data-i="rightType">نوع الحق</span></label>
-    <select id="rtCat" required>
-      <option value="" disabled selected data-i="selectCat">اختر الفئة</option>
-    </select>
-    <label data-i="amount">المبلغ</label>
-    <input id="rtAmount" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00" required>
-    <label data-i="collectedAmount">المبلغ المحصل</label>
-    <input id="rtCollected" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00">
-    <label data-i="dueDate">تاريخ الاستحقاق المتوقع</label>
-    <input id="rtDue" type="date">
-    <label>⏱️ <span data-i="reminder">التنبيه قبل الاستحقاق (اختياري)</span></label>
-    <select id="rtReminder">
-      <option value="1" data-i="rem1h">قبل ساعة</option>
-      <option value="24" data-i="rem24h">قبل 24 ساعة</option>
-      <option value="168" selected data-i="rem7d">قبل 7 أيام</option>
-    </select>
-    <div class="field-hint" data-i="remDefault">الافتراضي: قبل 7 أيام</div>
-    <button class="action" id="rtSave" data-i="saveRight">حفظ الحق</button>
-    <button class="secondary hidden" id="rtCancel" data-i="cancel">إلغاء</button>
-  </div>
-  <div class="card" id="rtCard">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-list"></i><span data-i="rightsLog">سجل الحقوق</span> <span class="cnt" id="rtCnt">0</span></h3>
-      <button class="edit-toggle" id="rtEdit"><i class="fa-solid fa-pen"></i><span data-i="editMode">وضع التعديل</span></button>
-    </div>
-    <div id="rtList"></div>
-  </div>
-</section>
+<div class="stat-big c-debt">
+<div class="stat-big-icon"><i class="fas fa-credit-card"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="debtsPaid">المدفوع من الالتزامات</div>
+<div class="stat-big-value" id="sDebPaid">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sDebBar"></div></div>
+<div class="stat-big-sub" id="sDebSub"></div>
+</div>
+<div class="stat-big-pct" id="sDebPct">0%</div>
+</div>
 
-<!-- OBLIGATIONS -->
-<section class="section" id="oblig">
-  <div class="section-hint">
-    <i class="fa-solid fa-circle-info"></i>
-    <span data-i="oblHint">دفع الالتزامات يُخصم من رصيدك الحالي</span>
-  </div>
-  <div class="card">
-    <label>🧾 <span data-i="obligType">نوع الالتزام</span></label>
-    <select id="obCat" required>
-      <option value="" disabled selected data-i="selectCat">اختر الفئة</option>
-    </select>
-    <label data-i="amount">المبلغ</label>
-    <input id="obAmount" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00" required>
-    <label data-i="dueDate">تاريخ الاستحقاق المتوقع</label>
-    <input id="obDue" type="date">
-    <label>✅ <span data-i="status">الحالة</span></label>
-    <div class="seg" id="obStatusSeg">
-      <button type="button" data-st="paid" data-i="paid">مدفوع</button>
-      <button type="button" data-st="partial" data-i="partial">مدفوع جزئياً</button>
-      <button type="button" data-st="unpaid" class="on" data-i="unpaid">غير مدفوع</button>
-      <button type="button" data-st="late" data-i="late">متأخر</button>
-    </div>
-    <div class="hidden" id="obPaidWrap" style="margin-top:12px">
-      <label data-i="paidAmount">المبلغ المدفوع</label>
-      <input id="obPaid" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00">
-    </div>
-    <label style="margin-top:14px">⏱️ <span data-i="reminder">التنبيه قبل الاستحقاق (اختياري)</span></label>
-    <select id="obReminder">
-      <option value="1" data-i="rem1h">قبل ساعة</option>
-      <option value="24" data-i="rem24h">قبل 24 ساعة</option>
-      <option value="168" selected data-i="rem7d">قبل 7 أيام</option>
-    </select>
-    <div class="field-hint" data-i="remDefault">الافتراضي: قبل 7 أيام</div>
-    <button class="action" id="obSave" data-i="saveObligation">حفظ الالتزام</button>
-    <button class="secondary hidden" id="obCancel" data-i="cancel">إلغاء</button>
-  </div>
-  <div class="card" id="obCard">
-    <div class="card-header">
-      <h3><i class="fa-solid fa-list"></i><span data-i="obligationsLog">سجل الالتزامات</span> <span class="cnt" id="obCnt">0</span></h3>
-      <button class="edit-toggle" id="obEdit"><i class="fa-solid fa-pen"></i><span data-i="editMode">وضع التعديل</span></button>
-    </div>
-    <div id="obList"></div>
-  </div>
-</section>
-</main>
+<div class="stat-big c-right">
+<div class="stat-big-icon"><i class="fas fa-handshake"></i></div>
+<div class="stat-big-body">
+<div class="stat-big-title" data-i18n="rightsCollected">المحصل من الحقوق</div>
+<div class="stat-big-value" id="sRigPaid">0 ﷼</div>
+<div class="stat-big-bar"><div class="stat-big-fill" id="sRigBar"></div></div>
+<div class="stat-big-sub" id="sRigSub"></div>
+</div>
+<div class="stat-big-pct" id="sRigPct">0%</div>
+</div>
 
-<!-- BOTTOM NAV (NEW DESIGN) -->
+<div class="stats-mini">
+<div class="mini-stat"><div class="mini-icon mi-ops"><i class="far fa-calendar-check"></i></div><div class="mini-title" id="sOpsTitle"></div><div class="mini-value mv-ops" id="sOpsCount">0</div><div class="mini-sub" id="sOpsSub"></div></div>
+<div class="mini-stat"><div class="mini-icon mi-exp"><i class="fas fa-chart-pie"></i></div><div class="mini-title" id="sExpRatioTitle"></div><div class="mini-value mv-exp" id="sExpRatio">0%</div><div class="mini-sub" id="sExpRatioSub"></div></div>
+<div class="mini-stat"><div class="mini-icon mi-goal"><i class="fas fa-bullseye"></i></div><div class="mini-title" id="sGoalTitle"></div><div class="mini-value mv-goal" id="sGoalRatio">0%</div><div class="mini-sub" id="sGoalSub"></div></div>
+<div class="mini-stat"><div class="mini-icon mi-net"><i class="fas fa-wallet"></i></div><div class="mini-title" id="sNetTitle"></div><div class="mini-value mv-net" id="sNet">0 ﷼</div><div class="mini-sub" id="sNetSub"></div></div>
+</div>
+
+<div class="stat-status good" id="sStatusBanner">
+<div class="stat-status-icon"><i class="fas fa-lightbulb"></i></div>
+<div class="stat-status-body">
+<div class="stat-status-title"><i class="fas fa-check-circle" id="sStatusIcon"></i> <span id="sStatusTitle"></span></div>
+<div class="stat-status-msg" id="sStatusMsg"></div>
+</div>
+<i class="fas fa-chevron-left stat-status-arrow"></i>
+</div>
+</div>
+</div>
+
+<!-- ============ INCOME ============ -->
+<div id="income" class="section">
+<span class="edit-indicator" id="incEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
+<span class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</span>
+<input id="iAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<select id="iType">
+<option value="" disabled selected data-i18n="incomeCategoryPlaceholder">📂 فئة الدخل</option>
+<option value="راتب" data-i18n="incomeSalary">💼 راتب</option>
+<option value="عمل حر" data-i18n="incomeFreelance">💻 عمل حر</option>
+<option value="تجارة" data-i18n="incomeBusiness">🏪 تجارة</option>
+<option value="استثمار" data-i18n="incomeInvestment">📈 استثمار</option>
+<option value="عمولة" data-i18n="incomeCommission">💰 عمولة</option>
+<option value="هدية" data-i18n="incomeGift">🎁 هدية</option>
+<option value="مكافأة" data-i18n="incomeBonus">🏆 مكافأة</option>
+<option value="الضمان الاجتماعي" data-i18n="incomeSocialSecurity">🛡️ الضمان الاجتماعي</option>
+<option value="المعاش التقاعدي" data-i18n="incomePension">🧓 المعاش التقاعدي</option>
+<option value="دخل آخر" data-i18n="incomeOther">📦 دخل آخر</option>
+</select>
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="iDate" type="date"></div>
+<input id="iDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
+<button class="action" onclick="addIncome()" data-i18n="saveIncome">حفظ الدخل</button>
+<button class="secondary" onclick="openLog('inc')" data-i18n="incomeLog">سجل الدخل</button>
+</div>
+
+<!-- ============ EXPENSES ============ -->
+<div id="expenses" class="section">
+<span class="edit-indicator" id="expEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
+<span class="section-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</span>
+<input id="eAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<select id="eType">
+<option value="" disabled selected data-i18n="expenseCategoryPlaceholder">🛒 الفئة (نفقات متغيرة)</option>
+<option value="طعام" data-i18n="expenseFood">🍽️ طعام</option>
+<option value="مواصلات" data-i18n="expenseTransport">🚗 مواصلات</option>
+<option value="وقود" data-i18n="expenseFuel">⛽ وقود</option>
+<option value="مقاهي" data-i18n="expenseCafe">☕ مقاهي</option>
+<option value="رعاية شخصية" data-i18n="expensePersonalCare">🧴 رعاية شخصية</option>
+<option value="أجهزة إلكترونية" data-i18n="expenseElectronics">📱 أجهزة إلكترونية</option>
+<option value="صحة" data-i18n="expenseHealth">🏥 صحة</option>
+<option value="ترفيه" data-i18n="expenseEntertainment">🎮 ترفيه</option>
+<option value="تسوق" data-i18n="expenseShopping">🛍️ تسوق</option>
+<option value="تعليم" data-i18n="expenseEducation">📚 تعليم</option>
+<option value="صيانة وإصلاح" data-i18n="expenseMaintenance">🔧 صيانة وإصلاح</option>
+<option value="أخرى" data-i18n="expenseOther">📦 أخرى</option>
+</select>
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="eDate" type="date"></div>
+<input id="eDesc" type="text" placeholder="📝 وصف / ملاحظة" data-i18n-placeholder="descriptionNotes">
+<button class="secondary" onclick="showImageSourceModal()" data-i18n="attachInvoice">إرفاق صورة الفاتورة (اختياري)</button>
+<span id="eImgName" style="font-size:0.85em;color:#888;display:block;"></span>
+<input type="file" id="eImgCamera" accept="image/*" capture="environment" style="display:none;" onchange="handleImageSelect(this)">
+<input type="file" id="eImgGallery" accept="image/*" style="display:none;" onchange="handleImageSelect(this)">
+<button class="action" onclick="addExpense()" data-i18n="saveExpense">حفظ المصروف</button>
+<button class="secondary" onclick="openLog('exp')" data-i18n="expenseLog">سجل المصروفات</button>
+</div>
+
+<!-- ============ RIGHTS ============ -->
+<div id="rights" class="section">
+<span class="edit-indicator" id="rigEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
+<span class="section-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل «المبلغ المحصل»</span>
+<span class="section-hint warning" data-i18n="rightsWarning">⚠️ عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل</span>
+<select id="rType" onchange="updateRightFields(this.value)">
+<option value="" disabled selected data-i18n="rightTypePlaceholder">🤝 نوع الحق</option>
+<option value="بيع آجل" data-i18n="rightCreditSale">🛒 بيع آجل</option>
+<option value="سلفة" data-i18n="rightLoan">💸 سلفة</option>
+<option value="إيجار مستحق" data-i18n="rightRentDue">🏠 إيجار مستحق</option>
+<option value="شراكة" data-i18n="rightPartnership">🤝 شراكة</option>
+<option value="حق آخر" data-i18n="rightOther">📦 حق آخر</option>
+</select>
+<input id="rAmount" type="text" placeholder="💵 المبلغ المستحق (الكلي)" data-i18n-placeholder="totalDueAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<div id="rDynamicFields"></div>
+<input id="rEntity" type="text" placeholder="👤 الجهة / المدين (اسم الشخص أو المؤسسة)" data-i18n-placeholder="entityDebtor">
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="rDueDate" type="date"></div>
+<span class="field-hint" data-i18n="dueDateHint">تاريخ الاستحقاق المتوقع</span>
+<select id="rNotifTiming">
+<option value="" disabled selected data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
+<option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
+<option value="24" data-i18n="notif24Hours">⏱️ قبل 24 ساعة</option>
+<option value="168" data-i18n="notif7Days">⏱️ قبل 7 أيام</option>
+</select>
+<span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
+<input id="rDesc" type="text" placeholder="📝 ملاحظات إضافية" data-i18n-placeholder="additionalNotes">
+<button class="action" onclick="addRight()" data-i18n="saveRight">حفظ الحق</button>
+<button class="secondary" onclick="openLog('rig')" data-i18n="rightsLog">سجل الحقوق</button>
+</div>
+
+<!-- ============ DEBTS ============ -->
+<div id="debts" class="section">
+<span class="edit-indicator" id="debEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
+<span class="section-hint" data-i18n="debtsHint">* دفع الالتزامات يُخصم من رصيدك الحالي</span>
+<select id="dType" onchange="updateDebtFields(this.value)">
+<option value="" disabled selected data-i18n="debtTypePlaceholder">🧾 نوع الالتزام</option>
+<option value="🏠 إيجار" data-i18n="debtRent">🏠 إيجار</option>
+<option value="💡 كهرباء" data-i18n="debtElectricity">💡 كهرباء</option>
+<option value="💧 ماء" data-i18n="debtWater">💧 ماء</option>
+<option value="💡 فواتير الخدمات" data-i18n="debtUtilities">💡 فواتير الخدمات</option>
+<option value="📱 الاتصالات والإنترنت" data-i18n="debtInternet">📱 الاتصالات والإنترنت</option>
+<option value="🏦 قروض وتمويل" data-i18n="debtLoans">🏦 قروض وتمويل</option>
+<option value="👤 دين شخصي" data-i18n="debtPersonal">👤 دين شخصي</option>
+<option value="🛒 مشتريات بالتقسيط" data-i18n="debtInstallments">🛒 مشتريات بالتقسيط</option>
+<option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
+<option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
+<option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
+<option value="👨‍‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩‍ التزامات عائلية</option>
+<option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
+<option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
+<option value="أخرى" data-i18n="debtOther">📦 أخرى</option>
+</select>
+<input id="dAmount" type="text" placeholder="💵 قيمة الفاتورة / القسط الحالي" data-i18n-placeholder="billAmount" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<input id="dEntity" type="text" placeholder="🏢 الجهة / الدائن" data-i18n-placeholder="entityCreditor" style="display:none;">
+<select id="dStatus">
+<option value="" disabled selected data-i18n="statusPlaceholder">✅ الحالة</option>
+<option value="مدفوع" data-i18n="statusPaid">مدفوع</option>
+<option value="مدفوع جزئياً" data-i18n="statusPartiallyPaid">مدفوع جزئياً</option>
+<option value="غير مدفوع" data-i18n="statusUnpaid">غير مدفوع</option>
+<option value="متأخر" data-i18n="statusOverdue">متأخر</option>
+</select>
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="dDueDate" type="date"></div>
+<select id="dNotifTiming">
+<option value="" disabled selected data-i18n="notifTimingPlaceholder">⏱️ التنبيه قبل الاستحقاق (اختياري)</option>
+<option value="1" data-i18n="notif1Hour">⏱️ قبل ساعة</option>
+<option value="24" data-i18n="notif24Hours">⏱️ قبل 24 ساعة</option>
+<option value="168" data-i18n="notif7Days">⏱️ قبل 7 أيام</option>
+</select>
+<span class="field-hint" data-i18n="notifTimingHint">الافتراضي: قبل 7 أيام</span>
+<input id="dDesc" type="text" placeholder="📝 ملاحظات إضافية" data-i18n-placeholder="additionalNotes">
+<div id="dDynamicFields"></div>
+<button class="action" onclick="addDebt()" data-i18n="saveDebt">حفظ الالتزام</button>
+<button class="secondary" onclick="openLog('deb')" data-i18n="debtsLog">سجل الالتزامات</button>
+</div>
+
+<!-- ============ BOTTOM NAVIGATION ============ -->
 <nav class="bottom-nav">
-  <button class="nav-item" data-page="income">
-    <i class="fa-solid fa-sack-dollar"></i>
-    <span data-i="income">الدخل</span>
-  </button>
-  <button class="nav-item" data-page="expense">
-    <i class="fa-solid fa-cart-shopping"></i>
-    <span data-i="expenses">مصروفات</span>
-  </button>
-  <button class="nav-item nav-item-home active" data-page="overview">
-    <span class="home-icon-wrapper"><i class="fa-solid fa-house"></i></span>
-    <span data-i="home">الرئيسية</span>
-  </button>
-  <button class="nav-item" data-page="rights">
-    <i class="fa-solid fa-hand-holding-dollar"></i>
-    <span data-i="rights">حقوق</span>
-  </button>
-  <button class="nav-item" data-page="oblig">
-    <i class="fa-solid fa-file-invoice"></i>
-    <span data-i="obligations">التزامات</span>
-  </button>
+<button class="nav-item" data-tab="income" onclick="openTabFromNav('income')"><i class="fas fa-arrow-down"></i><span data-i18n="navIncome">الدخل</span></button>
+<button class="nav-item" data-tab="expenses" onclick="openTabFromNav('expenses')"><i class="fas fa-arrow-up"></i><span data-i18n="navExpenses">مصروفات</span></button>
+<button class="nav-item nav-item-home active" data-tab="overview" onclick="openTabFromNav('overview')"><div class="home-icon-wrapper"><i class="fas fa-home"></i></div><span data-i18n="navHome">الرئيسية</span></button>
+<button class="nav-item" data-tab="rights" onclick="openTabFromNav('rights')"><i class="fas fa-hand-holding-usd"></i><span data-i18n="navRights">حقوق</span></button>
+<button class="nav-item" data-tab="debts" onclick="openTabFromNav('debts')"><i class="fas fa-file-invoice-dollar"></i><span data-i18n="navDebts">التزامات</span></button>
 </nav>
 
-<!-- SIDEBAR -->
-<div class="sidebar-overlay" id="sideOvl"></div>
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <span data-i="menu">القائمة</span>
-    <button id="sideClose"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="sidebar-content">
-    <button class="sidebar-menu-item" id="dLang">
-      <i class="fa-solid fa-globe"></i>
-      <span data-i="language">اللغة</span>
-      <span class="currency-label" id="langLabel">🇸🇦 العربية</span>
-    </button>
-    <button class="sidebar-menu-item drive-item" id="dDrive">
-      <i class="fa-brands fa-google-drive"></i>
-      Google Drive
-      <span class="drive-status-dot"></span>
-      <span class="drive-email" id="driveEmail"></span>
-    </button>
-    <button class="sidebar-menu-item" id="dLogout">
-      <i class="fa-solid fa-arrow-right-from-bracket"></i>
-      <span data-i="logout">تسجيل خروج</span>
-    </button>
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-switch-item">
-      <i class="fa-solid fa-moon"></i>
-      <span data-i="darkMode">الوضع الليلي</span>
-      <label class="switch">
-        <input type="checkbox" id="darkSwitch">
-        <span class="slider"></span>
-      </label>
-    </div>
-    <button class="sidebar-currency-item" id="dCur">
-      <i class="fa-solid fa-coins"></i>
-      <span data-i="changeCurrency">تغيير العملة</span>
-      <span class="currency-label cur-sym">﷼</span>
-    </button>
-    <div class="sidebar-divider"></div>
-    <button class="sidebar-menu-item" id="dExport">
-      <i class="fa-solid fa-file-export"></i>
-      <span data-i="exportData">تصدير البيانات</span>
-    </button>
-    <button class="sidebar-menu-item" id="dImport">
-      <i class="fa-solid fa-file-import"></i>
-      <span data-i="importData">استيراد البيانات</span>
-    </button>
-    <button class="sidebar-menu-item" id="dAbout">
-      <i class="fa-solid fa-circle-info"></i>
-      <span data-i="aboutApp">حول التطبيق</span>
-    </button>
-    <div class="sidebar-divider"></div>
-    <button class="sidebar-menu-item" id="dReset" style="color:var(--danger)">
-      <i class="fa-solid fa-rotate-left" style="color:var(--danger)"></i>
-      <span data-i="resetData">إعادة تعيين البيانات</span>
-    </button>
-  </div>
-</aside>
-
-<!-- MODALS -->
-<div class="modal" id="txModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title" id="txTitle">إيداع</div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content">
-    <div class="tx-bal">
-      <span data-i="yourBalance">رصيدك الحالي:</span>
-      <b id="txCurBal">0</b>
-    </div>
-    <label data-i="amount">المبلغ</label>
-    <input id="txAmount" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00">
-    <label data-i="noteOpt">ملاحظة (اختياري)</label>
-    <input id="txNote" type="text" maxlength="80">
-    <button class="action" id="txExec" data-i="execute">تنفيذ</button>
-  </div>
+<!-- ============ LOG MODAL ============ -->
+<div id="logModal" class="modal">
+<header><button onclick="closeLayer('log')"><i class="fas fa-times"></i></button><div class="title" data-i18n="searchLog">السجل</div></header>
+<div class="modal-content">
+<input id="search" type="text" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderLog()">
+<div class="log-filters">
+<select id="logFilterCat" onchange="setLogFilter('cat', this.value)"></select>
+<select id="logFilterStatus" onchange="setLogFilter('status', this.value)"></select>
+<select id="logFilterPeriod" onchange="setLogFilter('period', this.value)"></select>
+</div>
+<div id="logStatsBar" class="log-stats"></div>
+<div id="logContent"></div>
+</div>
 </div>
 
-<div class="modal" id="moveLogModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title"><i class="fa-solid fa-clock-rotate-left"></i> <span data-i="moveLog">سجل حركات الرصيد</span></div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content">
-    <div class="log-filters">
-      <input id="moveSearch" type="text" data-ip="search" placeholder="بحث...">
-      <select id="moveFilter">
-        <option value="all" data-i="fAll">الكل</option>
-        <option value="deposit" data-i="mvDeposit">إيداع</option>
-        <option value="withdraw" data-i="mvWithdraw">سحب</option>
-        <option value="income" data-i="mvIncome">دخل</option>
-        <option value="expense" data-i="mvExpense">مصروف</option>
-        <option value="right" data-i="mvRight">تحصيل حق</option>
-        <option value="obligation" data-i="mvOblig">دفع التزام</option>
-      </select>
-    </div>
-    <div id="moveLogList"></div>
-  </div>
+<!-- ============ DETAIL MODAL ============ -->
+<div id="detailModal" class="modal">
+<header><button onclick="closeLayer('detail')"><i class="fas fa-times"></i></button><div class="title" data-i18n="transactionDetails">تفاصيل المعاملة</div></header>
+<div class="modal-content" id="detailContent"></div>
 </div>
 
-<div class="modal" id="notifModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title"><i class="fa-solid fa-bell"></i> <span data-i="notifications">التنبيهات المالية</span></div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content" id="notifBody"></div>
+<!-- ============ BALANCE ACTION MODAL ============ -->
+<div id="balanceActionModal" class="modal">
+<header><button onclick="closeLayer('balanceAction')"><i class="fas fa-times"></i></button><div class="title" id="actionModalTitle" data-i18n="depositTitle">إيداع</div></header>
+<div class="modal-content">
+<p style="text-align:center;"><span data-i18n="currentBalanceLabel">رصيدك الحالي:</span> <span id="currentBalanceInAction"></span></p>
+<input id="bAmount" type="text" placeholder="💵 المبلغ" data-i18n-placeholder="amountPlaceholder" oninput="formatAmount(this)" inputmode="decimal" pattern="[0-9]*">
+<input id="bDesc" type="text" placeholder="📝 ملاحظات (اختياري)" data-i18n-placeholder="notesOptional">
+<div class="datetime-container"><span class="cal-icon"><i class="far fa-calendar-alt"></i></span><input id="bDate" type="datetime-local"></div>
+<button class="action" onclick="processBalanceAction()" data-i18n="execute">تنفيذ</button>
+</div>
 </div>
 
-<div class="modal" id="detailsModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title" data-i="txDetails">تفاصيل المعاملة</div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content">
-    <div class="card" id="detailsBody" style="margin-top:0"></div>
-  </div>
+<!-- ============ BALANCE LOG MODAL ============ -->
+<div id="balanceLogModal" class="modal">
+<header><button onclick="closeLayer('balanceLog')"><i class="fas fa-times"></i></button><div class="title" data-i18n="balanceLogTitle">سجل حركات الرصيد</div></header>
+<div class="modal-content">
+<input id="balanceSearch" type="text" placeholder="🔍 بحث في السجل..." data-i18n-placeholder="searchLog" oninput="renderBalanceLog()">
+<div class="log-filters"><select id="balanceFilterType" onchange="setBalanceFilter('type', this.value)"></select></div>
+<div id="balanceStatsBar" class="log-stats"></div>
+<div id="balanceLogContent"></div>
+</div>
 </div>
 
-<div class="modal" id="driveModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title"><i class="fa-brands fa-google-drive" style="color:#4285F4"></i> Google Drive</div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content">
-    <div class="drive-modal-header">
-      <span class="status disconnected" id="bkConn">❌ غير متصل</span>
-      <button class="refresh-btn" id="bkRefresh"><i class="fa-solid fa-arrows-rotate"></i> <span data-i="refresh">تحديث</span></button>
-    </div>
-    <button class="drive-backup-btn" id="bkSave">
-      <i class="fa-solid fa-cloud-arrow-up"></i>
-      <span data-i="saveNewBackup">حفظ نسخة احتياطية جديدة</span>
-    </button>
-    <div class="backup-count"><span data-i="uploadedCount">عدد النسخ المرفوعة</span>: <b id="bkCount">0</b></div>
-    <div id="bkList" style="margin-top:12px"></div>
-  </div>
+<!-- ============ NOTIFICATIONS MODAL ============ -->
+<div id="notificationsModal" class="modal">
+<header><button onclick="closeLayer('notifications')"><i class="fas fa-times"></i></button><div class="title" data-i18n="notificationsTitle">التنبيهات المالية</div></header>
+<div class="modal-content" id="notificationsContent"></div>
 </div>
 
-<div class="modal" id="currencyModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title" data-i="chooseCurrency">اختيار العملة</div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content" id="curList"></div>
-</div>
-
-<div class="modal" id="langModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title" data-i="chooseLang">اختر اللغة</div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content">
-    <button class="opt" data-lang="ar"><span class="flag">🇸🇦</span><span>العربية<span class="osub">Arabic</span></span><span class="oend"><i class="fa-solid fa-circle-check"></i></span></button>
-    <button class="opt" data-lang="en"><span class="flag">🇬🇧</span><span>English<span class="osub">الإنجليزية</span></span><span class="oend"><i class="fa-solid fa-circle-check"></i></span></button>
-    <button class="opt" data-lang="ur"><span class="flag">🇵🇰</span><span>اردو<span class="osub">Urdu</span></span><span class="oend"><i class="fa-solid fa-circle-check"></i></span></button>
-  </div>
-</div>
-
-<div class="modal" id="aboutModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title" data-i="aboutApp">حول التطبيق</div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content">
-    <div class="ab-logo"><i class="fa-solid fa-wallet"></i></div>
-    <div class="ab-title" data-i="appName">ميزانيتك الذكية</div>
-    <div class="ab-sub">SMART BUDGET</div>
-    <p style="font-size:13px;line-height:1.9;margin-bottom:12px;font-weight:500" data-i="aboutLead">تطبيق ميزانيتك المالية الذكية يساعدك على تتبع:</p>
-    <ul class="ab-list">
-      <li><i class="fa-solid fa-circle-check"></i><span data-i="a1">الدخل.</span></li>
-      <li><i class="fa-solid fa-circle-check"></i><span data-i="a2">المصروفات اليومية.</span></li>
-      <li><i class="fa-solid fa-circle-check"></i><span data-i="a3">الحقوق المالية المستحقة لك.</span></li>
-      <li><i class="fa-solid fa-circle-check"></i><span data-i="a4">الالتزامات المالية المستحقة عليك.</span></li>
-    </ul>
-    <div class="ab-note">📌 <span data-i="dataNote">ملاحظة: تُحفظ البيانات محلياً باستخدام IndexedDB.</span></div>
-    <div class="ab-ver" data-i="version">الإصدار 5.1 (الدخل)</div>
-  </div>
-</div>
-
-<div class="modal" id="confirmBackupModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title" data-i="backupTitle">نسخ احتياطي</div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content">
-    <i class="fa-brands fa-google-drive" style="font-size:3em;color:#4285F4;margin-bottom:15px"></i>
-    <p style="font-size:1.1em;margin-bottom:20px;line-height:1.8;text-align:center" data-i="backupQ">هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟</p>
-    <div class="btn-group">
-      <button class="confirm-btn" id="bkYes" style="background:#4285F4" data-i="yesBackup">نعم، احفظ النسخة</button>
-      <button class="view-btn" id="bkView" data-i="viewBackups">عرض النسخ المحفوظة</button>
-    </div>
-    <button class="cancel-btn" data-close style="width:100%;margin-top:8px" data-i="cancel">إلغاء</button>
-  </div>
-</div>
-
-<div id="imageSourceOverlay"></div>
+<!-- ============ IMAGE SOURCE MODAL ============ -->
+<div id="imageSourceOverlay" onclick="closeImageSource()"></div>
 <div id="imageSourceModal">
-  <h3 data-i="imageSource">اختيار مصدر الصورة</h3>
-  <button class="action" id="btnCam"><i class="fa-solid fa-camera"></i> <span data-i="camera">التقاط بالكاميرا</span></button>
-  <button class="secondary" id="btnGal"><i class="fa-solid fa-images"></i> <span data-i="gallery">اختيار من المعرض</span></button>
-  <button class="secondary" data-close data-i="cancel">إلغاء</button>
+<h3 data-i18n="chooseImageSource">اختيار مصدر الصورة</h3>
+<button class="action" onclick="openCameraInput()"><i class="fas fa-camera"></i> <span data-i18n="camera">التقاط بالكاميرا</span></button>
+<button class="action" onclick="openGalleryInput()"><i class="fas fa-images"></i> <span data-i18n="gallery">اختيار من المعرض</span></button>
+<button class="secondary" onclick="closeImageSource()" data-i18n="cancel">إلغاء</button>
 </div>
 
-<div class="modal" id="exportNameModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title" data-i="exportData">تصدير البيانات</div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content">
-    <label data-i="fileNameQ">أدخل اسم الملف:</label>
-    <input id="expName" type="text" placeholder="smart-budget">
-    <div class="btn-group">
-      <button class="confirm-btn" id="expDo" data-i="export">تصدير</button>
-      <button class="cancel-btn" data-close data-i="cancel">إلغاء</button>
-    </div>
-  </div>
+<!-- ============ CONFIRM BACKUP MODAL ============ -->
+<div id="confirmBackupModal" class="modal">
+<header><button onclick="closeLayer('confirmBackup')"><i class="fas fa-times"></i></button><div class="title" data-i18n="backupTitle">نسخ احتياطي</div></header>
+<div class="modal-content">
+<i class="fab fa-google-drive"></i>
+<p data-i18n="backupConfirmMsg">هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟</p>
+<div class="btn-group">
+<button class="confirm-btn" onclick="handleBackupConfirm()" data-i18n="backupSave">نعم، احفظ النسخة</button>
+<button class="view-btn" onclick="handleViewBackups()"><i class="fas fa-list"></i> <span data-i18n="backupView">عرض النسخ المحفوظة</span></button>
+</div>
+</div>
 </div>
 
-<div class="modal" id="confirmModal">
-  <header>
-    <button data-close><i class="fa-solid fa-xmark"></i></button>
-    <div class="title" data-i="confirmTitle">تأكيد</div>
-    <button data-close><i class="fa-solid fa-arrow-right"></i></button>
-  </header>
-  <div class="modal-content">
-    <div style="text-align:center">
-      <i class="fa-solid fa-triangle-exclamation" style="font-size:3em;color:var(--danger);margin-bottom:15px"></i>
-      <p id="cfMsg" style="font-size:1.1em;margin-bottom:20px;line-height:1.8"></p>
-    </div>
-    <div class="btn-group">
-      <button class="confirm-btn" id="cfOk" style="background:var(--danger)" data-i="confirm">تأكيد</button>
-      <button class="cancel-btn" data-close data-i="cancel">إلغاء</button>
-    </div>
-  </div>
+<!-- ============ DRIVE BACKUP MODAL ============ -->
+<div id="driveBackupModal" class="modal">
+<header><button onclick="closeLayer('driveBackup')"><i class="fas fa-times"></i></button><div class="title" data-i18n="backupDriveTitle">النسخ الاحتياطية</div></header>
+<div class="modal-content">
+<div class="drive-modal-header">
+<span id="driveModalStatus" class="status disconnected" data-i18n="driveDisconnectedStatus">❌ غير متصل</span>
+<button class="refresh-btn" onclick="refreshBackupList()"><i class="fas fa-sync-alt"></i> <span data-i18n="refresh">تحديث</span></button>
+</div>
+<button class="drive-backup-btn" onclick="handleDriveBackup()"><i class="fas fa-cloud-upload-alt"></i> <span data-i18n="backupNew">حفظ نسخة احتياطية جديدة</span></button>
+<div id="driveBackupCount" class="backup-count">عدد النسخ المرفوعة: 0</div>
+<div id="driveBackupList"></div>
+</div>
 </div>
 
-<input type="file" id="camInput" accept="image/*" capture="environment" class="hidden">
-<input type="file" id="galInput" accept="image/*" class="hidden">
-<input type="file" id="importFile" accept=".json,application/json" class="hidden">
-
-<div class="toast" id="toast">
-  <span class="toast-icon"></span>
-  <span id="toastMsg"></span>
+<!-- ============ EXPORT NAME MODAL ============ -->
+<div id="exportNameModal" class="modal">
+<header><button onclick="closeLayer('exportName')"><i class="fas fa-times"></i></button><div class="title" data-i18n="exportData">تصدير البيانات</div></header>
+<div class="modal-content">
+<label data-i18n="enterFileName">أدخل اسم الملف:</label>
+<input id="exportFileName" type="text" placeholder="اسم الملف" data-i18n-placeholder="fileName">
+<div class="btn-group">
+<button class="confirm-btn" onclick="performExport()" data-i18n="export">تصدير</button>
+<button class="cancel-btn" onclick="closeLayer('exportName')" data-i18n="cancel">إلغاء</button>
+</div>
+</div>
 </div>
 
-<div class="loading-overlay" id="loading">
-  <div class="loading-spinner">
-    <i class="fa-solid fa-circle-notch spinner-icon"></i>
-    <p data-i="processing">جاري المعالجة...</p>
-    <div class="progress-bar"><div class="progress-fill"></div></div>
-  </div>
+<!-- ============ CURRENCY MODAL ============ -->
+<div id="currencyModal" class="modal">
+<header><button onclick="closeLayer('currency')"><i class="fas fa-times"></i></button><div class="title" data-i18n="selectCurrency">اختيار العملة</div></header>
+<div class="modal-content">
+<input id="currencySearch" type="text" placeholder="🔍 ابحث عن العملة..." data-i18n-placeholder="searchCurrency" oninput="renderCurrencyList()">
+<div id="currencyList"></div>
+</div>
 </div>
 
-<script>
-/* ============ i18n ============ */
-const AR={appTitle:"ميزانيتك المالية الذكية",appName:"ميزانيتك الذكية",home:"الرئيسية",income:"الدخل",expenses:"مصروفات",rights:"حقوق",obligations:"التزامات",history:"السجل",menu:"القائمة",language:"اللغة",logout:"تسجيل خروج",darkMode:"الوضع الليلي",changeCurrency:"تغيير العملة",exportData:"تصدير البيانات",importData:"استيراد البيانات",aboutApp:"حول التطبيق",resetData:"إعادة تعيين البيانات",currentBalance:"الرصيد النقدي الحالي",deposit:"إيداع",withdraw:"سحب",moveLog:"سجل حركات الرصيد",yourBalance:"رصيدك الحالي:",execute:"تنفيذ",statsSummary:"ملخص الإحصائيات",thisMonth:"هذا الشهر",totalIncome:"إجمالي الدخل",totalExpenses:"إجمالي المصروفات",paidObligations:"المدفوع من الالتزامات",collectedRights:"المحصل من الحقوق",incHint:"الدخل يُضاف إلى رصيدك فوراً",expHint:"المصروفات تُخصم من رصيدك فوراً",rigHint:"تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل «المبلغ المحصل»",rigWarn:"عند تحصيل حق، حدّث المبلغ المحصل هنا ولا تسجله في الدخل",oblHint:"دفع الالتزامات يُخصم من رصيدك الحالي",incomeCat:"فئة الدخل",expCat:"الفئة (نفقات متغيرة)",rightType:"نوع الحق",obligType:"نوع الالتزام",amount:"المبلغ",noteOpt:"ملاحظة (اختياري)",dueDate:"تاريخ الاستحقاق المتوقع",reminder:"التنبيه قبل الاستحقاق (اختياري)",remDefault:"الافتراضي: قبل 7 أيام",rem1h:"قبل ساعة",rem24h:"قبل 24 ساعة",rem7d:"قبل 7 أيام",status:"الحالة",collectedAmount:"المبلغ المحصل",paidAmount:"المبلغ المدفوع",attachReceipt:"إرفاق صورة الفاتورة (اختياري)",attachBtn:"إرفاق صورة الفاتورة",saveIncome:"حفظ الدخل",saveExpense:"حفظ المصروف",saveRight:"حفظ الحق",saveObligation:"حفظ الالتزام",cancel:"إلغاء",confirm:"تأكيد",confirmTitle:"تأكيد",editMode:"وضع التعديل",export:"تصدير",refresh:"تحديث",update:"تحديث",incomeLog:"سجل الدخل",expenseLog:"سجل المصروفات",rightsLog:"سجل الحقوق",obligationsLog:"سجل الالتزامات",paid:"مدفوع",partial:"مدفوع جزئياً",unpaid:"غير مدفوع",late:"متأخر",stCollected:"تم التحصيل",stPending:"مستحق",selectCat:"اختر الفئة",
-cat_salary:"راتب",cat_freelance:"عمل حر",cat_business:"تجارة",cat_invest:"استثمار",cat_commission:"عمولة",cat_gift:"هدية",cat_reward:"مكافأة",cat_social:"الضمان الاجتماعي",cat_pension:"المعاش التقاعدي",cat_other_income:"دخل آخر",cat_food:"طعام",cat_transport:"مواصلات",cat_fuel:"وقود",cat_cafes:"مقاهي",cat_personal:"رعاية شخصية",cat_electronics:"أجهزة إلكترونية",cat_health:"صحة",cat_fun:"ترفيه",cat_shopping:"تسوق",cat_edu:"تعليم",cat_maint:"صيانة وإصلاح",cat_other:"أخرى",rt_sale:"بيع آجل",rt_loan:"سلفة",rt_rent:"إيجار مستحق",rt_partner:"شراكة",rt_other:"حق آخر",ot_rent:"إيجار",ot_elec:"كهرباء",ot_water:"ماء",ot_utils:"فواتير الخدمات",ot_telecom:"الاتصالات والإنترنت",ot_loan:"قروض وتمويل",ot_debt:"دين شخصي",ot_install:"مشتريات بالتقسيط",ot_tuition:"رسوم تعليمية",ot_medical:"مصاريف طبية مستحقة",ot_car:"تمويل السيارة",ot_family:"التزامات عائلية",ot_subs:"اشتراكات دورية",ot_salary:"رواتب",ot_other:"أخرى",
-mvDeposit:"إيداع",mvWithdraw:"سحب",mvIncome:"دخل",mvExpense:"مصروف",mvRight:"تحصيل حق",mvOblig:"دفع التزام",mvAdjust:"تعديل",fAll:"الكل",search:"بحث...",imageSource:"اختيار مصدر الصورة",camera:"التقاط بالكاميرا",gallery:"اختيار من المعرض",backupTitle:"نسخ احتياطي",backupQ:"هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟",yesBackup:"نعم، احفظ النسخة",viewBackups:"عرض النسخ المحفوظة",backups:"النسخ الاحتياطية",notConnected:"غير متصل",connected:"متصل",saveNewBackup:"حفظ نسخة احتياطية جديدة",uploadedCount:"عدد النسخ المرفوعة",restore:"استعادة",delL:"حذف",fileNameQ:"أدخل اسم الملف:",chooseCurrency:"اختيار العملة",chooseLang:"اختر اللغة",aboutLead:"تطبيق ميزانيتك المالية الذكية يساعدك على تتبع:",a1:"الدخل.",a2:"المصروفات اليومية.",a3:"الحقوق المالية المستحقة لك.",a4:"الالتزامات المالية المستحقة عليك.",dataNote:"ملاحظة: تُحفظ البيانات محلياً باستخدام IndexedDB.",version:"الإصدار 5.1 (الدخل)",txDetails:"تفاصيل المعاملة",notifications:"التنبيهات المالية",typeL:"النوع",dateL:"التاريخ",noteL:"البيان",amountL:"المبلغ",reqCat:"يرجى اختيار الفئة أولاً",reqAmt:"يرجى إدخال مبلغ صحيح",noBalance:"الرصيد غير كافٍ لإتمام السحب",saved:"تم الحفظ بنجاح",deleted:"تم الحذف",updated:"تم التحديث بنجاح",exported:"تم تصدير البيانات بنجاح",imported:"تم استيراد البيانات بنجاح",importErr:"ملف غير صالح، تعذر الاستيراد",resetMsg:"هل أنت متأكد من إعادة تعيين جميع البيانات؟ سيتم حذف كل شيء نهائياً.",deleteMsg:"هل تريد حذف هذا العنصر نهائياً؟",loggedOut:"تم تسجيل الخروج بنجاح",backupSaved:"تم حفظ النسخة الاحتياطية بنجاح",connectedDrive:"تم الاتصال بـ Google Drive",noData:"لا توجد بيانات بعد",tDeposit:"تم الإيداع بنجاح",tWithdraw:"تم السحب بنجاح",tImageAdded:"تم إرفاق صورة الفاتورة",overdue:"متأخر",upcoming:"قادم",unreadG:"غير مقروءة",readG:"مقروءة",tapView:"اضغط للعرض والتفاصيل",due:"الاستحقاق",collected:"محصّل",days:"أيام",hours:"ساعات",mins:"دقائق",processing:"جاري المعالجة..."};
-const EN={appTitle:"Smart Budget",appName:"Smart Budget",home:"Home",income:"Income",expenses:"Expenses",rights:"Rights",obligations:"Obligations",history:"History",menu:"Menu",language:"Language",logout:"Log out",darkMode:"Dark mode",changeCurrency:"Change currency",exportData:"Export data",importData:"Import data",aboutApp:"About the app",resetData:"Reset data",currentBalance:"Current cash balance",deposit:"Deposit",withdraw:"Withdraw",moveLog:"Balance movements log",yourBalance:"Your balance:",execute:"Execute",statsSummary:"Statistics summary",thisMonth:"This month",totalIncome:"Total income",totalExpenses:"Total expenses",paidObligations:"Paid obligations",collectedRights:"Collected rights",amount:"Amount",noteOpt:"Note (optional)",dueDate:"Expected due date",cancel:"Cancel",confirm:"Confirm",editMode:"Edit mode",export:"Export",refresh:"Refresh",update:"Update",processing:"Processing...",search:"Search...",noData:"No data yet",selectCat:"Select category"};
-const UR={appTitle:"اسمارٹ بجٹ",home:"ہوم",income:"آمدنی",expenses:"اخراجات",rights:"حقوق",obligations:"ذمہ داریاں",history:"ریکارڈ",menu:"فہرست",language:"زبان",logout:"لاگ آٹ",darkMode:"ڈارک موڈ",amount:"رقم",cancel:"منسوخ",confirm:"تصدیق",processing:"پروسیس ہو رہا ہے...",selectCat:"زمرہ منتخب کریں"};
-const DICTS={ar:AR,en:EN,ur:UR};
+<!-- ============ LANGUAGE MODAL ============ -->
+<div id="languageModal" class="modal">
+<header><button onclick="closeLayer('language')"><i class="fas fa-times"></i></button><div class="title" data-i18n="languageSelectTitle">اختر اللغة</div></header>
+<div class="modal-content">
+<button class="secondary" onclick="setLanguage('ar')">🇸🇦 العربية <i id="langCheckAr" class="fas fa-check" style="color:var(--success);"></i></button>
+<button class="secondary" onclick="setLanguage('en')">🇬🇧 English <i id="langCheckEn" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
+<button class="secondary" onclick="setLanguage('ur')">🇵🇰 اردو <i id="langCheckUr" class="fas fa-check" style="color:var(--success);display:none;"></i></button>
+</div>
+</div>
 
-/* ============ data ============ */
-const KEY='smart_budget_v51';
-const CUR={SAR:{s:'﷼',f:'🇸🇦',n:'ريال سعودي'},USD:{s:'$',f:'🇺🇸',n:'دولار أمريكي'},EUR:{s:'€',f:'🇪🇺',n:'يورو'},GBP:{s:'£',f:'🇬🇧',n:'جنيه إسترليني'},AED:{s:'د.إ',f:'🇦🇪',n:'درهم إماراتي'},KWD:{s:'د.ك',f:'🇰🇼',n:'دينار كويتي'},EGP:{s:'ج.م',f:'🇪🇬',n:'جنيه مصري'}};
-const INCOME_CATS=[['salary','💼'],['freelance','💻'],['business','🏪'],['invest','📈'],['commission','💰'],['gift','🎁'],['reward','🏆'],['social','🛡️'],['pension','🧓'],['other_income','📦']];
-const EXPENSE_CATS=[['food','🍽️'],['transport','🚗'],['fuel','⛽'],['cafes','☕'],['personal','🧴'],['electronics','📱'],['health','🏥'],['fun','🎮'],['shopping','🛍️'],['edu','📚'],['maint','🔧'],['other','📦']];
-const RIGHT_TYPES=[['sale','🛒'],['loan','💸'],['rent','🏠'],['partner','🤝'],['other','📦']];
-const OBLIG_TYPES=[['rent','🏠'],['elec','💡'],['water','💧'],['utils','💡'],['telecom','📱'],['loan','🏦'],['debt','👤'],['install','🛒'],['tuition','🎓'],['medical','🏥'],['car','🚗'],['family','👨‍👩'],['subs','📅'],['salary','👨‍💼'],['other','📦']];
-const MK={deposit:'💰',withdraw:'🪙',income:'📈',expense:'🛒',right:'🤝',obligation:'🧾',adjust:'✏️'};
-const MKK={deposit:'mvDeposit',withdraw:'mvWithdraw',income:'mvIncome',expense:'mvExpense',right:'mvRight',obligation:'mvOblig',adjust:'mvAdjust'};
+<!-- ============ ABOUT MODAL ============ -->
+<div id="aboutModal" class="modal">
+<header><button onclick="closeLayer('about')"><i class="fas fa-times"></i></button><div class="title" data-i18n="aboutTitle">حول ميزانيتك الذكية</div></header>
+<div class="modal-content">
+<div class="card">
+<p data-i18n="aboutDesc">تطبيق ميزانيتك المالية الذكية يساعدك على تتبع:</p>
+<ul>
+<li data-i18n="aboutIncome">الدخل.</li>
+<li data-i18n="aboutExpenses">المصروفات اليومية.</li>
+<li data-i18n="aboutRights">الحقوق المالية المستحقة لك.</li>
+<li data-i18n="aboutDebts">الالتزامات المالية المستحقة عليك.</li>
+</ul>
+<p><span data-i18n="aboutNote">ملاحظة:</span> <span data-i18n="aboutNoteText">تُحفظ البيانات محلياً باستخدام IndexedDB.</span></p>
+<p data-i18n="appVersion">الإصدار 5.1 (الدخل)</p>
+</div>
+</div>
+</div>
 
-function fresh(){return{balance:0,hidden:false,movements:[],incomes:[],expenses:[],rights:[],obligations:[],backups:[],connected:false,readNotifs:[],settings:{lang:'ar',currency:'SAR',dark:false}}}
-function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.settings)return Object.assign(fresh(),d)}catch(e){}return null}
-let S=load()||fresh();
-const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-const $=s=>document.querySelector(s);$$=s=>[...document.querySelectorAll(s)];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const t=k=>(DICTS[S.settings.lang]&&DICTS[S.settings.lang][k])??AR[k]??k;
-const sym=()=>(CUR[S.settings.currency]||CUR.SAR).s;
-const money=n=>{const v=Math.abs(+n||0).toLocaleString('en-US',{maximumFractionDigits:2});return(n<0?'-':'')+v};
-const loc=()=>S.settings.lang==='en'?'en-US':(S.settings.lang+'-u-nu-latn');
-const fmtDT=d=>{const x=new Date(d);return x.toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'})+' · '+x.toLocaleTimeString(loc(),{hour:'2-digit',minute:'2-digit'})};
-const fmtD=d=>new Date(d).toLocaleDateString(loc(),{day:'numeric',month:'short',year:'numeric'});
-const num=el=>{const v=parseFloat(el.value);return isNaN(v)?0:v};
-const dur=ms=>{const m=Math.max(1,Math.round(ms/6e4));if(m<60)return m+' '+t('mins');const h=Math.round(m/60);if(h<24)return h+' '+t('hours');return Math.round(h/24)+' '+t('days')};
-const inMonth=d=>{const x=new Date(d),n=new Date();return x.getFullYear()===n.getFullYear()&&x.getMonth()===n.getMonth()};
-const catName=(g,id)=>g==='right'?t('rt_'+id):g==='oblig'?t('ot_'+id):t('cat_'+id);
+<!-- ============ SIDEBAR ============ -->
+<div class="sidebar-overlay" onclick="closeLayer('sidebar')"></div>
+<div id="appSidebar" class="sidebar">
+<div class="sidebar-header"><span data-i18n="menu">القائمة</span><button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button></div>
+<div class="sidebar-content">
+<button class="sidebar-menu-item" onclick="openLanguageModal()"><i class="fas fa-globe"></i><span data-i18n="language">اللغة</span><span id="sidebarLanguageLabel" style="margin-right:auto;font-size:0.85em;color:#888;">🇸🇦 العربية</span></button>
+<button id="driveMenuItem" class="sidebar-menu-item drive-item" onclick="handleDriveClick()"><i class="fab fa-google-drive"></i><span id="driveMenuText" data-i18n="googleDrive">Google Drive</span><span id="driveStatusDot" class="drive-status-dot"></span><span id="driveMenuEmail" class="drive-email"></span><span id="driveLogoutBtn" class="drive-logout" onclick="event.stopPropagation();signOut();" data-i18n="signOut">تسجيل خروج</span></button>
+<div class="sidebar-divider"></div>
+<div class="sidebar-switch-item"><i class="fas fa-moon"></i><span data-i18n="darkMode">الوضع الليلي</span><label class="switch"><input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"><span class="slider"></span></label></div>
+<button class="sidebar-currency-item" onclick="openCurrencyModal()"><i class="fas fa-coins"></i><span data-i18n="changeCurrency">تغيير العملة</span><span id="sidebarCurrencyLabel" class="currency-label">﷼</span></button>
+<div class="sidebar-divider"></div>
+<button class="sidebar-menu-item" onclick="openExportNameModal()"><i class="fas fa-file-export"></i><span data-i18n="exportData">تصدير البيانات</span></button>
+<label class="sidebar-menu-item" style="cursor:pointer;"><i class="fas fa-file-import"></i><span data-i18n="importData">استيراد البيانات</span><input type="file" accept=".json,application/json" style="display:none;" onchange="importData(event)"></label>
+<button class="sidebar-menu-item" onclick="openAboutModal()"><i class="fas fa-info-circle"></i><span data-i18n="aboutApp">حول التطبيق</span></button>
+<div class="sidebar-divider"></div>
+<button class="sidebar-menu-item" style="color:var(--danger);" onclick="confirmResetData()"><i class="fas fa-trash-alt" style="color:var(--danger);"></i><span data-i18n="resetData">إعادة تعيين البيانات</span></button>
+</div>
+</div>
 
-let sel={income:null,expense:null,right:null,oblig:null};
-let editing={income:null,expense:null,right:null,oblig:null};
-let pendingImg=null,txType='deposit',obStatus='unpaid',confirmCb=null,lastBal=S.balance,moveQuery='';
+<!-- ============ LOADING OVERLAY ============ -->
+<div id="loadingOverlay" class="loading-overlay">
+<div class="loading-spinner">
+<i class="fas fa-circle-notch spinner-icon"></i>
+<p id="loadingMessage" data-i18n="processing">جاري المعالجة...</p>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+</div>
+</div>
 
-/* ============ helpers ============ */
-let toastTimer;
-function toast(msg,type='success'){const el=$('#toast');
-  el.className='toast show '+type;
-  el.querySelector('.toast-icon').className='toast-icon fa-solid '+(type==='success'?'fa-circle-check':type==='error'?'fa-circle-exclamation':'fa-circle-info');
-  $('#toastMsg').textContent=msg;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2700)}
-function withLoading(fn,ms=1200){$('#loading').classList.add('show');setTimeout(()=>{$('#loading').classList.remove('show');fn()},ms)}
-function openModal(id){$('#'+id).style.display='flex';document.body.style.overflow='hidden'}
-function closeModal(id){$('#'+id).style.display='none';document.body.style.overflow=''}
-$$('[data-close]').forEach(b=>b.addEventListener('click',()=>{const m=b.closest('.modal,#imageSourceModal');if(m){m.style.display='none';document.body.style.overflow=''}}));
-function showConfirm(msg,cb){$('#cfMsg').textContent=msg;confirmCb=cb;openModal('confirmModal')}
-$('#cfOk').onclick=()=>{closeModal('confirmModal');if(confirmCb){const f=confirmCb;confirmCb=null;f()}};
-function applyI18n(){$$('[data-i]').forEach(el=>el.textContent=t(el.dataset.i));$$('[data-ip]').forEach(el=>el.placeholder=t(el.dataset.ip))}
+<!-- ============ TOAST ============ -->
+<div id="toast" class="toast"></div>
 
-/* ============ renders ============ */
-function renderBalance(anim=true){const el=$('#balanceAmount');
-  if(S.hidden){el.innerHTML='<span class="hidden-balance">••••••</span>'}
-  else{
-    if(anim&&S.balance!==lastBal){const from=lastBal,to=S.balance,st=performance.now();
-      const step=now=>{const p=Math.min(1,(now-st)/650),e=1-Math.pow(1-p,3);
-        el.innerHTML='<span>'+money(from+(to-from)*e)+'</span> <span class="currency-symbol">'+sym()+'</span>';if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
-    else el.innerHTML='<span>'+money(S.balance)+'</span> <span class="currency-symbol">'+sym()+'</span>'}
-  lastBal=S.balance;$('#txCurBal').textContent=money(S.balance)+' '+sym()}
-const emptyHtml=()=>`<div class="drive-empty"><i class="fa-regular fa-folder-open"></i><p>${t('noData')}</p></div>`;
-function renderStats(){
-  const inc=S.incomes.filter(i=>inMonth(i.date)).reduce((a,b)=>a+b.amount,0);
-  const exp=S.expenses.filter(i=>inMonth(i.date)).reduce((a,b)=>a+b.amount,0);
-  const deb=S.obligations.filter(i=>inMonth(i.date)).reduce((a,b)=>a+(b.paid||0),0);
-  const rig=S.rights.filter(i=>inMonth(i.date)).reduce((a,b)=>a+(b.collected||0),0);
-  const tot=inc+exp+deb+rig;
-  const set=(v,bar,pct)=>{const p=tot?Math.round(v/tot*100):0;$('#'+bar).style.width=p+'%';$('#'+pct).textContent=p+'%'};
-  $('#sInc').textContent=money(inc);$('#sExp').textContent=money(exp);$('#sDeb').textContent=money(deb);$('#sRig').textContent=money(rig);
-  set(inc,'sIncBar','sIncPct');set(exp,'sExpBar','sExpPct');set(deb,'sDebBar','sDebPct');set(rig,'sRigBar','sRigPct')}
-const moveItem=m=>`<div class="list-item" data-mid="${m.id}">
-  <div style="display:flex;align-items:center;gap:12px">
-    <div style="font-size:22px">${MK[m.kind]||'•'}</div>
-    <div style="flex:1"><b>${esc(m.label)}</b><div style="font-size:11px;color:#888;margin-top:3px">${fmtDT(m.date)}</div></div>
-    <div style="font-weight:800;color:${m.amount>=0?'var(--success)':'var(--danger)'}">${m.amount>0?'+':''}${money(m.amount)} <span class="currency-symbol">${sym()}</span></div>
-  </div></div>`;
-function renderIncome(){$('#incCnt').textContent=S.incomes.length;const l=[...S.incomes].reverse();
-  $('#incList').innerHTML=l.length?l.map(i=>`<div class="list-item" data-id="${i.id}">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="font-size:22px">${INCOME_CATS.find(c=>c[0]===i.cat)?.[1]||'📦'}</div>
-      <div style="flex:1"><b>${esc(catName('income',i.cat))}</b><div style="font-size:11px;color:#888;margin-top:3px">${esc(i.note||'')}${i.note?' · ':''}${fmtDT(i.date)}</div></div>
-      <div style="font-weight:800;color:var(--success)">+${money(i.amount)} <span class="currency-symbol">${sym()}</span></div>
-      <button class="del-btn hidden" data-del="${i.id}" type="button" style="background:none;border:none;color:var(--danger);font-size:16px"><i class="fa-solid fa-trash-can"></i></button>
-    </div></div>`).join(''):emptyHtml()}
-function renderExpenses(){$('#expCnt').textContent=S.expenses.length;const l=[...S.expenses].reverse();
-  $('#expList').innerHTML=l.length?l.map(i=>`<div class="list-item" data-id="${i.id}">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="font-size:22px">${EXPENSE_CATS.find(c=>c[0]===i.cat)?.[1]||'📦'}</div>
-      <div style="flex:1"><b>${esc(catName('expense',i.cat))}</b><div style="font-size:11px;color:#888;margin-top:3px">${esc(i.note||'')}${i.note?' · ':''}${fmtDT(i.date)}</div></div>
-      <div style="font-weight:800;color:var(--danger)">-${money(i.amount)} <span class="currency-symbol">${sym()}</span></div>
-      <button class="del-btn hidden" data-del="${i.id}" type="button" style="background:none;border:none;color:var(--danger);font-size:16px"><i class="fa-solid fa-trash-can"></i></button>
-    </div></div>`).join(''):emptyHtml()}
-function renderRights(){$('#rtCnt').textContent=S.rights.length;const l=[...S.rights].reverse();
-  $('#rtList').innerHTML=l.length?l.map(r=>{
-    const col=r.collected||0,pct=Math.min(100,Math.round(col/r.amount*100));
-    const past=r.dueDate&&new Date(r.dueDate).getTime()<Date.now();
-    const st=col>=r.amount?'paid':past?'late':'unpaid';
-    return `<div class="list-item" data-id="${r.id}">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="font-size:22px">${RIGHT_TYPES.find(c=>c[0]===r.type)?.[1]||'📦'}</div>
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>${esc(catName('right',r.type))}</b><span class="status-badge ${st}">${t(st==='paid'?'stCollected':st==='late'?'late':'stPending')}</span></div>
-          <div style="font-size:11px;color:#888;margin-top:3px">${r.dueDate?t('due')+': '+fmtD(r.dueDate)+' · ':''}${t('collectedAmount')}: ${money(col)}</div>
-          <div style="height:6px;border-radius:99px;background:var(--border-color);margin-top:6px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,var(--p),var(--s));width:${pct}%"></div></div>
-        </div>
-        <div style="text-align:end"><div style="font-weight:800">${money(r.amount)} <span class="currency-symbol">${sym()}</span></div><div style="font-size:10px;color:#888">${pct}%</div></div>
-        <button class="del-btn hidden" data-del="${r.id}" type="button" style="background:none;border:none;color:var(--danger);font-size:16px"><i class="fa-solid fa-trash-can"></i></button>
-      </div></div>`}).join(''):emptyHtml()}
-function renderOblig(){$('#obCnt').textContent=S.obligations.length;const l=[...S.obligations].reverse();
-  $('#obList').innerHTML=l.length?l.map(o=>`<div class="list-item" data-id="${o.id}">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="font-size:22px">${OBLIG_TYPES.find(c=>c[0]===o.type)?.[1]||'📦'}</div>
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b>${esc(catName('oblig',o.type))}</b><span class="status-badge ${o.status}">${t(o.status)}</span></div>
-        <div style="font-size:11px;color:#888;margin-top:3px">${o.dueDate?t('due')+': '+fmtD(o.dueDate)+' · ':''}${t('paidAmount')}: ${money(o.paid||0)}</div>
-        <div style="height:6px;border-radius:99px;background:var(--border-color);margin-top:6px;overflow:hidden"><div style="height:100%;background:linear-gradient(90deg,var(--p),var(--s));width:${Math.min(100,Math.round((o.paid||0)/o.amount*100))}%"></div></div>
-      </div>
-      <div style="font-weight:800">${money(o.amount)} <span class="currency-symbol">${sym()}</span></div>
-      <button class="del-btn hidden" data-del="${o.id}" type="button" style="background:none;border:none;color:var(--danger);font-size:16px"><i class="fa-solid fa-trash-can"></i></button>
-    </div></div>`).join(''):emptyHtml()}
-function renderMoveLog(){
-  const f=$('#moveFilter').value,q=moveQuery.trim();
-  let l=[...S.movements].reverse();
-  if(f!=='all')l=l.filter(m=>m.kind===f);
-  if(q)l=l.filter(m=>m.label.includes(q)||String(Math.abs(m.amount)).includes(q));
-  $('#moveLogList').innerHTML=l.length?l.map(moveItem).join(''):emptyHtml()}
-$('#moveFilter').onchange=renderMoveLog;
-$('#moveSearch').oninput=e=>{moveQuery=e.target.value;renderMoveLog()};
-
-/* ============ notifications ============ */
-function computeNotifs(){const now=Date.now(),out=[];
-  S.rights.forEach(it=>{if((it.collected||0)>=it.amount||!it.dueDate)return;
-    const due=new Date(it.dueDate).getTime(),off=(+it.reminder||168)*36e5;
-    if(now>=due-off)out.push({id:'r'+it.id,group:'right',item:it,due,over:now>due})});
-  S.obligations.forEach(it=>{if(it.status==='paid'||!it.dueDate)return;
-    const due=new Date(it.dueDate).getTime(),off=(+it.reminder||168)*36e5;
-    if(now>=due-off)out.push({id:'o'+it.id,group:'oblig',item:it,due,over:now>due})});
-  return out.sort((a,b)=>a.due-b.due)}
-function renderBadge(){const un=computeNotifs().filter(n=>!S.readNotifs.includes(n.id)).length;
-  const b=$('#notifBadge');b.textContent=un;b.style.display=un>0?'flex':'none'}
-function renderNotifs(){const list=computeNotifs();
-  if(!list.length){$('#notifBody').innerHTML=`<div class="notif-empty-state"><i class="fa-solid fa-circle-check"></i><p>${t('noData')}</p></div>`;return}
-  const un=list.filter(n=>!S.readNotifs.includes(n.id)),rd=list.filter(n=>S.readNotifs.includes(n.id));
-  const ov=list.filter(n=>n.over).length;
-  const item=n=>{const g=n.group,name=g==='right'?catName('right',n.item.type):catName('oblig',n.item.type);
-    const isRd=S.readNotifs.includes(n.id);
-    const cls=isRd?'read':(n.over?'overdue':'upcoming');
-    return `<div class="notif-item ${cls}" data-nid="${n.id}" data-ng="${g}">
-    <div class="notif-head"><span class="notif-name"><i class="fa-solid ${n.over?'fa-circle-exclamation':'fa-clock'}"></i>${esc(name)}</span>${!isRd?`<span class="notif-tag">${n.over?t('overdue'):t('upcoming')}</span>`:`<span class="notif-tag read-tag">${t('readG')}</span>`}</div>
-    <div class="notif-body"><span class="notif-amount">${money(n.item.amount)} <span class="currency-symbol">${sym()}</span></span><span><i class="fa-regular fa-calendar"></i> ${fmtD(n.item.dueDate)}</span></div>
-    ${!isRd?`<span class="notif-read-hint"><i class="fa-solid fa-hand-pointer"></i> ${t('tapView')}</span>`:''}</div>`};
-  $('#notifBody').innerHTML=`<div class="notif-summary">
-    <div class="notif-sum-card overdue-card"><span class="sum-label">${t('overdue')}</span><span class="sum-value">${ov}</span></div>
-    <div class="notif-sum-card upcoming-card"><span class="sum-label">${t('upcoming')}</span><span class="sum-value">${list.length-ov}</span></div></div>
-    ${un.length?`<div class="notif-group-title unread-title"><i class="fa-solid fa-bell"></i>${t('unreadG')}<span class="count-pill">${un.length}</span></div>${un.map(item).join('')}`:''}
-    ${rd.length?`<div class="notif-group-title read-title"><i class="fa-regular fa-bell"></i>${t('readG')}<span class="count-pill">${rd.length}</span></div>${rd.map(item).join('')}`:''}`}
-$('#notifBody').addEventListener('click',e=>{const it=e.target.closest('.notif-item');if(!it||it.classList.contains('read'))return;
-  const nid=it.dataset.nid;if(!S.readNotifs.includes(nid))S.readNotifs.push(nid);
-  save();renderNotifs();renderBadge();closeModal('notifModal');go(it.dataset.ng==='right'?'rights':'oblig')});
-
-/* ============ categories ============ */
-function buildCategories(){
-  const mk=(sel,cats)=>{
-    const options=cats.map(c=>`<option value="${c[0]}">${c[1]} ${catName(sel,c[0])}</option>`).join('');
-    return `<option value="" disabled ${!sel[sel]?'selected':''}>${t('selectCat')}</option>`+options;
-  };
-  $('#incCat').innerHTML=mk({income:sel.income},INCOME_CATS);
-  $('#expCat').innerHTML=mk({expense:sel.expense},EXPENSE_CATS);
-  $('#rtCat').innerHTML=mk({right:sel.right},RIGHT_TYPES);
-  $('#obCat').innerHTML=mk({oblig:sel.oblig},OBLIG_TYPES);
-  if(sel.income)$('#incCat').value=sel.income;
-  if(sel.expense)$('#expCat').value=sel.expense;
-  if(sel.right)$('#rtCat').value=sel.right;
-  if(sel.oblig)$('#obCat').value=sel.oblig;
-}
-
-$('#incCat').onchange=e=>{sel.income=e.target.value};
-$('#expCat').onchange=e=>{sel.expense=e.target.value};
-$('#rtCat').onchange=e=>{sel.right=e.target.value};
-$('#obCat').onchange=e=>{sel.oblig=e.target.value};
-
-function pushMove(kind,amount,label){S.movements.push({id:uid(),kind,amount,label,date:new Date().toISOString()});if(S.movements.length>400)S.movements=S.movements.slice(-400)}
-function updateSaveBtn(g){const map={income:['#incSave','#incCancel','saveIncome'],expense:['#expSave','#expCancel','saveExpense'],right:['#rtSave','#rtCancel','saveRight'],oblig:['#obSave','#obCancel','saveObligation']};
-  const[sv,cn,key]=map[g];$(sv).textContent=editing[g]?t('update'):t(key);$(cn).classList.toggle('hidden',!editing[g])}
-function resetForm(g){
-  if(g==='income'){sel.income=null;$('#incAmount').value='';$('#incNote').value=''}
-  if(g==='expense'){sel.expense=null;$('#expAmount').value='';$('#expNote').value='';pendingImg=null;$('#expPrev').classList.add('hidden')}
-  if(g==='right'){sel.right=null;$('#rtAmount').value='';$('#rtCollected').value='';$('#rtDue').value='';$('#rtReminder').value='168'}
-  if(g==='oblig'){sel.oblig=null;$('#obAmount').value='';$('#obDue').value='';$('#obReminder').value='168';$('#obPaid').value='';$('#obPaidWrap').classList.add('hidden');setObStatus('unpaid')}
-  editing[g]=null;buildCategories();updateSaveBtn(g)}
-function setObStatus(st){obStatus=st;$$('#obStatusSeg button').forEach(b=>b.classList.toggle('on',b.dataset.st===st));$('#obPaidWrap').classList.toggle('hidden',st!=='partial')}
-$('#obStatusSeg').onclick=e=>{const b=e.target.closest('button');if(b)setObStatus(b.dataset.st)};
-
-$('#incSave').onclick=()=>{if(!sel.income)return toast(t('reqCat'),'error');
-  const amt=num($('#incAmount'));if(amt<=0)return toast(t('reqAmt'),'error');
-  const note=$('#incNote').value.trim();
-  if(editing.income){const it=S.incomes.find(x=>x.id===editing.income);const d=amt-it.amount;
-    it.cat=sel.income;it.amount=amt;it.note=note;
-    if(d!==0){S.balance+=d;pushMove('adjust',d,t('mvIncome')+' · '+catName('income',it.cat))}toast(t('updated'))}
-  else{S.incomes.push({id:uid(),cat:sel.income,amount:amt,note,date:new Date().toISOString()});
-    S.balance+=amt;pushMove('income',amt,t('mvIncome')+' · '+catName('income',sel.income));toast(t('saved'))}
-  resetForm('income');save();renderAll()};
-$('#incCancel').onclick=()=>resetForm('income');
-
-$('#expSave').onclick=()=>{if(!sel.expense)return toast(t('reqCat'),'error');
-  const amt=num($('#expAmount'));if(amt<=0)return toast(t('reqAmt'),'error');
-  const note=$('#expNote').value.trim();
-  if(editing.expense){const it=S.expenses.find(x=>x.id===editing.expense);const d=it.amount-amt;
-    it.cat=sel.expense;it.amount=amt;it.note=note;if(pendingImg!==null)it.image=pendingImg||'';
-    if(d!==0){S.balance+=d;pushMove('adjust',d,t('mvExpense')+' · '+catName('expense',it.cat))}toast(t('updated'))}
-  else{S.expenses.push({id:uid(),cat:sel.expense,amount:amt,note,image:pendingImg||'',date:new Date().toISOString()});
-    S.balance-=amt;pushMove('expense',-amt,t('mvExpense')+' · '+catName('expense',sel.expense));toast(t('saved'))}
-  resetForm('expense');save();renderAll()};
-$('#expCancel').onclick=()=>resetForm('expense');
-
-$('#rtSave').onclick=()=>{if(!sel.right)return toast(t('reqCat'),'error');
-  const amt=num($('#rtAmount'));if(amt<=0)return toast(t('reqAmt'),'error');
-  const due=$('#rtDue').value,rem=+$('#rtReminder').value||168,col=Math.min(num($('#rtCollected')),amt);
-  if(editing.right){const it=S.rights.find(x=>x.id===editing.right);const d=col-(it.collected||0);
-    it.type=sel.right;it.amount=amt;it.dueDate=due;it.reminder=rem;it.collected=col;
-    if(d!==0){S.balance+=d;pushMove('right',d,t('mvRight')+' · '+catName('right',it.type))}toast(t('updated'))}
-  else{S.rights.push({id:uid(),type:sel.right,amount:amt,collected:col,dueDate:due,reminder:rem,date:new Date().toISOString()});
-    if(col>0){S.balance+=col;pushMove('right',col,t('mvRight')+' · '+catName('right',sel.right))}toast(t('saved'))}
-  resetForm('right');save();renderAll()};
-$('#rtCancel').onclick=()=>resetForm('right');
-
-$('#obSave').onclick=()=>{if(!sel.oblig)return toast(t('reqCat'),'error');
-  const amt=num($('#obAmount'));if(amt<=0)return toast(t('reqAmt'),'error');
-  const due=$('#obDue').value,rem=+$('#obReminder').value||168;
-  const paid=obStatus==='paid'?amt:obStatus==='partial'?Math.min(num($('#obPaid')),amt):0;
-  if(editing.oblig){const it=S.obligations.find(x=>x.id===editing.oblig);const d=paid-(it.paid||0);
-    it.type=sel.oblig;it.amount=amt;it.dueDate=due;it.reminder=rem;it.status=obStatus;it.paid=paid;
-    if(d!==0){S.balance-=d;pushMove('obligation',-d,t('mvOblig')+' · '+catName('oblig',it.type))}toast(t('updated'))}
-  else{S.obligations.push({id:uid(),type:sel.oblig,amount:amt,paid,status:obStatus,dueDate:due,reminder:rem,date:new Date().toISOString()});
-    if(paid>0){S.balance-=paid;pushMove('obligation',-paid,t('mvOblig')+' · '+catName('oblig',sel.oblig))}toast(t('saved'))}
-  resetForm('oblig');save();renderAll()};
-$('#obCancel').onclick=()=>resetForm('oblig');
-
-/* ============ list interactions ============ */
-function bindList(listSel,g,arr){$(listSel).addEventListener('click',e=>{
-  const del=e.target.closest('.del-btn');
-  if(del){e.stopPropagation();showConfirm(t('deleteMsg'),()=>{
-    const idx=S[arr].findIndex(x=>x.id===del.dataset.del);if(idx<0)return;
-    const it=S[arr][idx];
-    if(g==='income'){S.balance-=it.amount;pushMove('adjust',-it.amount,t('mvAdjust')+' · '+catName(g,it.cat))}
-    if(g==='expense'){S.balance+=it.amount;pushMove('adjust',it.amount,t('mvAdjust')+' · '+catName(g,it.cat))}
-    if(g==='right'&&(it.collected||0)>0){S.balance-=it.collected;pushMove('adjust',-it.collected,t('mvAdjust')+' · '+catName(g,it.type))}
-    if(g==='oblig'&&(it.paid||0)>0){S.balance+=it.paid;pushMove('adjust',it.paid,t('mvAdjust')+' · '+catName(g,it.type))}
-    S[arr].splice(idx,1);if(editing[g]===it.id)resetForm(g);
-    save();renderAll();toast(t('deleted'))});return}
-  const item=e.target.closest('.list-item');if(!item)return;
-  const it=S[arr].find(x=>x.id===item.dataset.id);if(!it)return;loadEdit(g,it)})}
-function loadEdit(g,it){
-  if(g==='income'){sel.income=it.cat;$('#incAmount').value=it.amount;$('#incNote').value=it.note||'';editing.income=it.id}
-  if(g==='expense'){sel.expense=it.cat;$('#expAmount').value=it.amount;$('#expNote').value=it.note||'';
-    pendingImg=it.image||null;editing.expense=it.id;
-    if(it.image){$('#expPrevImg').src=it.image;$('#expPrev').classList.remove('hidden')}else $('#expPrev').classList.add('hidden')}
-  if(g==='right'){sel.right=it.type;$('#rtAmount').value=it.amount;$('#rtCollected').value=it.collected||0;$('#rtDue').value=it.dueDate||'';$('#rtReminder').value=String(it.reminder||168);editing.right=it.id}
-  if(g==='oblig'){sel.oblig=it.type;$('#obAmount').value=it.amount;$('#obDue').value=it.dueDate||'';$('#obReminder').value=String(it.reminder||168);
-    setObStatus(it.status||'unpaid');$('#obPaid').value=it.paid||0;editing.oblig=it.id}
-  buildCategories();updateSaveBtn(g);window.scrollTo({top:0,behavior:'smooth'})}
-bindList('#incList','income','incomes');bindList('#expList','expense','expenses');
-bindList('#rtList','right','rights');bindList('#obList','oblig','obligations');
-[['#incEdit','#incCard'],['#expEdit','#expCard'],['#rtEdit','#rtCard'],['#obEdit','#obCard']].forEach(([b,c])=>{
-  $(b).onclick=()=>{
-    $(b).classList.toggle('on');
-    c.querySelectorAll('.del-btn').forEach(d=>d.classList.toggle('hidden'));
-  }});
-
-/* ============ deposit / withdraw ============ */
-function openTx(type){txType=type;$('#txTitle').textContent=t(type);$('#txAmount').value='';$('#txNote').value='';
-  $('#txCurBal').textContent=money(S.balance)+' '+sym();openModal('txModal')}
-$('#btnDeposit').onclick=()=>openTx('deposit');
-$('#btnWithdraw').onclick=()=>openTx('withdraw');
-$('#txExec').onclick=()=>{const amt=num($('#txAmount'));if(amt<=0)return toast(t('reqAmt'),'error');
-  const note=$('#txNote').value.trim();
-  if(txType==='withdraw'&&amt>S.balance)return toast(t('noBalance'),'error');
-  if(txType==='deposit'){S.balance+=amt;pushMove('deposit',amt,note||t('mvDeposit'));toast(t('tDeposit'))}
-  else{S.balance-=amt;pushMove('withdraw',-amt,note||t('mvWithdraw'));toast(t('tWithdraw'))}
-  save();renderAll();closeModal('txModal')};
-$('#btnMoveLog').onclick=()=>{renderMoveLog();openModal('moveLogModal')};
-function openDetails(mid){const m=S.movements.find(x=>x.id===mid);if(!m)return;
-  $('#detailsBody').innerHTML=`<div class="drow"><span>${t('typeL')}</span><b>${MK[m.kind]||'•'} ${t(MKK[m.kind]||'txDetails')}</b></div>
-  <div class="drow"><span>${t('amountL')}</span><b style="color:${m.amount>=0?'var(--success)':'var(--danger)'}">${m.amount>0?'+':''}${money(m.amount)} ${sym()}</b></div>
-  <div class="drow"><span>${t('noteL')}</span><b>${esc(m.label)}</b></div>
-  <div class="drow"><span>${t('dateL')}</span><b>${fmtDT(m.date)}</b></div>`;
-  openModal('detailsModal')}
-$('#moveLogList').addEventListener('click',e=>{const it=e.target.closest('.list-item');if(it)openDetails(it.dataset.mid)});
-
-/* ============ image ============ */
-$('#btnAttach').onclick=()=>{openModal('imageSourceModal');$('#imageSourceOverlay').classList.add('open')};
-$('#btnCam').onclick=()=>{closeModal('imageSourceModal');$('#imageSourceOverlay').classList.remove('open');$('#camInput').click()};
-$('#btnGal').onclick=()=>{closeModal('imageSourceModal');$('#imageSourceOverlay').classList.remove('open');$('#galInput').click()};
-function handleImg(file){if(!file)return;const url=URL.createObjectURL(file);const img=new Image();
-  img.onload=()=>{const max=900,sc=Math.min(1,max/Math.max(img.width,img.height));
-    const c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    pendingImg=c.toDataURL('image/jpeg',.72);URL.revokeObjectURL(url);
-    $('#expPrevImg').src=pendingImg;$('#expPrev').classList.remove('hidden');toast(t('tImageAdded'),'info')};
-  img.src=url}
-$('#camInput').onchange=e=>{handleImg(e.target.files[0]);e.target.value=''};
-$('#galInput').onchange=e=>{handleImg(e.target.files[0]);e.target.value=''};
-$('#expPrevRm').onclick=()=>{pendingImg=null;$('#expPrev').classList.add('hidden')};
-
-/* ============ backup ============ */
-function renderBackup(){$('#bkCount').textContent=S.backups.length;
-  const chip=$('#bkConn');chip.className='status '+(S.connected?'connected':'disconnected');
-  chip.textContent=S.connected?('✅ '+t('connected')):('❌ '+t('notConnected'));
-  $('#bkList').innerHTML=S.backups.length?[...S.backups].reverse().map(b=>`<div class="list-item">
-    <div style="display:flex;align-items:center;gap:12px">
-      <i class="fa-solid fa-file-zipper" style="color:#4285F4;font-size:20px"></i>
-      <div style="flex:1"><b>${esc(b.name)}</b><div style="font-size:11px;color:#888;margin-top:3px">${fmtDT(b.date)} · ${(b.size/1024).toFixed(1)} KB</div></div>
-      <div style="display:flex;gap:4px">
-        <button class="restore-btn" data-rst="${b.id}" title="${t('restore')}" style="background:none;border:none;color:var(--success);font-size:14px;padding:6px"><i class="fa-solid fa-rotate-left"></i></button>
-        <button class="delete-btn" data-rmv="${b.id}" title="${t('delL')}" style="background:none;border:none;color:var(--danger);font-size:14px;padding:6px"><i class="fa-solid fa-trash-can"></i></button>
-      </div>
-    </div></div>`).join(''):emptyHtml();
-  $('#driveEmail').textContent=S.connected?'user@gmail.com':''}
-function doBackup(){withLoading(()=>{S.connected=true;
-  S.backups.push({id:uid(),name:'smart-budget-backup.json',date:new Date().toISOString(),size:JSON.stringify(S).length});
-  save();renderBackup();closeModal('confirmBackupModal');toast(t('backupSaved'))},1400)}
-$('#dDrive').onclick=()=>{closeSide();openModal('confirmBackupModal')};
-$('#bkYes').onclick=doBackup;
-$('#bkView').onclick=()=>{closeModal('confirmBackupModal');renderBackup();openModal('driveModal')};
-$('#bkSave').onclick=doBackup;
-$('#bkRefresh').onclick=()=>withLoading(()=>{S.connected=true;save();renderBackup();toast(t('connectedDrive'))},1000);
-$('#bkList').addEventListener('click',e=>{
-  const rmv=e.target.closest('[data-rmv]');
-  if(rmv){const i=S.backups.findIndex(b=>b.id===rmv.dataset.rmv);if(i>-1){S.backups.splice(i,1);save();renderBackup();toast(t('deleted'))}return}
-  const rst=e.target.closest('[data-rst]');
-  if(rst)withLoading(()=>toast(t('imported')),900)});
-
-/* ============ export / import ============ */
-$('#dExport').onclick=()=>{closeSide();$('#expName').value='';openModal('exportNameModal')};
-$('#expDo').onclick=()=>{const name=$('#expName').value.trim()||'smart-budget';
-  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.json';a.click();
-  URL.revokeObjectURL(a.href);closeModal('exportNameModal');toast(t('exported'))};
-$('#dImport').onclick=()=>{closeSide();$('#importFile').click()};
-$('#importFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
-  const rd=new FileReader();
-  rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!d.settings||!Array.isArray(d.movements))throw 0;
-    withLoading(()=>{S=Object.assign(fresh(),d);save();applyLang();buildCategories();renderAll(false);toast(t('imported'))},900)}
-    catch(_){toast(t('importErr'),'error')}};
-  rd.readAsText(f)};
-
-/* ============ currency / language ============ */
-function renderCurrencies(){$('#curList').innerHTML=Object.keys(CUR).map(c=>
-  `<button class="opt ${S.settings.currency===c?'on':''}" data-cur="${c}">
-  <span class="flag">${CUR[c].f}</span>
-  <span>${c}<span class="osub">${CUR[c].n} · ${CUR[c].s}</span></span>
-  <span class="oend"><i class="fa-solid fa-circle-check"></i></span></button>`).join('')}
-$('#curList').addEventListener('click',e=>{const b=e.target.closest('.opt');if(!b)return;
-  S.settings.currency=b.dataset.cur;save();renderCurrencies();renderAll(false);closeModal('currencyModal')});
-$('#dCur').onclick=()=>{closeSide();renderCurrencies();openModal('currencyModal')};
-function markLang(){$$('[data-lang]').forEach(b=>b.classList.toggle('on',b.dataset.lang===S.settings.lang));
-  const m={ar:'🇸🇦 العربية',en:'🇬🇧 English',ur:'🇵🇰 اردو'};$('#langLabel').textContent=m[S.settings.lang]}
-$$('[data-lang]').forEach(b=>b.onclick=()=>{S.settings.lang=b.dataset.lang;save();
-  document.documentElement.lang=S.settings.lang;
-  document.documentElement.dir=S.settings.lang==='en'?'ltr':'rtl';
-  applyLang();closeModal('langModal');buildCategories();renderAll(false);markLang()});
-$('#dLang').onclick=()=>{closeSide();markLang();openModal('langModal')};
-
-/* ============ sidebar / misc ============ */
-function closeSide(){$('#sidebar').classList.remove('open');$('#sideOvl').classList.remove('open')}
-$('#menuBtn').onclick=()=>{$('#sidebar').classList.add('open');$('#sideOvl').classList.add('open')};
-$('#sideClose').onclick=closeSide;$('#sideOvl').onclick=closeSide;
-$('#darkSwitch').onchange=e=>{S.settings.dark=e.target.checked;document.body.classList.toggle('dark-mode',S.settings.dark);save()};
-$('#dAbout').onclick=()=>{closeSide();openModal('aboutModal')};
-$('#dLogout').onclick=()=>{closeSide();withLoading(()=>toast(t('loggedOut'),'info'),1000)};
-$('#dReset').onclick=()=>{closeSide();showConfirm(t('resetMsg'),()=>{
-  localStorage.removeItem(KEY);S=fresh();save();
-  Object.keys(sel).forEach(k=>sel[k]=null);Object.keys(editing).forEach(k=>editing[k]=null);
-  applyLang();buildCategories();renderAll(false);toast(t('resetData'))})};
-$('#balanceVisibilityToggle').onclick=()=>{S.hidden=!S.hidden;save();renderBalance(false)};
-$('#notificationBell').onclick=()=>{renderNotifs();openModal('notifModal')};
-
-/* ============ nav & master render ============ */
-function go(page){$$('.section').forEach(p=>p.classList.toggle('active',p.id===page));
-  $$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
-  window.scrollTo({top:0})}
-$$('.nav-item').forEach(b=>b.onclick=()=>go(b.dataset.page));
-function renderAll(anim=true){renderBalance(anim);renderStats();renderIncome();renderExpenses();renderRights();renderOblig();
-  renderMoveLog();renderBadge();renderBackup();$$('.cur-sym').forEach(el=>el.textContent=sym())}
-function applyLang(){applyI18n()}
-
-/* ============ init ============ */
-document.body.classList.toggle('dark-mode',!!S.settings.dark);
-$('#darkSwitch').checked=!!S.settings.dark;
-document.documentElement.lang=S.settings.lang;
-document.documentElement.dir=S.settings.lang==='en'?'ltr':'rtl';
-applyI18n();buildCategories();renderAll(false);markLang();renderCurrencies();
-setInterval(renderBadge,6e4);
-</script>
+<!-- ============ SCRIPTS ============ -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+<script src="app.js"></script>
 </body>
 </html>
