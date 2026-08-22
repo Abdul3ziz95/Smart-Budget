@@ -25,9 +25,7 @@ let db = { exp: [], rig: [], deb: [], bal: { clientId: 1, amount: 0, changes: []
 let IDB_connection = null;
 let currentBalance = 0;
 let balanceHidden = localStorage.getItem('balanceHidden') === 'true';
-let currentLog = '',
-    editMode = null,
-    balanceActionType = null;
+let currentLog = '', editMode = null, balanceActionType = null;
 let selectedImageFile = null;
 let logFilters = { cat: 'all', status: 'all', period: 'all' };
 let balanceFilters = { type: 'all' };
@@ -91,7 +89,7 @@ function _visualOpen(layerName, data = {}) {
             renderBalanceLog();
         } else if (layerName === 'driveBackup') {
             renderDriveBackupList();
-            // ✅ التعديل الجديد: جلب قائمة النسخ تلقائياً عند الفتح
+            // ✅ جلب قائمة النسخ تلقائياً عند الفتح
             if (accessToken && appFolderId) { loadBackupList(); }
         } else if (layerName === 'exportName') {
             const fileNameEl = document.getElementById('exportFileName');
@@ -734,8 +732,11 @@ async function restoreBackup(fileId) {
         if (!response.ok) throw new Error(`Failed to download file: ${response.status}`);
         const text = await response.text();
         const imported = JSON.parse(text);
-        if (imported.bal && Array.isArray(imported.bal.changes)) { imported.bal.clientId = 1; await addDataToStore('bal', [imported.bal]); }
-        for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await addDataToStore(sn, imported[sn]); }
+        // ✅✅ التعديل الجديد: حذف جميع البيانات القديمة أولاً (استبدال وليس دمج)
+        await clearAllStores();
+        // ✅✅ التعديل الجديد: إضافة بيانات النسخة الاحتياطية دفعة واحدة
+        if (imported.bal && imported.bal.changes) { imported.bal.clientId = 1; await bulkAddToStore('bal', [imported.bal]); }
+        for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await bulkAddToStore(sn, imported[sn]); }
         if (imported.currency) {
             currentCurrency = imported.currency;
             localStorage.setItem('currencyCode', currentCurrency.code);
@@ -837,6 +838,48 @@ async function addDataToStore(storeName, dataArray) {
             }
         });
     }
+}
+
+// ✅✅ التعديل الجديد: مسح جميع الجداول (يستخدم قبل الاستعادة)
+function clearAllStores() {
+    return new Promise((resolve, reject) => {
+        if (!IDB_connection) return resolve();
+        const tx = IDB_connection.transaction(STORE_NAMES, 'readwrite');
+        let completed = 0;
+        let hasError = false;
+        STORE_NAMES.forEach(sn => {
+            const req = tx.objectStore(sn).clear();
+            req.onsuccess = () => {
+                completed++;
+                if (completed === STORE_NAMES.length && !hasError) resolve();
+            };
+            req.onerror = () => {
+                if (!hasError) { hasError = true; reject(req.error); }
+            };
+        });
+    });
+}
+
+// ✅✅ التعديل الجديد: إضافة مجموعة سجلات دفعة واحدة بدون تكرار
+function bulkAddToStore(storeName, dataArray) {
+    return new Promise((resolve, reject) => {
+        if (!IDB_connection) return resolve();
+        if (!dataArray || dataArray.length === 0) return resolve();
+        const tx = IDB_connection.transaction([storeName], 'readwrite');
+        const store = tx.objectStore(storeName);
+        dataArray.forEach(item => {
+            if (storeName === 'bal') {
+                store.put(item);
+            } else {
+                const toSave = { ...item };
+                delete toSave.id;
+                store.add(toSave);
+            }
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+    });
 }
 
 // =============================================================
@@ -1889,14 +1932,6 @@ function updateStats() {
     const cur = (currentLang === 'ur') ? 'ur' : (currentLang === 'en') ? 'en' : 'ar';
     const A = ADVISOR[cur];
     const money = x => `${getFormattedAmount(x)} ${currentCurrency.symbol}`;
-    if (document.getElementById('sRigTotal')) {
-        set('sIncTotal', '<span class="pulse-dot"></span>' + formatCurrency(incTotal, true));
-        set('sExpTotal', formatCurrency(expTotal, true));
-        set('sRigTotal', formatCurrency(rigTotal, rigTotal > 0));
-        set('sRigPaid', '<span class="pulse-dot"></span>' + formatCurrency(rigPaid, true));
-        set('sDebTotal', formatCurrency(debTotal, debTotal > 0));
-        set('sDebPaid', formatCurrency(debPaid, false));
-    }
     if (document.getElementById('sIncTotal')) {
         set('sIncTotal', formatCurrency(incTotal, true));
         const ib = document.getElementById('sIncBar'); if (ib && ib.parentElement) ib.parentElement.style.display = 'none';
@@ -1988,7 +2023,7 @@ function resetAllData() {
 // 15. SIDEBAR FUNCTIONS
 // =============================================================
 function openSidebar() {
-    // ✅ التعديل الجديد: استعادة حالة اتصال Google Drive المحفوظة لضمان ظهور زر تسجيل الخروج
+    // ✅ استعادة حالة اتصال Google Drive المحفوظة لضمان ظهور زر تسجيل الخروج
     if (!isDriveConnected && localStorage.getItem('drive_token') && localStorage.getItem('drive_email')) {
         const tokenExpiry = localStorage.getItem('drive_token_expiry');
         const expiry = parseInt(tokenExpiry) || 0;
