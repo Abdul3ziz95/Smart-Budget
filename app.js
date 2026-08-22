@@ -91,6 +91,8 @@ function _visualOpen(layerName, data = {}) {
             renderBalanceLog();
         } else if (layerName === 'driveBackup') {
             renderDriveBackupList();
+            // ✅ التعديل الجديد: جلب قائمة النسخ تلقائياً عند الفتح
+            if (accessToken && appFolderId) { loadBackupList(); }
         } else if (layerName === 'exportName') {
             const fileNameEl = document.getElementById('exportFileName');
             if (fileNameEl) {
@@ -1985,7 +1987,21 @@ function resetAllData() {
 // =============================================================
 // 15. SIDEBAR FUNCTIONS
 // =============================================================
-function openSidebar() { openLayer('sidebar'); }
+function openSidebar() {
+    // ✅ التعديل الجديد: استعادة حالة اتصال Google Drive المحفوظة لضمان ظهور زر تسجيل الخروج
+    if (!isDriveConnected && localStorage.getItem('drive_token') && localStorage.getItem('drive_email')) {
+        const tokenExpiry = localStorage.getItem('drive_token_expiry');
+        const expiry = parseInt(tokenExpiry) || 0;
+        if (expiry > Date.now()) {
+            accessToken = localStorage.getItem('drive_token');
+            userEmail = localStorage.getItem('drive_email') || '';
+            appFolderId = localStorage.getItem('drive_folder_id') || null;
+            isDriveConnected = true;
+        }
+    }
+    updateDriveUI();
+    openLayer('sidebar');
+}
 function openCurrencyModal() { openLayer('currency'); }
 function openAboutModal() { openLayer('about'); }
 function openBalanceActionModal(actionType) { openLayer('balanceAction', { actionType: actionType }); }
