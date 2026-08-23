@@ -16,7 +16,7 @@ let gisInitAttempts = 0;
 const MAX_INIT_ATTEMPTS = 10;
 let tokenRefreshInterval = null;
 
-// ============ إعدادات المزامنة التلقائية (جديد) ============
+// ============ إعدادات المزامنة التلقائية ============
 let autoSyncEnabled = localStorage.getItem('autoSyncEnabled') !== 'false';
 let lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp') || null;
 let lastSyncRecordCount = parseInt(localStorage.getItem('lastSyncRecordCount')) || 0;
@@ -203,7 +203,7 @@ window.onpopstate = (e) => {
 };
 
 // =============================================================
-// 3. TRANSLATION SYSTEM (i18n) — عربي / English / اردو
+// 3. TRANSLATION SYSTEM (i18n)
 // =============================================================
 let translations = {};
 let currentLang = localStorage.getItem('appLang') || 'ar';
@@ -442,7 +442,13 @@ function restoreDriveState() {
             updateDriveUI();
             updateAutoSyncUI();
             startTokenRefresh();
-            setTimeout(() => { if (accessToken) { loadBackupList(); verifyTokenValidity(); checkAndHandleSync(); } }, 1000);
+            setTimeout(() => {
+                if (accessToken) {
+                    loadBackupList();
+                    verifyTokenValidity();
+                    checkAndHandleSync();
+                }
+            }, 1000);
         } else {
             console.log('Token expired, attempting to refresh...');
             if (tokenClient) { tokenClient.requestAccessToken({ prompt: '' }); }
@@ -764,8 +770,51 @@ async function performBackup() {
     }
 }
 
+async function restoreBackup(fileId) {
+    if (!confirm(translate('confirmRestore'))) return;
+    showLoading(translate('restoringData'));
+    try {
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+        if (!response.ok) throw new Error(`Failed to download file: ${response.status}`);
+        const text = await response.text();
+        const imported = JSON.parse(text);
+        await clearAllStores();
+        if (imported.bal && Array.isArray(imported.bal.changes)) { imported.bal.clientId = 1; await bulkAddToStore('bal', [imported.bal]); }
+        for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await bulkAddToStore(sn, imported[sn]); }
+        if (imported.currency) {
+            currentCurrency = imported.currency;
+            localStorage.setItem('currencyCode', currentCurrency.code);
+            const label = document.getElementById('sidebarCurrencyLabel');
+            if (label) label.textContent = currentCurrency.symbol;
+        }
+        await loadAllData();
+        hideLoading();
+        updateStats();
+        updateBalanceDisplay();
+        toastMsg(translate('dataRestored'), "success");
+        await loadBackupList();
+        renderDriveBackupList();
+        scheduleAutoSync();
+    } catch (error) {
+        hideLoading();
+        console.error('Error restoring backup:', error);
+        toastMsg(translate('restoreFailed') + ': ' + error.message, "error");
+    }
+}
+
+async function deleteBackup(fileId) {
+    if (!confirm(translate('confirmDeleteBackup'))) return;
+    try {
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${accessToken}` } });
+        if (!response.ok) throw new Error(`Delete failed: ${response.status}`);
+        toastMsg(translate('backupDeleted'), "success");
+        await loadBackupList();
+        renderDriveBackupList();
+    } catch (error) { console.error('Error deleting backup:', error); toastMsg(translate('deleteFailed') + ': ' + error.message, "error"); }
+}
+
 // =============================================================
-// 5. SYNC SYSTEM — نظام المزامنة التلقائية (جديد)
+// 5. SYNC SYSTEM — نظام المزامنة التلقائية
 // =============================================================
 
 function getTotalRecordCount() {
@@ -1194,7 +1243,7 @@ function toastMsg(message, type = "info") {
 }
 
 // =============================================================
-// 9. FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
+// 9. FORMATTING HELPERS + CURRENCIES
 // =============================================================
 const ARABIC_CURRENCIES = [
     { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
@@ -2153,7 +2202,7 @@ function renderNotifications() {
 }
 
 // =============================================================
-// 15. UPDATE STATS (✔ مساعد مالي ذكي + فلتر الفترة الزمنية)
+// 15. UPDATE STATS (مساعد مالي ذكي + فلتر الفترة)
 // =============================================================
 const ADVISOR = {
     ar: { good: 'وضعك المالي جيد: مصروفاتك أقل من دخلك.', over: 'تنبيه: مصروفاتك أعلى من دخلك؛ راجع قسم المصروفات.', noIncome: 'لا يوجد دخل مسجل مع وجود مصروفات؛ أضف دخلك من قسم الدخل.', noData: 'لا توجد عمليات في هذه الفترة بعد؛ ابدأ بتسجيل دخل أو مصروف.', tipR: 'لديك حقوق غير محصلة بقيمة', tipD: 'لديك التزامات غير مدفوعة بقيمة' },
