@@ -1,9 +1,10 @@
 // =============================================================
-// 0. GOOGLE DRIVE CONFIGURATION
+// 0. GOOGLE DRIVE CONFIGURATION + SYNC SETTINGS
 // =============================================================
 const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const APP_FOLDER_NAME = 'ميزانيتك الذكية';
+const SYNC_FILE_NAME = 'مزامنة_ميزانيتك_الذكية';
 let tokenClient;
 let accessToken = null;
 let isDriveConnected = false;
@@ -14,6 +15,21 @@ let gapiInitAttempts = 0;
 let gisInitAttempts = 0;
 const MAX_INIT_ATTEMPTS = 10;
 let tokenRefreshInterval = null;
+
+// ============ إعدادات المزامنة التلقائية (جديد) ============
+let autoSyncEnabled = localStorage.getItem('autoSyncEnabled') !== 'false';
+let lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp') || null;
+let lastSyncRecordCount = parseInt(localStorage.getItem('lastSyncRecordCount')) || 0;
+let lastSyncBalance = localStorage.getItem('lastSyncBalance') || '0';
+let syncInProgress = false;
+let pendingConflictData = null;
+let deviceId = localStorage.getItem('deviceId') || generateDeviceId();
+
+function generateDeviceId() {
+    const id = 'device-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('deviceId', id);
+    return id;
+}
 
 // =============================================================
 // 1. INDEXED DB SETUP
@@ -47,7 +63,8 @@ const LAYERS = {
     'driveBackup': { elementId: 'driveBackupModal', type: 'modal' },
     'exportName': { elementId: 'exportNameModal', type: 'modal' },
     'language': { elementId: 'languageModal', type: 'modal' },
-    'notifications': { elementId: 'notificationsModal', type: 'modal' }
+    'notifications': { elementId: 'notificationsModal', type: 'modal' },
+    'syncConflict': { elementId: 'syncConflictModal', type: 'modal' }
 };
 let historyStack = [];
 
@@ -89,7 +106,6 @@ function _visualOpen(layerName, data = {}) {
             renderBalanceLog();
         } else if (layerName === 'driveBackup') {
             renderDriveBackupList();
-            // ✅ جلب قائمة النسخ تلقائياً عند الفتح
             if (accessToken && appFolderId) { loadBackupList(); }
         } else if (layerName === 'exportName') {
             const fileNameEl = document.getElementById('exportFileName');
@@ -103,6 +119,11 @@ function _visualOpen(layerName, data = {}) {
         } else if (layerName === 'notifications') {
             cleanupExpiredReads();
             renderNotifications();
+        } else if (layerName === 'syncConflict') {
+            if (data.conflict) {
+                pendingConflictData = data.conflict;
+                showConflictDialog(data.conflict);
+            }
         }
     } else if (layer.type === 'menu') {
         el.classList.add('open');
@@ -119,6 +140,12 @@ function _visualClose(layerName, clearEdit = true) {
     if (layer.type === 'modal') {
         el.style.display = 'none';
         if (clearEdit && (layerName === 'detail' || layerName === 'log')) editMode = null;
+        if (layerName === 'syncConflict') {
+            const choiceView = document.getElementById('conflictChoiceView');
+            const detailsView = document.getElementById('conflictDetailsView');
+            if (choiceView) choiceView.style.display = 'block';
+            if (detailsView) detailsView.style.display = 'none';
+        }
     } else if (layer.type === 'menu') {
         el.classList.remove('open');
         const ov = document.querySelector(layerName === 'imageSource' ? '#imageSourceOverlay' : '.sidebar-overlay');
@@ -316,6 +343,7 @@ function applyTranslations(lang) {
     }
     updateBalanceDisplay();
     updateStats();
+    updateAutoSyncUI();
     const logModal = document.getElementById('logModal');
     if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
     const balanceLogModal = document.getElementById('balanceLogModal');
@@ -412,13 +440,16 @@ function restoreDriveState() {
             appFolderId = savedFolderId || null;
             isDriveConnected = true;
             updateDriveUI();
+            updateAutoSyncUI();
             startTokenRefresh();
-            setTimeout(() => { if (accessToken) { loadBackupList(); verifyTokenValidity(); } }, 1000);
+            setTimeout(() => { if (accessToken) { loadBackupList(); verifyTokenValidity(); checkAndHandleSync(); } }, 1000);
         } else {
             console.log('Token expired, attempting to refresh...');
             if (tokenClient) { tokenClient.requestAccessToken({ prompt: '' }); }
             else { setTimeout(() => { if (tokenClient) { tokenClient.requestAccessToken({ prompt: '' }); } }, 2000); }
         }
+    } else {
+        updateAutoSyncUI();
     }
 }
 
@@ -476,12 +507,14 @@ function initGis() {
                     await createAppFolder();
                     isDriveConnected = true;
                     updateDriveUI();
+                    updateAutoSyncUI();
                     toastMsg(translate('driveConnected'), "success");
                     startTokenRefresh();
                     await loadBackupList();
                     const cbm = document.getElementById('confirmBackupModal');
                     if (cbm && cbm.style.display === 'flex') { closeLayer('confirmBackup'); }
                     openLayer('driveBackup');
+                    checkAndHandleSync();
                 } catch (e) {
                     console.error('Error getting user info:', e);
                     userEmail = '';
@@ -529,6 +562,7 @@ function handleDriveClick() {
             appFolderId = localStorage.getItem('drive_folder_id') || null;
             isDriveConnected = true;
             updateDriveUI();
+            updateAutoSyncUI();
             startTokenRefresh();
             openLayer('driveBackup');
             return;
@@ -549,6 +583,7 @@ function handleBackupConfirm() {
             appFolderId = localStorage.getItem('drive_folder_id') || null;
             isDriveConnected = true;
             updateDriveUI();
+            updateAutoSyncUI();
             startTokenRefresh();
             closeLayer('confirmBackup');
             performBackup();
@@ -573,6 +608,7 @@ function handleViewBackups() {
                 appFolderId = localStorage.getItem('drive_folder_id') || null;
                 isDriveConnected = true;
                 updateDriveUI();
+                updateAutoSyncUI();
                 startTokenRefresh();
             }
             openLayer('driveBackup');
@@ -601,6 +637,7 @@ function signOut() {
     appFolderId = null;
     backupFiles = [];
     updateDriveUI();
+    updateAutoSyncUI();
     toastMsg(translate('signedOut'), "info");
 }
 
@@ -608,7 +645,8 @@ function updateDriveUI() {
     const menuItem = document.getElementById('driveMenuItem');
     const menuText = document.getElementById('driveMenuText');
     const dot = document.getElementById('driveStatusDot');
-    const email = document.getElementById('driveMenuEmail');
+    const emailLine = document.getElementById('driveEmailLine');
+    const emailFull = document.getElementById('driveMenuEmail');
     const logoutBtn = document.getElementById('driveLogoutBtn');
     const modalStatus = document.getElementById('driveModalStatus');
     if (menuItem) {
@@ -616,13 +654,15 @@ function updateDriveUI() {
             menuItem.classList.add('connected');
             if (menuText) menuText.textContent = translate('googleDrive');
             if (dot) { dot.style.display = 'inline-block'; dot.style.background = 'var(--success)'; }
-            if (email) email.textContent = userEmail || '';
+            if (emailLine) emailLine.style.display = 'flex';
+            if (emailFull) emailFull.textContent = userEmail || '';
             if (logoutBtn) logoutBtn.style.display = 'inline-block';
         } else {
             menuItem.classList.remove('connected');
             if (menuText) menuText.textContent = translate('googleDrive');
             if (dot) { dot.style.display = 'inline-block'; dot.style.background = '#999'; }
-            if (email) email.textContent = '';
+            if (emailLine) emailLine.style.display = 'none';
+            if (emailFull) emailFull.textContent = '';
             if (logoutBtn) logoutBtn.style.display = 'none';
         }
     }
@@ -724,52 +764,295 @@ async function performBackup() {
     }
 }
 
-async function restoreBackup(fileId) {
-    if (!confirm(translate('confirmRestore'))) return;
-    showLoading(translate('restoringData'));
-    try {
-        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-        if (!response.ok) throw new Error(`Failed to download file: ${response.status}`);
-        const text = await response.text();
-        const imported = JSON.parse(text);
-        // ✅✅ التعديل الجديد: حذف جميع البيانات القديمة أولاً (استبدال وليس دمج)
-        await clearAllStores();
-        // ✅✅ التعديل الجديد: إضافة بيانات النسخة الاحتياطية دفعة واحدة
-        if (imported.bal && imported.bal.changes) { imported.bal.clientId = 1; await bulkAddToStore('bal', [imported.bal]); }
-        for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await bulkAddToStore(sn, imported[sn]); }
-        if (imported.currency) {
-            currentCurrency = imported.currency;
-            localStorage.setItem('currencyCode', currentCurrency.code);
-            const label = document.getElementById('sidebarCurrencyLabel');
-            if (label) label.textContent = currentCurrency.symbol;
+// =============================================================
+// 5. SYNC SYSTEM — نظام المزامنة التلقائية (جديد)
+// =============================================================
+
+function getTotalRecordCount() {
+    return (db.exp?.length || 0) + (db.rig?.length || 0) + (db.deb?.length || 0) + (db.inc?.length || 0);
+}
+
+function updateAutoSyncUI() {
+    const toggle = document.getElementById('autoSyncToggle');
+    const statusEl = document.getElementById('autoSyncStatus');
+    const syncNowBtn = document.getElementById('syncNowBtn');
+    if (toggle) toggle.checked = autoSyncEnabled;
+    if (statusEl) {
+        if (!isDriveConnected) {
+            statusEl.textContent = translate('autoSyncReadyNotConnected');
+            statusEl.className = 'auto-sync-status';
+        } else if (syncInProgress) {
+            statusEl.textContent = translate('syncingNow');
+            statusEl.className = 'auto-sync-status syncing';
+        } else if (lastSyncTimestamp) {
+            const lastDate = new Date(parseInt(lastSyncTimestamp));
+            const locale = (currentLang === 'ur') ? 'ur-PK' : (currentLang || 'ar');
+            const formatted = lastDate.toLocaleString(locale, { numberingSystem: 'latn', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+            statusEl.textContent = `${translate('lastSyncLabel')}: ${formatted}`;
+            statusEl.className = 'auto-sync-status success';
+        } else {
+            statusEl.textContent = translate('lastSyncNever');
+            statusEl.className = 'auto-sync-status';
         }
-        await loadAllData();
-        hideLoading();
-        updateStats();
-        updateBalanceDisplay();
-        toastMsg(translate('dataRestored'), "success");
-        await loadBackupList();
-        renderDriveBackupList();
-    } catch (error) {
-        hideLoading();
-        console.error('Error restoring backup:', error);
-        toastMsg(translate('restoreFailed') + ': ' + error.message, "error");
+    }
+    if (syncNowBtn) syncNowBtn.disabled = syncInProgress || !isDriveConnected;
+}
+
+function toggleAutoSync(checked) {
+    autoSyncEnabled = checked;
+    localStorage.setItem('autoSyncEnabled', checked ? 'true' : 'false');
+    updateAutoSyncUI();
+    if (checked && isDriveConnected) {
+        scheduleAutoSync();
     }
 }
 
-async function deleteBackup(fileId) {
-    if (!confirm(translate('confirmDeleteBackup'))) return;
+function manualSyncNow() {
+    if (!isDriveConnected) {
+        toastMsg(translate('driveNotConnected'), "error");
+        return;
+    }
+    performSync();
+}
+
+function scheduleAutoSync() {
+    if (!autoSyncEnabled || !isDriveConnected || syncInProgress) return;
+    setTimeout(() => { performSync(); }, 3000);
+}
+
+async function performSync() {
+    if (!accessToken || !appFolderId || syncInProgress) return;
+    syncInProgress = true;
+    updateAutoSyncUI();
     try {
-        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${accessToken}` } });
-        if (!response.ok) throw new Error(`Delete failed: ${response.status}`);
-        toastMsg(translate('backupDeleted'), "success");
-        await loadBackupList();
-        renderDriveBackupList();
-    } catch (error) { console.error('Error deleting backup:', error); toastMsg(translate('deleteFailed') + ': ' + error.message, "error"); }
+        const syncFileId = await findSyncFile();
+        const currentRecordCount = getTotalRecordCount();
+        const currentBalanceStr = String(currentBalance);
+        const syncData = {
+            meta: {
+                lastModified: new Date().toISOString(),
+                deviceId: deviceId,
+                recordCount: currentRecordCount,
+                balance: currentBalanceStr,
+                schemaVersion: 1
+            },
+            data: {
+                exp: db.exp,
+                rig: db.rig,
+                deb: db.deb,
+                bal: db.bal,
+                inc: db.inc,
+                currency: currentCurrency
+            }
+        };
+        const jsonData = JSON.stringify(syncData, null, 2);
+        const fileData = new Blob([jsonData], { type: 'application/json' });
+        if (syncFileId) {
+            await updateSyncFile(syncFileId, fileData);
+        } else {
+            await createSyncFile(fileData);
+        }
+        lastSyncTimestamp = Date.now().toString();
+        lastSyncRecordCount = currentRecordCount;
+        lastSyncBalance = currentBalanceStr;
+        localStorage.setItem('lastSyncTimestamp', lastSyncTimestamp);
+        localStorage.setItem('lastSyncRecordCount', String(lastSyncRecordCount));
+        localStorage.setItem('lastSyncBalance', lastSyncBalance);
+        syncInProgress = false;
+        updateAutoSyncUI();
+        toastMsg(translate('syncSuccess'), "success");
+    } catch (error) {
+        syncInProgress = false;
+        updateAutoSyncUI();
+        console.error('Sync error:', error);
+        toastMsg(translate('syncFailed'), "error");
+    }
+}
+
+async function findSyncFile() {
+    try {
+        const searchResponse = await fetch(`https://www.googleapis.com/drive/v3/files?q='${appFolderId}' in parents and name='${SYNC_FILE_NAME}.json' and trashed=false&fields=files(id,name)`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+        const result = await searchResponse.json();
+        if (result.files && result.files.length > 0) {
+            return result.files[0].id;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error finding sync file:', error);
+        return null;
+    }
+}
+
+async function createSyncFile(fileData) {
+    const metadata = { name: `${SYNC_FILE_NAME}.json`, parents: [appFolderId], mimeType: 'application/json' };
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', fileData);
+    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': `Bearer ${accessToken}` }, body: form });
+    if (!response.ok) throw new Error(`Create sync file failed: ${response.status}`);
+    return response.json();
+}
+
+async function updateSyncFile(fileId, fileData) {
+    const response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: fileData
+    });
+    if (!response.ok) throw new Error(`Update sync file failed: ${response.status}`);
+    return response.json();
+}
+
+async function checkAndHandleSync() {
+    if (!accessToken || !appFolderId || !autoSyncEnabled) return;
+    try {
+        const syncFileId = await findSyncFile();
+        if (!syncFileId) {
+            if (getTotalRecordCount() > 0) {
+                await performSync();
+            }
+            return;
+        }
+        const response = await fetch(`https://www.googleapis.com/drive/v3/files/${syncFileId}?alt=media`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+        if (!response.ok) return;
+        const text = await response.text();
+        const remoteSync = JSON.parse(text);
+        const remoteMeta = remoteSync.meta || {};
+        const remoteTimestamp = remoteMeta.lastModified ? new Date(remoteMeta.lastModified).getTime() : 0;
+        const localTimestamp = lastSyncTimestamp ? parseInt(lastSyncTimestamp) : 0;
+        const currentRecordCount = getTotalRecordCount();
+        const currentBalanceStr = String(currentBalance);
+        const hasLocalChanges = (currentRecordCount !== lastSyncRecordCount) || (currentBalanceStr !== lastSyncBalance);
+        const hasRemoteChanges = remoteTimestamp > localTimestamp;
+        if (hasRemoteChanges && hasLocalChanges) {
+            const conflictData = {
+                syncFileId: syncFileId,
+                remoteData: remoteSync.data,
+                remoteMeta: remoteMeta,
+                localRecordCount: currentRecordCount,
+                remoteRecordCount: remoteMeta.recordCount || 0
+            };
+            pendingConflictData = conflictData;
+            openLayer('syncConflict', { conflict: conflictData });
+        } else if (hasRemoteChanges && !hasLocalChanges) {
+            await applyRemoteData(remoteSync.data);
+            lastSyncTimestamp = remoteTimestamp.toString();
+            lastSyncRecordCount = remoteMeta.recordCount || getTotalRecordCount();
+            lastSyncBalance = remoteMeta.balance || String(currentBalance);
+            localStorage.setItem('lastSyncTimestamp', lastSyncTimestamp);
+            localStorage.setItem('lastSyncRecordCount', String(lastSyncRecordCount));
+            localStorage.setItem('lastSyncBalance', lastSyncBalance);
+            updateAutoSyncUI();
+            toastMsg(translate('syncUpdated'), "success");
+        } else if (!hasRemoteChanges && hasLocalChanges) {
+            await performSync();
+        }
+    } catch (error) {
+        console.error('Error checking sync:', error);
+    }
+}
+
+async function applyRemoteData(remoteData) {
+    if (!remoteData) return;
+    await clearAllStores();
+    if (remoteData.bal && remoteData.bal.changes) {
+        remoteData.bal.clientId = 1;
+        await bulkAddToStore('bal', [remoteData.bal]);
+    }
+    for (const sn of ['exp', 'rig', 'deb', 'inc']) {
+        if (remoteData[sn] && Array.isArray(remoteData[sn])) {
+            await bulkAddToStore(sn, remoteData[sn]);
+        }
+    }
+    if (remoteData.currency) {
+        currentCurrency = remoteData.currency;
+        localStorage.setItem('currencyCode', currentCurrency.code);
+        const label = document.getElementById('sidebarCurrencyLabel');
+        if (label) label.textContent = currentCurrency.symbol;
+    }
+    await loadAllData();
+    updateStats();
+    updateBalanceDisplay();
+}
+
+function showConflictDialog(conflictData) {
+    const choiceView = document.getElementById('conflictChoiceView');
+    const detailsView = document.getElementById('conflictDetailsView');
+    if (choiceView) choiceView.style.display = 'block';
+    if (detailsView) detailsView.style.display = 'none';
+}
+
+function dismissConflict() {
+    pendingConflictData = null;
+    closeLayer('syncConflict');
+    toastMsg(translate('conflictPendingReminder'), "info");
+}
+
+async function resolveConflict(choice) {
+    if (!pendingConflictData) return;
+    showLoading(translate('processing'));
+    try {
+        if (choice === 'local') {
+            await performSync();
+        } else if (choice === 'remote') {
+            await applyRemoteData(pendingConflictData.remoteData);
+            const remoteMeta = pendingConflictData.remoteMeta;
+            lastSyncTimestamp = remoteMeta.lastModified ? new Date(remoteMeta.lastModified).getTime().toString() : Date.now().toString();
+            lastSyncRecordCount = remoteMeta.recordCount || getTotalRecordCount();
+            lastSyncBalance = remoteMeta.balance || String(currentBalance);
+            localStorage.setItem('lastSyncTimestamp', lastSyncTimestamp);
+            localStorage.setItem('lastSyncRecordCount', String(lastSyncRecordCount));
+            localStorage.setItem('lastSyncBalance', lastSyncBalance);
+            updateAutoSyncUI();
+        }
+        pendingConflictData = null;
+        hideLoading();
+        closeLayer('syncConflict');
+        toastMsg(translate('dataRestored'), "success");
+    } catch (error) {
+        hideLoading();
+        console.error('Error resolving conflict:', error);
+        toastMsg(translate('syncFailed'), "error");
+    }
+}
+
+function showConflictDetails() {
+    const choiceView = document.getElementById('conflictChoiceView');
+    const detailsView = document.getElementById('conflictDetailsView');
+    const localCountEl = document.getElementById('localRecordCount');
+    const remoteCountEl = document.getElementById('remoteRecordCount');
+    const remoteLastModEl = document.getElementById('remoteLastModified');
+    const remoteEditedByEl = document.getElementById('remoteEditedBy');
+    if (choiceView) choiceView.style.display = 'none';
+    if (detailsView) detailsView.style.display = 'block';
+    if (pendingConflictData) {
+        const remoteMeta = pendingConflictData.remoteMeta || {};
+        if (localCountEl) localCountEl.textContent = pendingConflictData.localRecordCount || 0;
+        if (remoteCountEl) remoteCountEl.textContent = pendingConflictData.remoteRecordCount || 0;
+        if (remoteLastModEl && remoteMeta.lastModified) {
+            const lastDate = new Date(remoteMeta.lastModified);
+            const locale = (currentLang === 'ur') ? 'ur-PK' : (currentLang || 'ar');
+            remoteLastModEl.textContent = lastDate.toLocaleString(locale, { numberingSystem: 'latn', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        }
+        if (remoteEditedByEl) {
+            if (remoteMeta.deviceId && remoteMeta.deviceId !== deviceId) {
+                remoteEditedByEl.textContent = translate('conflictAnotherDevice');
+            } else {
+                remoteEditedByEl.textContent = translate('conflictThisPhone');
+            }
+        }
+    }
+}
+
+function backToConflictChoice() {
+    const choiceView = document.getElementById('conflictChoiceView');
+    const detailsView = document.getElementById('conflictDetailsView');
+    if (choiceView) choiceView.style.display = 'block';
+    if (detailsView) detailsView.style.display = 'none';
 }
 
 // =============================================================
-// 5. EXPORT / IMPORT
+// 6. EXPORT / IMPORT
 // =============================================================
 function openExportNameModal() { openLayer('exportName'); }
 
@@ -802,8 +1085,9 @@ async function importData(event) {
     reader.onload = async (e) => {
         try {
             const imported = JSON.parse(e.target.result);
-            if (imported.bal && Array.isArray(imported.bal.changes)) { imported.bal.clientId = 1; await addDataToStore('bal', [imported.bal]); }
-            for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await addDataToStore(sn, imported[sn]); }
+            await clearAllStores();
+            if (imported.bal && Array.isArray(imported.bal.changes)) { imported.bal.clientId = 1; await bulkAddToStore('bal', [imported.bal]); }
+            for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await bulkAddToStore(sn, imported[sn]); }
             if (imported.currency) {
                 currentCurrency = imported.currency;
                 localStorage.setItem('currencyCode', currentCurrency.code);
@@ -815,6 +1099,7 @@ async function importData(event) {
             updateStats();
             updateBalanceDisplay();
             toastMsg(translate('importSuccess'), "success");
+            scheduleAutoSync();
         } catch (err) {
             hideLoading();
             toastMsg(translate('importFailed'), "error");
@@ -840,7 +1125,6 @@ async function addDataToStore(storeName, dataArray) {
     }
 }
 
-// ✅✅ التعديل الجديد: مسح جميع الجداول (يستخدم قبل الاستعادة)
 function clearAllStores() {
     return new Promise((resolve, reject) => {
         if (!IDB_connection) return resolve();
@@ -860,7 +1144,6 @@ function clearAllStores() {
     });
 }
 
-// ✅✅ التعديل الجديد: إضافة مجموعة سجلات دفعة واحدة بدون تكرار
 function bulkAddToStore(storeName, dataArray) {
     return new Promise((resolve, reject) => {
         if (!IDB_connection) return resolve();
@@ -883,7 +1166,7 @@ function bulkAddToStore(storeName, dataArray) {
 }
 
 // =============================================================
-// 6. LOADING OVERLAY
+// 7. LOADING OVERLAY
 // =============================================================
 function showLoading(message = translate('processing')) {
     const overlay = document.getElementById('loadingOverlay');
@@ -898,7 +1181,7 @@ function hideLoading() {
 }
 
 // =============================================================
-// 7. TOAST NOTIFICATION
+// 8. TOAST NOTIFICATION
 // =============================================================
 function toastMsg(message, type = "info") {
     const t = document.getElementById('toast');
@@ -911,7 +1194,7 @@ function toastMsg(message, type = "info") {
 }
 
 // =============================================================
-// 8. FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
+// 9. FORMATTING HELPERS + MULTI-LANGUAGE CURRENCIES
 // =============================================================
 const ARABIC_CURRENCIES = [
     { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
@@ -1055,7 +1338,7 @@ function clearFields() {
 }
 
 // =============================================================
-// 9. TAB NAVIGATION
+// 10. TAB NAVIGATION
 // =============================================================
 function openTab(id, keepEdit = false) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -1082,7 +1365,7 @@ function openTabFromNav(tabId) {
 }
 
 // =============================================================
-// 10. BALANCE
+// 11. BALANCE
 // =============================================================
 function toggleBalanceVisibility() {
     balanceHidden = !balanceHidden;
@@ -1145,6 +1428,7 @@ async function processBalanceAction() {
     if (ok) {
         toastMsg(balanceActionType === 'deposit' ? translate('depositSuccess') : translate('withdrawSuccess'), "success");
         closeLayer('balanceAction');
+        scheduleAutoSync();
     }
 }
 
@@ -1176,7 +1460,7 @@ function renderBalanceLog() {
 }
 
 // =============================================================
-// 11. CRUD — INCOME, EXPENSES, RIGHTS, DEBTS
+// 12. CRUD — INCOME, EXPENSES, RIGHTS, DEBTS
 // =============================================================
 async function addIncome() {
     const iAmount = document.getElementById('iAmount');
@@ -1430,10 +1714,11 @@ function postSaveCleanup(isEditing, type) {
     loadAllData().then(() => { updateStats(); updateBalanceDisplay(); });
     editMode = null;
     clearFields();
+    scheduleAutoSync();
 }
 
 // =============================================================
-// 12. DETAIL & LOG RENDERING + FILTERS
+// 13. DETAIL & LOG RENDERING + FILTERS
 // =============================================================
 function inPeriod(dateStr, period) {
     if (period === 'all' || !dateStr) return true;
@@ -1698,11 +1983,12 @@ async function deleteTransaction() {
         updateBalanceDisplay();
         closeAllLayers();
         openTab('overview');
+        scheduleAutoSync();
     } catch (err) { toastMsg(translate('deleteFailed'), "error"); console.error(err); }
 }
 
 // =============================================================
-// 12.5 🔔 NOTIFICATIONS
+// 14. NOTIFICATIONS
 // =============================================================
 function getReadNotifications() {
     try {
@@ -1867,43 +2153,7 @@ function renderNotifications() {
 }
 
 // =============================================================
-// 12.8 📅 STATS PERIOD FILTER (الفلترة الزمنية للإحصائيات)
-// =============================================================
-function getWeekRange() {
-    const now = new Date();
-    const dayOfWeek = now.getDay(); // 0=الأحد، 1=الاثنين، ...، 6=السبت
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - dayOfWeek);
-    startOfWeek.setHours(0, 0, 0, 0);
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-    return { start: startOfWeek, end: endOfWeek };
-}
-
-function inStatsPeriod(dateStr, period) {
-    if (period === 'all' || !dateStr) return true;
-    const d = new Date(dateStr);
-    if (isNaN(d)) return true;
-    const now = new Date();
-    if (period === 'today') return d.toDateString() === now.toDateString();
-    if (period === 'week') {
-        const range = getWeekRange();
-        return d >= range.start && d <= range.end;
-    }
-    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-    if (period === 'year') return d.getFullYear() === now.getFullYear();
-    return true;
-}
-
-function setStatsPeriod(period) {
-    statsPeriodFilter = period;
-    localStorage.setItem('statsPeriodFilter', period);
-    updateStats();
-}
-
-// =============================================================
-// 13. UPDATE STATS (✔ مساعد مالي ذكي + فلتر الفترة الزمنية)
+// 15. UPDATE STATS (✔ مساعد مالي ذكي + فلتر الفترة الزمنية)
 // =============================================================
 const ADVISOR = {
     ar: { good: 'وضعك المالي جيد: مصروفاتك أقل من دخلك.', over: 'تنبيه: مصروفاتك أعلى من دخلك؛ راجع قسم المصروفات.', noIncome: 'لا يوجد دخل مسجل مع وجود مصروفات؛ أضف دخلك من قسم الدخل.', noData: 'لا توجد عمليات في هذه الفترة بعد؛ ابدأ بتسجيل دخل أو مصروف.', tipR: 'لديك حقوق غير محصلة بقيمة', tipD: 'لديك التزامات غير مدفوعة بقيمة' },
@@ -1959,8 +2209,41 @@ function updateStats() {
     }
 }
 
+function inStatsPeriod(dateStr, period) {
+    if (period === 'all' || !dateStr) return true;
+    const d = new Date(dateStr);
+    if (isNaN(d)) return true;
+    const now = new Date();
+    if (period === 'today') return d.toDateString() === now.toDateString();
+    if (period === 'week') {
+        const range = getWeekRange();
+        return d >= range.start && d <= range.end;
+    }
+    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === 'year') return d.getFullYear() === now.getFullYear();
+    return true;
+}
+
+function getWeekRange() {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    return { start: startOfWeek, end: endOfWeek };
+}
+
+function setStatsPeriod(period) {
+    statsPeriodFilter = period;
+    localStorage.setItem('statsPeriodFilter', period);
+    updateStats();
+}
+
 // =============================================================
-// 14. OTHER FUNCTIONS
+// 16. OTHER FUNCTIONS
 // =============================================================
 function renderCurrencyList() {
     const list = document.getElementById('currencyList');
@@ -2011,6 +2294,7 @@ function resetAllData() {
                         updateStats();
                         updateBalanceDisplay();
                         toastMsg(translate('dataReset'), "success");
+                        scheduleAutoSync();
                     });
                 });
             }
@@ -2020,10 +2304,9 @@ function resetAllData() {
 }
 
 // =============================================================
-// 15. SIDEBAR FUNCTIONS
+// 17. SIDEBAR FUNCTIONS
 // =============================================================
 function openSidebar() {
-    // ✅ استعادة حالة اتصال Google Drive المحفوظة لضمان ظهور زر تسجيل الخروج
     if (!isDriveConnected && localStorage.getItem('drive_token') && localStorage.getItem('drive_email')) {
         const tokenExpiry = localStorage.getItem('drive_token_expiry');
         const expiry = parseInt(tokenExpiry) || 0;
@@ -2035,6 +2318,7 @@ function openSidebar() {
         }
     }
     updateDriveUI();
+    updateAutoSyncUI();
     openLayer('sidebar');
 }
 function openCurrencyModal() { openLayer('currency'); }
@@ -2092,7 +2376,7 @@ function clearSelectedImage() {
 }
 
 // =============================================================
-// 16. INDEXED DB OPERATIONS
+// 18. INDEXED DB OPERATIONS
 // =============================================================
 function initDB() {
     return new Promise((resolve, reject) => {
@@ -2167,7 +2451,7 @@ async function loadAllData() {
 }
 
 // =============================================================
-// 17. DARK MODE
+// 19. DARK MODE
 // =============================================================
 function loadDarkModePreference() {
     if (localStorage.getItem('darkMode') === 'true') {
@@ -2185,7 +2469,7 @@ function toggleDarkMode() {
 loadDarkModePreference();
 
 // =============================================================
-// 18. INITIALIZATION
+// 20. INITIALIZATION
 // =============================================================
 window.onload = () => {
     if (!history.state || history.state.layer === undefined) {
@@ -2202,6 +2486,7 @@ window.onload = () => {
     updateBalanceDisplay();
     updateStats();
     updateDriveUI();
+    updateAutoSyncUI();
     updateNotificationBadge();
     setTimeout(() => { initGapi(); initGis(); restoreDriveState(); }, 1000);
 };
