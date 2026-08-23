@@ -31,8 +31,19 @@
 <div class="stats-summary">
 <div class="stats-head">
 <h3 class="stats-title"><i class="fas fa-chart-line"></i> <span data-i18n="statsSummary">ملخص الإحصائيات</span></h3>
-<div class="stats-period-wrap"><i class="far fa-calendar-alt"></i><span data-i18n="periodMonth">هذا الشهر</span><i class="fas fa-chevron-down"></i></div>
+<div class="stats-period-wrap">
+<i class="far fa-calendar-alt"></i>
+<select id="statsPeriod" onchange="setStatsPeriod(this.value)">
+<option value="all" selected data-i18n="periodAll">الكل</option>
+<option value="today" data-i18n="periodToday">اليوم</option>
+<option value="week" data-i18n="periodWeek">هذا الأسبوع</option>
+<option value="month" data-i18n="periodMonth">هذا الشهر</option>
+<option value="year" data-i18n="periodYear">هذه السنة</option>
+</select>
+<i class="fas fa-chevron-down"></i>
 </div>
+</div>
+
 <div class="stat-big c-income">
 <div class="stat-big-icon"><i class="fas fa-chart-line"></i></div>
 <div class="stat-big-body">
@@ -43,6 +54,7 @@
 </div>
 <div class="stat-big-pct" id="sIncPct">0%</div>
 </div>
+
 <div class="stat-big c-expense">
 <div class="stat-big-icon"><i class="fas fa-shopping-cart"></i></div>
 <div class="stat-big-body">
@@ -53,6 +65,7 @@
 </div>
 <div class="stat-big-pct" id="sExpPct">0%</div>
 </div>
+
 <div class="stat-big c-debt">
 <div class="stat-big-icon"><i class="fas fa-credit-card"></i></div>
 <div class="stat-big-body">
@@ -63,6 +76,7 @@
 </div>
 <div class="stat-big-pct" id="sDebPct">0%</div>
 </div>
+
 <div class="stat-big c-right">
 <div class="stat-big-icon"><i class="fas fa-handshake"></i></div>
 <div class="stat-big-body">
@@ -73,6 +87,7 @@
 </div>
 <div class="stat-big-pct" id="sRigPct">0%</div>
 </div>
+
 <div class="stat-status good" id="sStatusBanner">
 <div class="stat-status-icon"><i class="fas fa-lightbulb"></i></div>
 <div class="stat-status-body">
@@ -333,7 +348,7 @@
 <div id="appSidebar" class="sidebar">
 <div class="sidebar-header"><span data-i18n="menu">القائمة</span><button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button></div>
 <div class="sidebar-content">
-<button class="sidebar-menu-item" onclick="openLanguageModal()"><i class="fas fa-globe"></i><span data-i18n="language">اللغة</span><span id="sidebarLanguageLabel" style="margin-right:auto;font-size:0.85em;color:#888;">🇸 العربية</span></button>
+<button class="sidebar-menu-item" onclick="openLanguageModal()"><i class="fas fa-globe"></i><span data-i18n="language">اللغة</span><span id="sidebarLanguageLabel" style="margin-right:auto;font-size:0.85em;color:#888;">🇸🇦 العربية</span></button>
 <button id="driveMenuItem" class="sidebar-menu-item drive-item" onclick="handleDriveClick()"><i class="fab fa-google-drive"></i><span id="driveMenuText" data-i18n="googleDrive">Google Drive</span><span id="driveStatusDot" class="drive-status-dot"></span><span id="driveMenuEmail" class="drive-email"></span><span id="driveLogoutBtn" class="drive-logout" onclick="event.stopPropagation();signOut();" data-i18n="signOut">تسجيل خروج</span></button>
 <div class="sidebar-divider"></div>
 <div class="sidebar-switch-item"><i class="fas fa-moon"></i><span data-i18n="darkMode">الوضع الليلي</span><label class="switch"><input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"><span class="slider"></span></label></div>
@@ -360,6 +375,5 @@
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script src="app.js"></script>
-<script src="sync.js"></script>
 </body>
 </html>
