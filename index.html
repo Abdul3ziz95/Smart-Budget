@@ -326,6 +326,60 @@
 </div>
 </div>
 
+<!-- ============ SYNC CONFLICT MODAL (جديد) ============ -->
+<div id="syncConflictModal" class="modal">
+<header><button onclick="dismissConflict()"><i class="fas fa-times"></i></button><div class="title" data-i18n="conflictTitle">⚠️ تعارض في البيانات</div></header>
+<div class="modal-content">
+<div id="conflictChoiceView">
+<div class="conflict-icon-wrap"><i class="fas fa-code-branch"></i></div>
+<p class="conflict-msg" data-i18n="conflictMsg">وجدنا تغييرات على هذا الهاتف وعلى جهاز آخر. أي نسخة تريد الإبقاء؟</p>
+<div class="conflict-buttons">
+<button class="conflict-btn keep-local" onclick="resolveConflict('local')">
+<i class="fas fa-mobile-alt"></i>
+<span data-i18n="conflictKeepLocal">📱 إبقاء بيانات هذا الهاتف</span>
+</button>
+<button class="conflict-btn use-remote" onclick="resolveConflict('remote')">
+<i class="fas fa-cloud-download-alt"></i>
+<span data-i18n="conflictUseRemote">☁️ استخدام بيانات الهاتف الآخر</span>
+</button>
+<button class="conflict-btn show-details" onclick="showConflictDetails()">
+<i class="fas fa-search"></i>
+<span data-i18n="conflictShowDetails">🔍 عرض التفاصيل</span>
+</button>
+</div>
+</div>
+<div id="conflictDetailsView" style="display:none;">
+<h3 class="conflict-compare-title" data-i18n="conflictCompareTitle">⚖️ مقارنة النسختين</h3>
+<div class="compare-grid">
+<div class="compare-card local-card">
+<div class="compare-card-title" data-i18n="conflictThisPhone">📱 هذا الهاتف</div>
+<div class="compare-row">
+<span class="compare-label" data-i18n="conflictRecords">عدد السجلات</span>
+<span class="compare-value" id="localRecordCount">0</span>
+</div>
+<div class="compare-note" data-i18n="conflictLocalPending">لديك تغييرات محلية لم تُزامَن بعد</div>
+</div>
+<div class="compare-card remote-card">
+<div class="compare-card-title" data-i18n="conflictOtherCopy">☁️ النسخة الأخرى</div>
+<div class="compare-row">
+<span class="compare-label" data-i18n="conflictRecords">عدد السجلات</span>
+<span class="compare-value" id="remoteRecordCount">0</span>
+</div>
+<div class="compare-row">
+<span class="compare-label" data-i18n="conflictLastModified">آخر تعديل</span>
+<span class="compare-value" id="remoteLastModified">—</span>
+</div>
+<div class="compare-row">
+<span class="compare-label" data-i18n="conflictEditedBy">عدّلها</span>
+<span class="compare-value" id="remoteEditedBy" data-i18n="conflictAnotherDevice">جهاز آخر</span>
+</div>
+</div>
+</div>
+<button class="secondary" onclick="backToConflictChoice()" data-i18n="conflictBackToChoice">رجوع للاختيار</button>
+</div>
+</div>
+</div>
+
 <!-- ============ EXPORT NAME MODAL ============ -->
 <div id="exportNameModal" class="modal">
 <header><button onclick="closeLayer('exportName')"><i class="fas fa-times"></i></button><div class="title" data-i18n="exportData">تصدير البيانات</div></header>
@@ -382,7 +436,34 @@
 <div class="sidebar-header"><span data-i18n="menu">القائمة</span><button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button></div>
 <div class="sidebar-content">
 <button class="sidebar-menu-item" onclick="openLanguageModal()"><i class="fas fa-globe"></i><span data-i18n="language">اللغة</span><span id="sidebarLanguageLabel" style="margin-right:auto;font-size:0.85em;color:#888;">🇸🇦 العربية</span></button>
-<button id="driveMenuItem" class="sidebar-menu-item drive-item" onclick="handleDriveClick()"><i class="fab fa-google-drive"></i><span id="driveMenuText" data-i18n="googleDrive">Google Drive</span><span id="driveStatusDot" class="drive-status-dot"></span><span id="driveMenuEmail" class="drive-email"></span><span id="driveLogoutBtn" class="drive-logout" onclick="event.stopPropagation();signOut();" data-i18n="signOut">تسجيل خروج</span></button>
+
+<!-- ✔ زر جوجل درايف (محدّث) -->
+<button id="driveMenuItem" class="sidebar-menu-item drive-item" onclick="handleDriveClick()">
+<i class="fab fa-google-drive"></i>
+<span id="driveMenuText" data-i18n="googleDrive">Google Drive</span>
+<span id="driveStatusDot" class="drive-status-dot"></span>
+<span id="driveLogoutBtn" class="drive-logout" onclick="event.stopPropagation();signOut();" data-i18n="signOut">تسجيل خروج</span>
+</button>
+
+<!-- ✔ سطر البريد الإلكتروني أسفل درايف (جديد) -->
+<div id="driveEmailLine" class="drive-email-line" style="display:none;">
+<i class="fas fa-envelope"></i>
+<span id="driveMenuEmail" class="drive-email-full"></span>
+</div>
+
+<!-- ✔ كتلة المزامنة التلقائية (جديدة) -->
+<div class="auto-sync-block">
+<div class="auto-sync-header">
+<span class="auto-sync-title"><i class="fas fa-sync-alt"></i> <span data-i18n="autoSyncTitle">المزامنة التلقائية</span></span>
+<label class="switch">
+<input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync(this.checked)" checked>
+<span class="slider"></span>
+</label>
+</div>
+<div id="autoSyncStatus" class="auto-sync-status" data-i18n="autoSyncReadyNotConnected">جاهزة — اتصل بـ Google Drive لتفعيلها</div>
+<button class="sync-now-btn" id="syncNowBtn" onclick="manualSyncNow()" data-i18n="syncNowBtn">مزامنة الآن</button>
+</div>
+
 <div class="sidebar-divider"></div>
 <div class="sidebar-switch-item"><i class="fas fa-moon"></i><span data-i18n="darkMode">الوضع الليلي</span><label class="switch"><input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"><span class="slider"></span></label></div>
 <button class="sidebar-currency-item" onclick="openCurrencyModal()"><i class="fas fa-coins"></i><span data-i18n="changeCurrency">تغيير العملة</span><span id="sidebarCurrencyLabel" class="currency-label">﷼</span></button>
