@@ -10,14 +10,12 @@
 </head>
 <body>
 
-<!-- ============ HEADER ============ -->
 <header>
 <button onclick="openSidebar()" aria-label="menu"><i class="fas fa-bars"></i></button>
 <div class="title" data-i18n="appTitleShort">ميزانيتك المالية الذكية</div>
 <button id="notificationBell" onclick="openNotifications()" aria-label="notifications"><i class="fas fa-bell"></i><span id="notifBadge" class="notif-badge" style="display:none;">0</span></button>
 </header>
 
-<!-- ============ OVERVIEW ============ -->
 <div id="overview" class="section active">
 <div class="balance-display">
 <button id="balanceVisibilityToggle" onclick="toggleBalanceVisibility()"><i class="fas fa-eye"></i></button>
@@ -30,23 +28,11 @@
 </div>
 </div>
 
-<!-- ✔ ملخص الإحصائيات — التصميم الجديد -->
 <div class="stats-summary">
 <div class="stats-head">
 <h3 class="stats-title"><i class="fas fa-chart-line"></i> <span data-i18n="statsSummary">ملخص الإحصائيات</span></h3>
-<div class="stats-period-wrap">
-<i class="far fa-calendar-alt"></i>
-<select id="statsPeriod" onchange="setStatsPeriod(this.value)">
-<option value="all" selected data-i18n="periodAll">الكل</option>
-<option value="today" data-i18n="periodToday">اليوم</option>
-<option value="week" data-i18n="periodWeek">هذا الأسبوع</option>
-<option value="month" data-i18n="periodMonth">هذا الشهر</option>
-<option value="year" data-i18n="periodYear">هذه السنة</option>
-</select>
-<i class="fas fa-chevron-down"></i>
+<div class="stats-period-wrap"><i class="far fa-calendar-alt"></i><span data-i18n="periodMonth">هذا الشهر</span><i class="fas fa-chevron-down"></i></div>
 </div>
-</div>
-
 <div class="stat-big c-income">
 <div class="stat-big-icon"><i class="fas fa-chart-line"></i></div>
 <div class="stat-big-body">
@@ -57,7 +43,6 @@
 </div>
 <div class="stat-big-pct" id="sIncPct">0%</div>
 </div>
-
 <div class="stat-big c-expense">
 <div class="stat-big-icon"><i class="fas fa-shopping-cart"></i></div>
 <div class="stat-big-body">
@@ -68,7 +53,6 @@
 </div>
 <div class="stat-big-pct" id="sExpPct">0%</div>
 </div>
-
 <div class="stat-big c-debt">
 <div class="stat-big-icon"><i class="fas fa-credit-card"></i></div>
 <div class="stat-big-body">
@@ -79,7 +63,6 @@
 </div>
 <div class="stat-big-pct" id="sDebPct">0%</div>
 </div>
-
 <div class="stat-big c-right">
 <div class="stat-big-icon"><i class="fas fa-handshake"></i></div>
 <div class="stat-big-body">
@@ -90,7 +73,6 @@
 </div>
 <div class="stat-big-pct" id="sRigPct">0%</div>
 </div>
-
 <div class="stat-status good" id="sStatusBanner">
 <div class="stat-status-icon"><i class="fas fa-lightbulb"></i></div>
 <div class="stat-status-body">
@@ -102,7 +84,6 @@
 </div>
 </div>
 
-<!-- ============ INCOME ============ -->
 <div id="income" class="section">
 <span class="edit-indicator" id="incEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="incomeHint">* الدخل يُضاف إلى رصيدك فوراً</span>
@@ -126,7 +107,6 @@
 <button class="secondary" onclick="openLog('inc')" data-i18n="incomeLog">سجل الدخل</button>
 </div>
 
-<!-- ============ EXPENSES ============ -->
 <div id="expenses" class="section">
 <span class="edit-indicator" id="expEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="expenseHint">* المصروفات تُخصم من رصيدك فوراً</span>
@@ -156,7 +136,6 @@
 <button class="secondary" onclick="openLog('exp')" data-i18n="expenseLog">سجل المصروفات</button>
 </div>
 
-<!-- ============ RIGHTS ============ -->
 <div id="rights" class="section">
 <span class="edit-indicator" id="rigEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="rightsHint">* تحصيل الحقوق يُضاف إلى رصيدك فقط عبر حقل «المبلغ المحصل»</span>
@@ -186,7 +165,6 @@
 <button class="secondary" onclick="openLog('rig')" data-i18n="rightsLog">سجل الحقوق</button>
 </div>
 
-<!-- ============ DEBTS ============ -->
 <div id="debts" class="section">
 <span class="edit-indicator" id="debEditIndicator" style="display:none;" data-i18n="editMode">وضع التعديل</span>
 <span class="section-hint" data-i18n="debtsHint">* دفع الالتزامات يُخصم من رصيدك الحالي</span>
@@ -231,7 +209,6 @@
 <button class="secondary" onclick="openLog('deb')" data-i18n="debtsLog">سجل الالتزامات</button>
 </div>
 
-<!-- ============ BOTTOM NAVIGATION ============ -->
 <nav class="bottom-nav">
 <button class="nav-item" data-tab="income" onclick="openTabFromNav('income')"><i class="fas fa-arrow-down"></i><span data-i18n="navIncome">الدخل</span></button>
 <button class="nav-item" data-tab="expenses" onclick="openTabFromNav('expenses')"><i class="fas fa-arrow-up"></i><span data-i18n="navExpenses">مصروفات</span></button>
@@ -240,7 +217,6 @@
 <button class="nav-item" data-tab="debts" onclick="openTabFromNav('debts')"><i class="fas fa-file-invoice-dollar"></i><span data-i18n="navDebts">التزامات</span></button>
 </nav>
 
-<!-- ============ LOG MODAL ============ -->
 <div id="logModal" class="modal">
 <header><button onclick="closeLayer('log')"><i class="fas fa-times"></i></button><div class="title" data-i18n="searchLog">السجل</div></header>
 <div class="modal-content">
@@ -255,13 +231,11 @@
 </div>
 </div>
 
-<!-- ============ DETAIL MODAL ============ -->
 <div id="detailModal" class="modal">
 <header><button onclick="closeLayer('detail')"><i class="fas fa-times"></i></button><div class="title" data-i18n="transactionDetails">تفاصيل المعاملة</div></header>
 <div class="modal-content" id="detailContent"></div>
 </div>
 
-<!-- ============ BALANCE ACTION MODAL ============ -->
 <div id="balanceActionModal" class="modal">
 <header><button onclick="closeLayer('balanceAction')"><i class="fas fa-times"></i></button><div class="title" id="actionModalTitle" data-i18n="depositTitle">إيداع</div></header>
 <div class="modal-content">
@@ -273,7 +247,6 @@
 </div>
 </div>
 
-<!-- ============ BALANCE LOG MODAL ============ -->
 <div id="balanceLogModal" class="modal">
 <header><button onclick="closeLayer('balanceLog')"><i class="fas fa-times"></i></button><div class="title" data-i18n="balanceLogTitle">سجل حركات الرصيد</div></header>
 <div class="modal-content">
@@ -284,13 +257,11 @@
 </div>
 </div>
 
-<!-- ============ NOTIFICATIONS MODAL ============ -->
 <div id="notificationsModal" class="modal">
 <header><button onclick="closeLayer('notifications')"><i class="fas fa-times"></i></button><div class="title" data-i18n="notificationsTitle">التنبيهات المالية</div></header>
 <div class="modal-content" id="notificationsContent"></div>
 </div>
 
-<!-- ============ IMAGE SOURCE MODAL ============ -->
 <div id="imageSourceOverlay" onclick="closeImageSource()"></div>
 <div id="imageSourceModal">
 <h3 data-i18n="chooseImageSource">اختيار مصدر الصورة</h3>
@@ -299,20 +270,6 @@
 <button class="secondary" onclick="closeImageSource()" data-i18n="cancel">إلغاء</button>
 </div>
 
-<!-- ============ CONFIRM BACKUP MODAL ============ -->
-<div id="confirmBackupModal" class="modal">
-<header><button onclick="closeLayer('confirmBackup')"><i class="fas fa-times"></i></button><div class="title" data-i18n="backupTitle">نسخ احتياطي</div></header>
-<div class="modal-content">
-<i class="fab fa-google-drive"></i>
-<p data-i18n="backupConfirmMsg">هل تريد عمل نسخة احتياطية للبيانات على Google Drive؟</p>
-<div class="btn-group">
-<button class="confirm-btn" onclick="handleBackupConfirm()" data-i18n="backupSave">نعم، احفظ النسخة</button>
-<button class="view-btn" onclick="handleViewBackups()"><i class="fas fa-list"></i> <span data-i18n="backupView">عرض النسخ المحفوظة</span></button>
-</div>
-</div>
-</div>
-
-<!-- ============ DRIVE BACKUP MODAL ============ -->
 <div id="driveBackupModal" class="modal">
 <header><button onclick="closeLayer('driveBackup')"><i class="fas fa-times"></i></button><div class="title" data-i18n="backupDriveTitle">النسخ الاحتياطية</div></header>
 <div class="modal-content">
@@ -326,61 +283,6 @@
 </div>
 </div>
 
-<!-- ============ SYNC CONFLICT MODAL (جديد) ============ -->
-<div id="syncConflictModal" class="modal">
-<header><button onclick="dismissConflict()"><i class="fas fa-times"></i></button><div class="title" data-i18n="conflictTitle">⚠️ تعارض في البيانات</div></header>
-<div class="modal-content">
-<div id="conflictChoiceView">
-<div class="conflict-icon-wrap"><i class="fas fa-code-branch"></i></div>
-<p class="conflict-msg" data-i18n="conflictMsg">وجدنا تغييرات على هذا الهاتف وعلى جهاز آخر. أي نسخة تريد الإبقاء؟</p>
-<div class="conflict-buttons">
-<button class="conflict-btn keep-local" onclick="resolveConflict('local')">
-<i class="fas fa-mobile-alt"></i>
-<span data-i18n="conflictKeepLocal">📱 إبقاء بيانات هذا الهاتف</span>
-</button>
-<button class="conflict-btn use-remote" onclick="resolveConflict('remote')">
-<i class="fas fa-cloud-download-alt"></i>
-<span data-i18n="conflictUseRemote">☁️ استخدام بيانات الهاتف الآخر</span>
-</button>
-<button class="conflict-btn show-details" onclick="showConflictDetails()">
-<i class="fas fa-search"></i>
-<span data-i18n="conflictShowDetails">🔍 عرض التفاصيل</span>
-</button>
-</div>
-</div>
-<div id="conflictDetailsView" style="display:none;">
-<h3 class="conflict-compare-title" data-i18n="conflictCompareTitle">⚖️ مقارنة النسختين</h3>
-<div class="compare-grid">
-<div class="compare-card local-card">
-<div class="compare-card-title" data-i18n="conflictThisPhone">📱 هذا الهاتف</div>
-<div class="compare-row">
-<span class="compare-label" data-i18n="conflictRecords">عدد السجلات</span>
-<span class="compare-value" id="localRecordCount">0</span>
-</div>
-<div class="compare-note" data-i18n="conflictLocalPending">لديك تغييرات محلية لم تُزامَن بعد</div>
-</div>
-<div class="compare-card remote-card">
-<div class="compare-card-title" data-i18n="conflictOtherCopy">☁️ النسخة الأخرى</div>
-<div class="compare-row">
-<span class="compare-label" data-i18n="conflictRecords">عدد السجلات</span>
-<span class="compare-value" id="remoteRecordCount">0</span>
-</div>
-<div class="compare-row">
-<span class="compare-label" data-i18n="conflictLastModified">آخر تعديل</span>
-<span class="compare-value" id="remoteLastModified">—</span>
-</div>
-<div class="compare-row">
-<span class="compare-label" data-i18n="conflictEditedBy">عدّلها</span>
-<span class="compare-value" id="remoteEditedBy" data-i18n="conflictAnotherDevice">جهاز آخر</span>
-</div>
-</div>
-</div>
-<button class="secondary" onclick="backToConflictChoice()" data-i18n="conflictBackToChoice">رجوع للاختيار</button>
-</div>
-</div>
-</div>
-
-<!-- ============ EXPORT NAME MODAL ============ -->
 <div id="exportNameModal" class="modal">
 <header><button onclick="closeLayer('exportName')"><i class="fas fa-times"></i></button><div class="title" data-i18n="exportData">تصدير البيانات</div></header>
 <div class="modal-content">
@@ -393,7 +295,6 @@
 </div>
 </div>
 
-<!-- ============ CURRENCY MODAL ============ -->
 <div id="currencyModal" class="modal">
 <header><button onclick="closeLayer('currency')"><i class="fas fa-times"></i></button><div class="title" data-i18n="selectCurrency">اختيار العملة</div></header>
 <div class="modal-content">
@@ -402,7 +303,6 @@
 </div>
 </div>
 
-<!-- ============ LANGUAGE MODAL ============ -->
 <div id="languageModal" class="modal">
 <header><button onclick="closeLayer('language')"><i class="fas fa-times"></i></button><div class="title" data-i18n="languageSelectTitle">اختر اللغة</div></header>
 <div class="modal-content">
@@ -412,7 +312,6 @@
 </div>
 </div>
 
-<!-- ============ ABOUT MODAL ============ -->
 <div id="aboutModal" class="modal">
 <header><button onclick="closeLayer('about')"><i class="fas fa-times"></i></button><div class="title" data-i18n="aboutTitle">حول ميزانيتك الذكية</div></header>
 <div class="modal-content">
@@ -430,39 +329,17 @@
 </div>
 </div>
 
-<!-- ============ SIDEBAR ============ -->
 <div class="sidebar-overlay" onclick="closeLayer('sidebar')"></div>
 <div id="appSidebar" class="sidebar">
 <div class="sidebar-header"><span data-i18n="menu">القائمة</span><button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button></div>
 <div class="sidebar-content">
 <button class="sidebar-menu-item" onclick="openLanguageModal()"><i class="fas fa-globe"></i><span data-i18n="language">اللغة</span><span id="sidebarLanguageLabel" style="margin-right:auto;font-size:0.85em;color:#888;">🇸🇦 العربية</span></button>
 
-<!-- ✔ زر جوجل درايف (محدّث) -->
-<button id="driveMenuItem" class="sidebar-menu-item drive-item" onclick="handleDriveClick()">
-<i class="fab fa-google-drive"></i>
-<span id="driveMenuText" data-i18n="googleDrive">Google Drive</span>
-<span id="driveStatusDot" class="drive-status-dot"></span>
-<span id="driveLogoutBtn" class="drive-logout" onclick="event.stopPropagation();signOut();" data-i18n="signOut">تسجيل خروج</span>
-</button>
+<button id="driveMenuItem" class="sidebar-menu-item drive-item" onclick="handleDriveClick()"><i class="fab fa-google-drive"></i><span id="driveMenuText" data-i18n="googleDrive">Google Drive</span><span id="driveStatusDot" class="drive-status-dot"></span><span id="driveMenuEmail" class="drive-email"></span><span id="driveLogoutBtn" class="drive-logout" onclick="event.stopPropagation();signOut();" data-i18n="signOut">تسجيل خروج</span></button>
 
-<!-- ✔ سطر البريد الإلكتروني أسفل درايف (جديد) -->
-<div id="driveEmailLine" class="drive-email-line" style="display:none;">
-<i class="fas fa-envelope"></i>
-<span id="driveMenuEmail" class="drive-email-full"></span>
-</div>
-
-<!-- ✔ كتلة المزامنة التلقائية (جديدة) -->
-<div class="auto-sync-block">
-<div class="auto-sync-header">
-<span class="auto-sync-title"><i class="fas fa-sync-alt"></i> <span data-i18n="autoSyncTitle">المزامنة التلقائية</span></span>
-<label class="switch">
-<input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync(this.checked)" checked>
-<span class="slider"></span>
-</label>
-</div>
-<div id="autoSyncStatus" class="auto-sync-status" data-i18n="autoSyncReadyNotConnected">جاهزة — اتصل بـ Google Drive لتفعيلها</div>
-<button class="sync-now-btn" id="syncNowBtn" onclick="manualSyncNow()" data-i18n="syncNowBtn">مزامنة الآن</button>
-</div>
+<!-- ✔✔✔ مفتاح المزامنة التلقائية + سطر آخر تحديث (بدون زر مزامنة الآن) -->
+<div class="sidebar-switch-item"><i class="fas fa-sync-alt"></i><span>المزامنة التلقائية</span><label class="switch"><input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync(this.checked)"><span class="slider"></span></label></div>
+<div id="lastSyncLine" style="padding:0 20px 10px;font-size:0.8em;color:#888;">آخر تحديث: —</div>
 
 <div class="sidebar-divider"></div>
 <div class="sidebar-switch-item"><i class="fas fa-moon"></i><span data-i18n="darkMode">الوضع الليلي</span><label class="switch"><input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"><span class="slider"></span></label></div>
@@ -476,7 +353,6 @@
 </div>
 </div>
 
-<!-- ============ LOADING OVERLAY ============ -->
 <div id="loadingOverlay" class="loading-overlay">
 <div class="loading-spinner">
 <i class="fas fa-circle-notch spinner-icon"></i>
@@ -485,10 +361,8 @@
 </div>
 </div>
 
-<!-- ============ TOAST ============ -->
 <div id="toast" class="toast"></div>
 
-<!-- ============ SCRIPTS ============ -->
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script src="app.js"></script>
