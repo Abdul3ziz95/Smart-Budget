@@ -181,7 +181,7 @@
 <option value="🎓 رسوم تعليمية" data-i18n="debtTuition">🎓 رسوم تعليمية</option>
 <option value="🏥 مصاريف طبية مستحقة" data-i18n="debtMedical">🏥 مصاريف طبية مستحقة</option>
 <option value="🚗 تمويل السيارة" data-i18n="debtCarFinance">🚗 تمويل السيارة</option>
-<option value="👨‍👩 التزامات عائلية" data-i18n="debtFamily">👨‍👩 التزامات عائلية</option>
+<option value="👨‍ التزامات عائلية" data-i18n="debtFamily">👨‍👩 التزامات عائلية</option>
 <option value="📅 اشتراكات دورية" data-i18n="debtSubscriptions">📅 اشتراكات دورية</option>
 <option value="👨‍💼 رواتب" data-i18n="debtSalaries">👨‍💼 رواتب</option>
 <option value="أخرى" data-i18n="debtOther">📦 أخرى</option>
@@ -333,14 +333,8 @@
 <div id="appSidebar" class="sidebar">
 <div class="sidebar-header"><span data-i18n="menu">القائمة</span><button onclick="closeLayer('sidebar')"><i class="fas fa-times"></i></button></div>
 <div class="sidebar-content">
-<button class="sidebar-menu-item" onclick="openLanguageModal()"><i class="fas fa-globe"></i><span data-i18n="language">اللغة</span><span id="sidebarLanguageLabel" style="margin-right:auto;font-size:0.85em;color:#888;">🇸🇦 العربية</span></button>
-
+<button class="sidebar-menu-item" onclick="openLanguageModal()"><i class="fas fa-globe"></i><span data-i18n="language">اللغة</span><span id="sidebarLanguageLabel" style="margin-right:auto;font-size:0.85em;color:#888;">🇸 العربية</span></button>
 <button id="driveMenuItem" class="sidebar-menu-item drive-item" onclick="handleDriveClick()"><i class="fab fa-google-drive"></i><span id="driveMenuText" data-i18n="googleDrive">Google Drive</span><span id="driveStatusDot" class="drive-status-dot"></span><span id="driveMenuEmail" class="drive-email"></span><span id="driveLogoutBtn" class="drive-logout" onclick="event.stopPropagation();signOut();" data-i18n="signOut">تسجيل خروج</span></button>
-
-<!-- ✔✔✔ مفتاح المزامنة التلقائية + سطر آخر تحديث (بدون زر مزامنة الآن) -->
-<div class="sidebar-switch-item"><i class="fas fa-sync-alt"></i><span>المزامنة التلقائية</span><label class="switch"><input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync(this.checked)"><span class="slider"></span></label></div>
-<div id="lastSyncLine" style="padding:0 20px 10px;font-size:0.8em;color:#888;">آخر تحديث: —</div>
-
 <div class="sidebar-divider"></div>
 <div class="sidebar-switch-item"><i class="fas fa-moon"></i><span data-i18n="darkMode">الوضع الليلي</span><label class="switch"><input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()"><span class="slider"></span></label></div>
 <button class="sidebar-currency-item" onclick="openCurrencyModal()"><i class="fas fa-coins"></i><span data-i18n="changeCurrency">تغيير العملة</span><span id="sidebarCurrencyLabel" class="currency-label">﷼</span></button>
@@ -366,5 +360,6 @@
 <script src="https://apis.google.com/js/api.js"></script>
 <script src="https://accounts.google.com/gsi/client"></script>
 <script src="app.js"></script>
+<script src="sync.js"></script>
 </body>
 </html>
