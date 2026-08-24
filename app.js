@@ -170,7 +170,7 @@ const OPTION_I18N = {
     'راتب': 'incomeSalary', 'عمل حر': 'incomeFreelance', 'تجارة': 'incomeBusiness', 'استثمار': 'incomeInvestment', 'عمولة': 'incomeCommission', 'هدية': 'incomeGift', 'مكافأة': 'incomeBonus', 'الضمان الاجتماعي': 'incomeSocialSecurity', 'المعاش التقاعدي': 'incomePension', 'دخل آخر': 'incomeOther',
     'طعام': 'expenseFood', 'مواصلات': 'expenseTransport', 'وقود': 'expenseFuel', 'مقاهي': 'expenseCafe', 'رعاية شخصية': 'expensePersonalCare', 'أجهزة إلكترونية': 'expenseElectronics', 'صحة': 'expenseHealth', 'ترفيه': 'expenseEntertainment', 'تسوق': 'expenseShopping', 'تعليم': 'expenseEducation', 'صيانة وإصلاح': 'expenseMaintenance', 'أخرى': 'expenseOther',
     'بيع آجل': 'rightCreditSale', 'سلفة': 'rightLoan', 'إيجار مستحق': 'rightRentDue', 'شراكة': 'rightPartnership', 'حق آخر': 'rightOther',
-    '🏠 إيجار': 'debtRent', '💡 كهرباء': 'debtElectricity', '💧 ماء': 'debtWater', '💡 فواتير الخدمات': 'debtUtilities', '📱 الاتصالات والإنترنت': 'debtInternet', '🏦 قروض وتمويل': 'debtLoans', '👤 دين شخصي': 'debtPersonal', '🛒 مشتريات بالتقسيط': 'debtInstallments', '🎓 رسوم تعليمية': 'debtTuition', '🏥 مصاريف طبية مستحقة': 'debtMedical', '🚗 تمويل السيارة': 'debtCarFinance', '👨‍👩 التزامات عائلية': 'debtFamily', '📅 اشتراكات دورية': 'debtSubscriptions', '👨‍💼 رواتب': 'debtSalaries', '📦 أخرى': 'debtOther',
+    '🏠 إيجار': 'debtRent', '💡 كهرباء': 'debtElectricity', '💧 ماء': 'debtWater', '💡 فواتير الخدمات': 'debtUtilities', '📱 الاتصالات والإنترنت': 'debtInternet', '🏦 قروض وتمويل': 'debtLoans', '👤 دين شخصي': 'debtPersonal', '🛒 مشتريات بالتقسيط': 'debtInstallments', '🎓 رسوم تعليمية': 'debtTuition', '🏥 مصاريف طبية مستحقة': 'debtMedical', '🚗 تمويل السيارة': 'debtCarFinance', '👨‍ التزامات عائلية': 'debtFamily', '📅 اشتراكات دورية': 'debtSubscriptions', '👨‍💼 رواتب': 'debtSalaries', '📦 أخرى': 'debtOther',
     'مدفوع': 'statusPaid', 'مدفوع جزئياً': 'statusPartiallyPaid', 'غير مدفوع': 'statusUnpaid', 'متأخر': 'statusOverdue',
     '📂 فئة الدخل': 'incomeCategoryPlaceholder', '🛒 الفئة (نفقات متغيرة)': 'expenseCategoryPlaceholder', '🤝 نوع الحق': 'rightTypePlaceholder', '🧾 نوع الالتزام': 'debtTypePlaceholder', '✅ الحالة': 'statusPlaceholder', '⏱️ التنبيه قبل الاستحقاق (اختياري)': 'notifTimingPlaceholder',
     '⏱️ قبل ساعة': 'notif1Hour', '⏱️ قبل 24 ساعة': 'notif24Hours', '⏱️ قبل 7 أيام': 'notif7Days',
@@ -243,7 +243,7 @@ function applyTranslations(lang) {
     translatePlaceholders();
     translateAllOptions();
     const langLabel = document.getElementById('sidebarLanguageLabel');
-    if (langLabel) { const langNames = { ar: '🇸🇦 العربية', en: '🇬 English', ur: '🇵 اردو' }; langLabel.textContent = langNames[lang] || '🇸🇦 العربية'; }
+    if (langLabel) { const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' }; langLabel.textContent = langNames[lang] || '🇸 العربية'; }
     updateBalanceDisplay();
     updateStats();
     const logModal = document.getElementById('logModal'); if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
@@ -363,6 +363,7 @@ function initGis() {
                 } catch (e) {
                     console.error('Error getting user info:', e);
                     userEmail = '';
+                    hideLoading();
                     toastMsg(translate('loginError'), "error");
                 }
             },
@@ -387,6 +388,7 @@ async function createAppFolder() {
     } catch (error) { console.error('Error creating folder:', error); toastMsg(translate('folderCreateFailed'), "error"); }
 }
 
+// ✔ اتصال مباشر بدون شاشة «هل تريد عمل نسخة احتياطية؟»
 function handleDriveClick() {
     if (isDriveConnected) { openLayer('driveBackup'); return; }
     const savedToken = localStorage.getItem('drive_token');
@@ -697,18 +699,18 @@ function toastMsg(message, type = "info") {
 const ARABIC_CURRENCIES = [
     { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
     { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
-    { code: 'AED', symbol: 'د.إ', flag: '🇦🇪', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
+    { code: 'AED', symbol: 'د.إ', flag: '🇦', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
     { code: 'QAR', symbol: 'ر.ق', flag: '🇶🇦', name: { ar: 'الريال القطري', en: 'Qatari Riyal', ur: 'قطری ریال' } },
     { code: 'KWD', symbol: 'د.ك', flag: '🇰🇼', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
     { code: 'BHD', symbol: 'د.ب', flag: '🇧🇭', name: { ar: 'الدينار البحريني', en: 'Bahraini Dinar', ur: 'بحرینی دینار' } },
-    { code: 'OMR', symbol: 'ر.ع', flag: '🇴', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
+    { code: 'OMR', symbol: 'ر.ع', flag: '🇴🇲', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
     { code: 'YER', symbol: 'ر.ي', flag: '🇾🇪', name: { ar: 'الريال اليمني', en: 'Yemeni Rial', ur: 'یمنی ریال' } },
     { code: 'IQD', symbol: 'ع.د', flag: '🇮🇶', name: { ar: 'الدينار العراقي', en: 'Iraqi Dinar', ur: 'عراقی دینار' } },
     { code: 'JOD', symbol: 'د.أ', flag: '🇯🇴', name: { ar: 'الدينار الأردني', en: 'Jordanian Dinar', ur: 'اردنی دینار' } },
     { code: 'LBP', symbol: 'ل.ل', flag: '🇱🇧', name: { ar: 'الليرة اللبنانية', en: 'Lebanese Lira', ur: 'لبنانی لیرا' } },
     { code: 'SYP', symbol: 'ل.س', flag: '🇸🇾', name: { ar: 'الليرة السورية', en: 'Syrian Lira', ur: 'شامی لیرا' } },
     { code: 'ILS', symbol: '₪', flag: '🇵🇸', name: { ar: 'الشيكل الفلسطيني', en: 'Israeli Shekel', ur: 'اسرائیلی شیکل' } },
-    { code: 'EGP', symbol: 'ج.م', flag: '🇪🇬', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
+    { code: 'EGP', symbol: 'ج.م', flag: '🇪', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
     { code: 'LYD', symbol: 'ل.د', flag: '🇱🇾', name: { ar: 'الدينار الليبي', en: 'Libyan Dinar', ur: 'لیبیائی دینار' } },
     { code: 'TND', symbol: 'د.ت', flag: '🇹🇳', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
     { code: 'DZD', symbol: 'دج', flag: '🇩🇿', name: { ar: 'الدينار الجزائري', en: 'Algerian Dinar', ur: 'الجزائری دینار' } },
@@ -718,13 +720,13 @@ const ARABIC_CURRENCIES = [
     { code: 'DJF', symbol: 'ف.ج', flag: '🇩🇯', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
     { code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
     { code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
-    { code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
+    { code: 'USD', symbol: '$', flag: '🇺', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
     { code: 'EUR', symbol: '€', flag: '🇪🇺', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
     { code: 'BDT', symbol: '৳', flag: '🇧🇩', name: { ar: 'التاكا البنغلاديشي', en: 'Bangladeshi Taka', ur: 'بنگلادیشی ٹاکا' } },
-    { code: 'INR', symbol: '₹', flag: '🇮', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
-    { code: 'PKR', symbol: '₨', flag: '🇵', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
-    { code: 'PHP', symbol: '₱', flag: '🇵', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
-    { code: 'CNY', symbol: '¥', flag: '🇨🇳', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
+    { code: 'INR', symbol: '₹', flag: '🇮🇳', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
+    { code: 'PKR', symbol: '₨', flag: '🇵🇰', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
+    { code: 'PHP', symbol: '₱', flag: '🇵🇭', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
+    { code: 'CNY', symbol: '¥', flag: '🇨', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
 ];
 let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SAR')) || ARABIC_CURRENCIES[0];
 
@@ -939,7 +941,7 @@ function renderBalanceLog() {
         const color = isDep ? 'var(--success)' : (i.القيمة_الصافية < 0 ? 'var(--danger)' : '#999');
         const icon = isDep ? 'fa-arrow-up' : (i.القيمة_الصافية < 0 ? 'fa-arrow-down' : 'fa-minus');
         const displayAmount = (i.القيمة_الصافية < 0 ? '-' : '') + formatCurrency(Math.abs(i.المبلغ));
-        return `<div class="list-item" style="border-right-color:${color};"> <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;"> <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span> <span style="color:${color};">${displayAmount}</span> </div> <div class="details"> <span>${translate('balanceAfter')}: ${formatBalance(i.الرصيد_بعد_العملية)}</span> <span><i class="far fa-clock" style="margin-left:4px;"></i>${formatDateTime(i.التاريخ)}</span> </div> </div>`;
+        return `<div class="list-item" style="border-right-color:${color};"> <div style="font-weight:bold;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;"> <span><i class="fas ${icon}" style="margin-left:8px;color:${color};"></i> ${i.النوع}</span> <span style="color:${color};">${displayAmount}</span> </div> <div class="details"> <span>${translate('balanceAfter')}: ${formatBalance(i.الرصيد_بعد_العملية)}</span> <span><i class="far fa-clock" style="margin-left:4px;"></i> ${formatDateTime(i.التاريخ)}</span> </div> </div>`;
     }).join('');
 }
 
@@ -1054,7 +1056,7 @@ function updateDebtFields(type, currentData = null) {
     const amountInput = document.getElementById('dAmount');
     const statusSelect = document.getElementById('dStatus');
     const entityInput = document.getElementById('dEntity');
-    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
+    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍ رواتب', '💡 كهرباء', '💧 ماء'];
     if (entityTypes.includes(type)) {
         if (entityInput) {
             entityInput.style.display = 'block';
@@ -1105,89 +1107,6 @@ function updateDebtFields(type, currentData = null) {
     }
 }
 
-async function addDebt() {
-    const dType = document.getElementById('dType');
-    const dAmount = document.getElementById('dAmount');
-    const dEntity = document.getElementById('dEntity');
-    const dDueDate = document.getElementById('dDueDate');
-    const dDesc = document.getElementById('dDesc');
-    const dStatus = document.getElementById('dStatus');
-    if (!dType.value || !dDueDate.value) return toastMsg(translate('fillRequired'), "error");
-    const isEditing = editMode && editMode.type === 'deb';
-    const oldData = isEditing ? db.deb[editMode.index] : {};
-    const masterTypes = ['🏦 قروض وتمويل', '👤 دين شخصي', '🛒 مشتريات بالتقسيط', '🚗 تمويل السيارة'];
-    const isMaster = masterTypes.includes(dType.value);
-    const data = isEditing ? { ...oldData } : {};
-    data.clientId = isEditing ? oldData.clientId : `deb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    data.النوع = dType.value;
-    data.تاريخ_الاستحقاق = dDueDate.value;
-    data.الوصف = (dDesc && dDesc.value) ? dDesc.value : '—';
-    if (dEntity && dEntity.style.display !== 'none' && dEntity.value) data.الجهة = dEntity.value;
-    else data.الجهة = '—';
-    const dNotifTiming = document.getElementById('dNotifTiming');
-    data.وقت_التنبيه = dNotifTiming ? (dNotifTiming.value || '168') : '168';
-    let paidAmount = 0;
-    const oldPaid = isEditing ? parseAmount(oldData.المبلغ_المخصوم_للرصيد || 0) : 0;
-    if (isMaster) {
-        const totalInput = document.getElementById('dTotalAmount');
-        if (!totalInput || !totalInput.value) return toastMsg(translate('enterTotalAmount'), "error");
-        const total = parseAmount(totalInput.value);
-        if (total === 0) return toastMsg(translate('amountMustBePositive'), "error");
-        data.المبلغ_الكلي_للالتزام = getFormattedAmount(total);
-        let totalPaid = 0;
-        const isLoanOrInstallment = (dType.value === '🏦 قروض وتمويل' || dType.value === '🛒 مشتريات بالتقسيط' || dType.value === '🚗 تمويل السيارة');
-        if (isLoanOrInstallment) {
-            const installmentsInput = document.getElementById('dInstallments');
-            const paidInstallmentsInput = document.getElementById('dPaidInstallments');
-            if (!installmentsInput || !installmentsInput.value) return toastMsg(translate('enterInstallments'), "error");
-            const installments = parseInt(installmentsInput.value) || 0;
-            const paidInstallments = parseInt(paidInstallmentsInput ? paidInstallmentsInput.value : 0) || 0;
-            if (installments <= 0) return toastMsg(translate('installmentsPositive'), "error");
-            if (paidInstallments > installments) return toastMsg(translate('paidInstallmentsExceed'), "error");
-            const installmentVal = total / installments;
-            totalPaid = paidInstallments * installmentVal;
-            data.عدد_الاقساط = installments;
-            data.قيمة_القسط = getFormattedAmount(installmentVal);
-            data.الأقساط_المدفوعة = paidInstallments;
-        } else {
-            const paidInput = document.getElementById('dPaidAmount');
-            if (paidInput) totalPaid = parseAmount(paidInput.value);
-            if (totalPaid > total) return toastMsg(translate('paidExceedsTotalDebt'), "error");
-        }
-        data.إجمالي_المدفوع = getFormattedAmount(totalPaid);
-        data.المتبقي_للالتزام = getFormattedAmount(total - totalPaid);
-        data.المبلغ = '—';
-        data.الحالة = (total - totalPaid) <= 0 ? translate('statusPaid') : translate('statusPartiallyPaid');
-        paidAmount = totalPaid;
-    } else {
-        if (!dAmount.value || !dStatus.value) return toastMsg(translate('fillRequired'), "error");
-        const amt = parseAmount(dAmount.value);
-        if (amt === 0) return toastMsg(translate('amountMustBePositive'), "error");
-        data.المبلغ = getFormattedAmount(amt);
-        data.الحالة = dStatus.value;
-        if (dStatus.value === 'مدفوع جزئياً') {
-            const partialPaidInput = document.getElementById('dPartialPaidAmount');
-            if (!partialPaidInput || !partialPaidInput.value) return toastMsg(translate('enterPartialPaid'), "error");
-            const partialPaid = parseAmount(partialPaidInput.value);
-            if (partialPaid <= 0) return toastMsg(translate('partialPaidPositive'), "error");
-            if (partialPaid >= amt) return toastMsg(translate('partialPaidLessThanTotal'), "error");
-            paidAmount = partialPaid;
-            data.المبلغ_المدفوع_جزئياً = getFormattedAmount(partialPaid);
-        } else if (dStatus.value === 'مدفوع' || dStatus.value === 'مدفوع بالكامل') { paidAmount = amt; }
-        else { paidAmount = 0; }
-        delete data.المبلغ_الكلي_للالتزام;
-        delete data.إجمالي_المدفوع;
-        delete data.المتبقي_للالتزام;
-        delete data.عدد_الاقساط;
-        delete data.قيمة_القسط;
-        delete data.الأقساط_المدفوعة;
-        if (dStatus.value !== 'مدفوع جزئياً') { delete data.المبلغ_المدفوع_جزئياً; }
-    }
-    data.المبلغ_المخصوم_للرصيد = paidAmount;
-    const oldNetChange = isEditing ? -oldPaid : 0;
-    try {
-        await saveData('deb', data);
-        await processBalanceChange(paidAmount, 'debt_payment', `${translate('debtLogPrefix')}: ${translateStoredValue
 async function addDebt() {
     const dType = document.getElementById('dType');
     const dAmount = document.getElementById('dAmount');
@@ -2022,6 +1941,7 @@ loadDarkModePreference();
 (function(){
 if (window.__smartSuiteLoaded) return; window.__smartSuiteLoaded = true;
 
+// ---------- أدوات الضغط (gzip مع fallback) ----------
 async function compressText(str){
   if (!('CompressionStream' in window)) return { bin:false, out:str };
   try{
@@ -2043,6 +1963,7 @@ async function decompressAuto(input){
   if (typeof input==='string' && !isGz) return input;
   return new TextDecoder().decode(buf);
 }
+// تنزيل متوافق مع Capacitor (مشاركة إن توفرت وإلا تنزيل عادي)
 function downloadFile(name, blob){
   function anchor(){ const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); }
   try{
@@ -2052,6 +1973,7 @@ function downloadFile(name, blob){
   }catch(e){ anchor(); }
 }
 
+// ---------- سلة المحذوفات (5 نسخ مضغوطة) ----------
 const TRASH_KEY='smartTrash', TRASH_MAX=5;
 function getTrash(){ try{ return JSON.parse(localStorage.getItem(TRASH_KEY)||'[]'); }catch(e){ return []; } }
 function setTrash(t){ localStorage.setItem(TRASH_KEY, JSON.stringify(t)); }
@@ -2079,15 +2001,15 @@ function openTrash(){ if(!LAYERS['trash']) LAYERS['trash']={elementId:'trashModa
 function renderTrash(){
   const el=document.getElementById('trashList'); if(!el) return;
   const t=getTrash();
-  if(!t.length){ el.innerHTML='<p style="text-align:center;color:#999;padding:30px 0;">🗑️ '+translate('trashEmpty')+'</p>'; return; }
+  if(!t.length){ el.innerHTML='<p style="text-align:center;color:#999;padding:30px 0;">🗑️ سلة المحذوفات فارغة</p>'; return; }
   el.innerHTML = t.map(it=>{
     const d=new Date(it.date);
     const size = it.bin ? Math.max(1,Math.round(it.comp.length*0.75/1024)) : Math.max(1,Math.round(it.raw/1024));
     return `<div class="list-item" style="border-right-color:var(--warning);">
-      <div style="font-weight:bold;display:flex;justify-content:space-between;"><span>🗑️ ${translate('trashTitle')}</span><span style="color:#888;font-size:0.8em;">${size}KB</span></div>
+      <div style="font-weight:bold;display:flex;justify-content:space-between;"><span>🗑️ نسخة محذوفة</span><span style="color:#888;font-size:0.8em;">${size}KB</span></div>
       <div class="details"><span>${d.toLocaleString('ar',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</span>
-      <span><button class="secondary" style="width:auto;padding:4px 10px;" onclick="restoreTrash(${it.id})">${translate('restoreTrash')}</button>
-      <button class="secondary" style="width:auto;padding:4px 10px;color:var(--danger);" onclick="deleteTrash(${it.id})">${translate('deleteTrash')}</button></span></div></div>`;
+      <span><button class="secondary" style="width:auto;padding:4px 10px;" onclick="restoreTrash(${it.id})">استعادة</button>
+      <button class="secondary" style="width:auto;padding:4px 10px;color:var(--danger);" onclick="deleteTrash(${it.id})">حذف</button></span></div></div>`;
   }).join('');
 }
 window.restoreTrash = async function(id){
@@ -2103,14 +2025,14 @@ window.restoreTrash = async function(id){
 };
 window.deleteTrash = function(id){ setTrash(getTrash().filter(x=>x.id!==id)); renderTrash(); };
 
+// ---------- المزامنة الحيّة ----------
 const SYNC_NAME='ميزانيتك_الذكية_مزامنة.json';
 let deviceId=localStorage.getItem('deviceId');
 if(!deviceId){ deviceId='dev-'+Date.now()+'-'+Math.random().toString(36).substr(2,6); localStorage.setItem('deviceId',deviceId); }
 let autoSync=localStorage.getItem('autoSyncEnabled')!=='false';
 let lastSync=localStorage.getItem('lastSyncTimestamp')||null;
 let liveSeenTs=null;
-let lastPushedId=null;
-function liveData(){ const lc=(db.bal&&db.bal.changes&&db.bal.changes[0])||null; return { dev:deviceId, t:Date.now(), lastChangeId: lc?lc.id:null, lastChange: lc, data:{exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency} }; }
+function liveData(){ return JSON.stringify({dev:deviceId,t:Date.now(),data:{exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency}}); }
 async function liveFind(){
   if(!isDriveConnected||!accessToken) return null;
   const q=encodeURIComponent("name='"+SYNC_NAME+"' and trashed=false");
@@ -2118,89 +2040,79 @@ async function liveFind(){
   if(!r.ok) return null; const j=await r.json(); return (j.files&&j.files[0])||null;
 }
 function fmtLast(){ const el=document.getElementById('lastSyncLine'); if(!el)return;
-  if(lastSync){ const d=new Date(parseInt(lastSync)); el.textContent=translate('lastSyncLabel')+': '+d.toLocaleString('ar',{hour:'numeric',minute:'2-digit',day:'numeric',month:'short'}); }
-  else el.textContent=translate('lastSyncNever'); }
+  if(lastSync){ const d=new Date(parseInt(lastSync)); el.textContent='آخر تحديث: '+d.toLocaleString('ar',{hour:'numeric',minute:'2-digit',day:'numeric',month:'short'}); }
+  else el.textContent='آخر تحديث: —'; }
 function markSynced(){ lastSync=Date.now(); localStorage.setItem('lastSyncTimestamp',String(lastSync)); fmtLast(); }
 async function pushSync(){
   if(!autoSync||!isDriveConnected||!accessToken) return;
   try{
-    const f=await liveFind(); const body=JSON.stringify(liveData());
+    const f=await liveFind(); const body=liveData();
     if(f){ await fetch('https://www.googleapis.com/upload/drive/v3/files/'+f.id+'?uploadType=media',{method:'PATCH',headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},body}); }
     else{ const form=new FormData(); form.append('metadata',new Blob([JSON.stringify({name:SYNC_NAME,mimeType:'application/json'})],{type:'application/json'})); form.append('file',new Blob([body],{type:'application/json'})); await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Authorization':'Bearer '+accessToken},body:form}); }
-    lastPushedId=(db.bal&&db.bal.changes&&db.bal.changes[0])?db.bal.changes[0].id:null;
     markSynced();
   }catch(e){ console.log('pushSync:',e); }
 }
-async function applyRemote(file){
-  if(recCount()>0) await trashPush();
-  await applyImported(file.data);
-  liveSeenTs=file.lastChangeId; lastPushedId=file.lastChangeId; markSynced();
-}
-function notifyAction(file){
-  const lc=file.lastChange;
-  if(!lc){ toastMsg(translate('syncNewAction'),'info'); return; }
-  const amt=(lc.القيمة_الصافية<0?'-':'')+Math.abs(lc.المبلغ||0).toLocaleString('en-US')+' '+currentCurrency.symbol;
-  toastMsg(translate('syncNewAction')+' '+lc.النوع+' ('+amt+')','info');
-}
-function showConflict(file){
-  let m=document.getElementById('syncConflictModal');
-  if(!m){
-    m=document.createElement('div'); m.id='syncConflictModal'; m.className='modal';
-    m.innerHTML='<header><button onclick="closeLayer(\'syncConflict\')"><i class="fas fa-times"></i></button><div class="title">'+translate('conflictTitle')+'</div></header>'+
-      '<div class="modal-content"><p id="syncConflictMsg" style="line-height:1.8;font-weight:700;margin-bottom:16px;"></p>'+
-      '<button class="action" id="scRemote">'+translate('conflictRemote')+'</button>'+
-      '<button class="secondary" id="scLocal">'+translate('conflictLocal')+'</button></div>';
-    document.body.appendChild(m);
-    if(!window.LAYERS['syncConflict']) window.LAYERS['syncConflict']={elementId:'syncConflictModal',type:'modal'};
-  }
-  const lc=file.lastChange;
-  const amt=lc?((lc.القيمة_الصافية<0?'-':'')+Math.abs(lc.المبلغ||0).toLocaleString('en-US')+' '+currentCurrency.symbol):'';
-  document.getElementById('syncConflictMsg').textContent=translate('syncNewAction')+' '+(lc?lc.النوع+' ('+amt+')':'');
-  document.getElementById('scRemote').onclick=async function(){ await applyRemote(file); closeLayer('syncConflict'); toastMsg(translate('dataRestored'),'success'); pushSync(); };
-  document.getElementById('scLocal').onclick=async function(){ closeLayer('syncConflict'); await pushSync(); toastMsg(translate('syncEnabled'),'success'); };
-  openLayer('syncConflict');
+async function applyRemote(remote){
+  if(recCount()>0) await trashPush(); // حماية: احفظ الحالي في السلة قبل الاستبدال
+  await applyImported(remote.data);
 }
 async function pullSync(){
   if(!autoSync||!isDriveConnected||!accessToken) return;
   try{
     const f=await liveFind(); if(!f) return;
-    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media',{headers:{'Authorization':'Bearer '+accessToken}});
-    if(!r.ok) return;
-    const file=JSON.parse(await r.text());
-    const localNew=(db.bal&&db.bal.changes&&db.bal.changes[0])? (db.bal.changes[0].id!==lastPushedId) : false;
-    const remoteNew=file.lastChangeId && file.lastChangeId!==liveSeenTs;
-    if(file.dev!==deviceId && remoteNew){
-      if(localNew){ showConflict(file); return; }
-      await applyRemote(file);
-      notifyAction(file);
-    } else if(localNew){ await pushSync(); }
-    else { liveSeenTs=file.lastChangeId||liveSeenTs; fmtLast(); }
+    const ts=new Date(f.modifiedTime).getTime();
+    if(liveSeenTs===null){ liveSeenTs=ts; return; }
+    if(ts>liveSeenTs+2000){
+      liveSeenTs=ts;
+      const r=await fetch('https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media',{headers:{'Authorization':'Bearer '+accessToken}});
+      if(!r.ok) return;
+      const remote=JSON.parse(await r.text());
+      if(remote.dev===deviceId) return;
+      toastMsg('🔄 تعديل جديد من جهاز آخر — جارٍ التحديث...','info');
+      await applyRemote(remote); markSynced();
+      toastMsg('✅ تم تحديث بياناتك بآخر التغييرات','success');
+    }
   }catch(e){ console.log('pullSync:',e); }
 }
+async function initialSyncCheck(){
+  if(!autoSync||!isDriveConnected||!accessToken) return;
+  try{
+    const f=await liveFind();
+    if(!f){ if(recCount()>0) pushSync(); return; }
+    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media',{headers:{'Authorization':'Bearer '+accessToken}});
+    if(!r.ok) return;
+    const remote=JSON.parse(await r.text());
+    const rc=(remote.data.exp?remote.data.exp.length:0)+(remote.data.rig?remote.data.rig.length:0)+(remote.data.deb?remote.data.deb.length:0)+(remote.data.inc?remote.data.inc.length:0);
+    if(recCount()===0 && rc>0 && remote.dev!==deviceId){ toastMsg('☁️ وُجدت بياناتك على جهاز آخر — جارٍ الاستعادة...','info'); await applyImported(remote.data); toastMsg('✅ تم استعادة بياناتك','success'); }
+    liveSeenTs=new Date(f.modifiedTime).getTime(); markSynced();
+  }catch(e){ console.log('initialSyncCheck:',e); }
+}
 
-function injectUI(){
+// ---------- حقن الواجهة (مفتاح المزامنة + آخر تحديث + سلة المحذوفات) ----------
+function injectSyncUI(){
   const driveBtn=document.getElementById('driveMenuItem'); if(!driveBtn) return;
   if(!document.getElementById('autoSyncToggle')){
     const row=document.createElement('div'); row.className='sidebar-switch-item';
-    row.innerHTML='<i class="fas fa-sync-alt"></i><span>'+translate('autoSyncTitle')+'</span><label class="switch"><input type="checkbox" id="autoSyncToggle"><span class="slider"></span></label>';
+    row.innerHTML='<i class="fas fa-sync-alt"></i><span>المزامنة التلقائية</span><label class="switch"><input type="checkbox" id="autoSyncToggle"><span class="slider"></span></label>';
     driveBtn.insertAdjacentElement('afterend',row);
     const line=document.createElement('div'); line.id='lastSyncLine'; line.style.cssText='padding:0 20px 10px;font-size:0.8em;color:#888;';
     row.insertAdjacentElement('afterend',line);
     const t=row.querySelector('#autoSyncToggle'); t.checked=autoSync;
-    t.onchange=function(){ autoSync=t.checked; localStorage.setItem('autoSyncEnabled',t.checked?'true':'false'); fmtLast(); if(t.checked&&isDriveConnected)pushSync(); toastMsg(t.checked?translate('syncEnabled'):translate('syncDisabled'),'info'); };
+    t.onchange=function(){ autoSync=t.checked; localStorage.setItem('autoSyncEnabled',t.checked?'true':'false'); fmtLast(); if(t.checked&&isDriveConnected)pushSync(); toastMsg(t.checked?'🔄 تم تفعيل المزامنة التلقائية':'⏸️ تم إيقاف المزامنة التلقائية','info'); };
   }
   if(!document.getElementById('trashBtn')){
     const line=document.getElementById('lastSyncLine');
     const b=document.createElement('button'); b.className='sidebar-menu-item'; b.id='trashBtn';
-    b.innerHTML='<i class="fas fa-trash-alt"></i><span>'+translate('trashTitle')+'</span>'; b.onclick=openTrash;
+    b.innerHTML='<i class="fas fa-trash-alt"></i><span>سلة المحذوفات</span>'; b.onclick=openTrash;
     if(line) line.insertAdjacentElement('afterend',b); else driveBtn.insertAdjacentElement('afterend',b);
     const m=document.createElement('div'); m.id='trashModal'; m.className='modal';
-    m.innerHTML='<header><button onclick="closeLayer(\'trash\')"><i class="fas fa-times"></i></button><div class="title">🗑️ '+translate('trashTitle')+'</div></header><div class="modal-content"><div id="trashList"></div></div>';
+    m.innerHTML='<header><button onclick="closeLayer(\'trash\')"><i class="fas fa-times"></i></button><div class="title">🗑️ سلة المحذوفات</div></header><div class="modal-content"><div id="trashList"></div></div>';
     document.body.appendChild(m);
   }
   fmtLast();
 }
 
+// ---------- تجاوزات: تصدير/نسخ/استيراد مضغوط + حماية الحذف ----------
 const _reset=window.resetAllData;
 window.resetAllData=async function(){ if(recCount()>0) await trashPush(); return _reset.apply(this,arguments); };
 const _export=window.performExport;
@@ -2214,7 +2126,6 @@ window.performExport=async function(){
   else downloadFile(name+'.json', new Blob([json],{type:'application/json'}));
   toastMsg(translate('exportSuccess'),'success');
 };
-const _backup=window.performBackup;
 window.performBackup=async function(){
   if(!isDriveConnected){ toastMsg(translate('driveNotConnected'),'error'); return; }
   showLoading(translate('savingBackup'));
@@ -2230,7 +2141,6 @@ window.performBackup=async function(){
     hideLoading(); toastMsg(translate('backupSaved'),'success'); loadBackupList();
   }catch(e){ hideLoading(); toastMsg(translate('backupFailed'),'error'); }
 };
-const _restore=window.restoreBackup;
 window.restoreBackup=async function(fileId){
   if(!confirm(translate('confirmRestore'))) return;
   showLoading(translate('restoringData'));
@@ -2243,7 +2153,6 @@ window.restoreBackup=async function(fileId){
     hideLoading(); toastMsg(translate('dataRestored'),'success'); loadBackupList(); pushSync();
   }catch(e){ hideLoading(); toastMsg(translate('restoreFailed'),'error'); }
 };
-const _import=window.importData;
 window.importData=function(event){
   const file=event.target.files[0]; if(!file) return;
   if(!confirm(translate('confirmImport'))){ event.target.value=null; return; }
@@ -2258,13 +2167,15 @@ window.importData=function(event){
   reader.readAsArrayBuffer(file);
 };
 
-const _psc=window.postSaveCleanup; window.postSaveCleanup=function(){ const r=_psc.apply(this,arguments); lastPushedId=(db.bal&&db.bal.changes&&db.bal.changes[0])?db.bal.changes[0].id:null; pushSync(); return r; };
+// ---------- ربط الدفع/الحذف بالمزامنة + تشغيل ----------
+const _psc=window.postSaveCleanup; window.postSaveCleanup=function(){ const r=_psc.apply(this,arguments); pushSync(); return r; };
 const _dt=window.deleteTransaction; window.deleteTransaction=async function(){ const r=await _dt.apply(this,arguments); pushSync(); return r; };
 const _pb=window.processBalanceAction; window.processBalanceAction=async function(){ const r=await _pb.apply(this,arguments); pushSync(); return r; };
-const _osb=window.openSidebar; window.openSidebar=function(){ if(_osb)_osb(); injectUI(); };
-const _udui=window.updateDriveUI; window.updateDriveUI=function(){ _udui(); injectUI(); if(isDriveConnected && !window.__pollStarted){ window.__pollStarted=true; setInterval(pullSync,10000); } };
+const _osb=window.openSidebar; window.openSidebar=function(){ if(_osb)_osb(); injectSyncUI(); };
+const _udui=window.updateDriveUI; window.updateDriveUI=function(){ _udui(); injectSyncUI(); if(isDriveConnected) initialSyncCheck(); };
 
-setTimeout(function(){ injectUI(); fmtLast(); }, 1500);
+setInterval(pullSync, 25000);
+setTimeout(function(){ injectSyncUI(); fmtLast(); }, 1500);
 })();
 
 // =============================================================
@@ -2289,5 +2200,3 @@ window.onload = () => {
     setTimeout(() => { initGapi(); initGis(); restoreDriveState(); }, 1000);
 };
 console.log('ميزانيتك الذكية جاهزة ✅');
-
-                                                                                                 
