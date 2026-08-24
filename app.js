@@ -1,5 +1,5 @@
 // =============================================================
-// 0. GOOGLE DRIVE CONFIGURATION + SYNC SETTINGS
+// 0. GOOGLE DRIVE CONFIGURATION
 // =============================================================
 const CLIENT_ID = '110105567176-h191ogi1tl0bevvk0vo8jvnbf47re5q1.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -14,8 +14,6 @@ let gapiInitAttempts = 0;
 let gisInitAttempts = 0;
 const MAX_INIT_ATTEMPTS = 10;
 let tokenRefreshInterval = null;
-let autoSyncEnabled = localStorage.getItem('autoSyncEnabled') !== 'false';
-let lastSyncTimestamp = localStorage.getItem('lastSyncTimestamp') || null;
 
 // =============================================================
 // 1. INDEXED DB SETUP
@@ -31,6 +29,7 @@ let currentLog = '', editMode = null, balanceActionType = null;
 let selectedImageFile = null;
 let logFilters = { cat: 'all', status: 'all', period: 'all' };
 let balanceFilters = { type: 'all' };
+let statsPeriodFilter = localStorage.getItem('statsPeriodFilter') || 'all';
 
 // =============================================================
 // 2. NAVIGATION / LAYERS
@@ -78,10 +77,7 @@ function _visualOpen(layerName, data = {}) {
         }
         else if (layerName === 'currency') { const s = document.getElementById('currencySearch'); if (s) s.value = ''; renderCurrencyList(); }
         else if (layerName === 'balanceLog') { buildBalanceFilters(); renderBalanceLog(); }
-        else if (layerName === 'driveBackup') {
-            renderDriveBackupList();
-            if (isDriveConnected && accessToken && appFolderId) loadBackupList();
-        }
+        else if (layerName === 'driveBackup') { renderDriveBackupList(); if (isDriveConnected && accessToken && appFolderId) loadBackupList(); }
         else if (layerName === 'exportName') { const f = document.getElementById('exportFileName'); if (f) { f.value = translate('defaultFileName'); f.focus(); f.select(); } }
         else if (layerName === 'language') { updateLanguageModalCheckmarks(); }
         else if (layerName === 'notifications') { cleanupExpiredReads(); renderNotifications(); }
@@ -174,7 +170,7 @@ const OPTION_I18N = {
     'راتب': 'incomeSalary', 'عمل حر': 'incomeFreelance', 'تجارة': 'incomeBusiness', 'استثمار': 'incomeInvestment', 'عمولة': 'incomeCommission', 'هدية': 'incomeGift', 'مكافأة': 'incomeBonus', 'الضمان الاجتماعي': 'incomeSocialSecurity', 'المعاش التقاعدي': 'incomePension', 'دخل آخر': 'incomeOther',
     'طعام': 'expenseFood', 'مواصلات': 'expenseTransport', 'وقود': 'expenseFuel', 'مقاهي': 'expenseCafe', 'رعاية شخصية': 'expensePersonalCare', 'أجهزة إلكترونية': 'expenseElectronics', 'صحة': 'expenseHealth', 'ترفيه': 'expenseEntertainment', 'تسوق': 'expenseShopping', 'تعليم': 'expenseEducation', 'صيانة وإصلاح': 'expenseMaintenance', 'أخرى': 'expenseOther',
     'بيع آجل': 'rightCreditSale', 'سلفة': 'rightLoan', 'إيجار مستحق': 'rightRentDue', 'شراكة': 'rightPartnership', 'حق آخر': 'rightOther',
-    '🏠 إيجار': 'debtRent', '💡 كهرباء': 'debtElectricity', '💧 ماء': 'debtWater', '💡 فواتير الخدمات': 'debtUtilities', '📱 الاتصالات والإنترنت': 'debtInternet', '🏦 قروض وتمويل': 'debtLoans', '👤 دين شخصي': 'debtPersonal', '🛒 مشتريات بالتقسيط': 'debtInstallments', '🎓 رسوم تعليمية': 'debtTuition', '🏥 مصاريف طبية مستحقة': 'debtMedical', '🚗 تمويل السيارة': 'debtCarFinance', '👨‍👩 التزامات عائلية': 'debtFamily', '📅 اشتراكات دورية': 'debtSubscriptions', '👨‍💼 رواتب': 'debtSalaries', '📦 أخرى': 'debtOther',
+    '🏠 إيجار': 'debtRent', '💡 كهرباء': 'debtElectricity', '💧 ماء': 'debtWater', '💡 فواتير الخدمات': 'debtUtilities', '📱 الاتصالات والإنترنت': 'debtInternet', '🏦 قروض وتمويل': 'debtLoans', '👤 دين شخصي': 'debtPersonal', '🛒 مشتريات بالتقسيط': 'debtInstallments', '🎓 رسوم تعليمية': 'debtTuition', '🏥 مصاريف طبية مستحقة': 'debtMedical', '🚗 تمويل السيارة': 'debtCarFinance', '👨‍ التزامات عائلية': 'debtFamily', '📅 اشتراكات دورية': 'debtSubscriptions', '👨‍💼 رواتب': 'debtSalaries', '📦 أخرى': 'debtOther',
     'مدفوع': 'statusPaid', 'مدفوع جزئياً': 'statusPartiallyPaid', 'غير مدفوع': 'statusUnpaid', 'متأخر': 'statusOverdue',
     '📂 فئة الدخل': 'incomeCategoryPlaceholder', '🛒 الفئة (نفقات متغيرة)': 'expenseCategoryPlaceholder', '🤝 نوع الحق': 'rightTypePlaceholder', '🧾 نوع الالتزام': 'debtTypePlaceholder', '✅ الحالة': 'statusPlaceholder', '⏱️ التنبيه قبل الاستحقاق (اختياري)': 'notifTimingPlaceholder',
     '⏱️ قبل ساعة': 'notif1Hour', '⏱️ قبل 24 ساعة': 'notif24Hours', '⏱️ قبل 7 أيام': 'notif7Days',
@@ -247,10 +243,9 @@ function applyTranslations(lang) {
     translatePlaceholders();
     translateAllOptions();
     const langLabel = document.getElementById('sidebarLanguageLabel');
-    if (langLabel) { const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' }; langLabel.textContent = langNames[lang] || '🇸🇦 العربية'; }
+    if (langLabel) { const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' }; langLabel.textContent = langNames[lang] || '🇸 العربية'; }
     updateBalanceDisplay();
     updateStats();
-    updateLastSyncLine();
     const logModal = document.getElementById('logModal'); if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
     const balanceLogModal = document.getElementById('balanceLogModal'); if (balanceLogModal && balanceLogModal.style.display === 'flex') { buildBalanceFilters(); renderBalanceLog(); }
     const driveBackupModal = document.getElementById('driveBackupModal'); if (driveBackupModal && driveBackupModal.style.display === 'flex') renderDriveBackupList();
@@ -276,7 +271,7 @@ function updateLanguageModalCheckmarks() {
 }
 
 // =============================================================
-// 4. GOOGLE DRIVE API FUNCTIONS (اتصال مباشر بدون شاشة تأكيد)
+// 4. GOOGLE DRIVE API (اتصال مباشر بدون شاشة تأكيد)
 // =============================================================
 function startTokenRefresh() {
     if (tokenRefreshInterval) { clearInterval(tokenRefreshInterval); }
@@ -298,14 +293,14 @@ function restoreDriveState() {
         if (expiry > now) {
             accessToken = savedToken; userEmail = savedEmail; appFolderId = savedFolderId || null;
             isDriveConnected = true;
-            updateDriveUI(); updateAutoSyncUI(); startTokenRefresh();
-            setTimeout(() => { if (accessToken) { loadBackupList(); verifyTokenValidity(); initialSyncCheck(); } }, 1000);
+            updateDriveUI(); startTokenRefresh();
+            setTimeout(() => { if (accessToken) { loadBackupList(); verifyTokenValidity(); } }, 1000);
         } else {
             console.log('Token expired, attempting to refresh...');
             if (tokenClient) { tokenClient.requestAccessToken({ prompt: '' }); }
             else { setTimeout(() => { if (tokenClient) { tokenClient.requestAccessToken({ prompt: '' }); } }, 2000); }
         }
-    } else { updateAutoSyncUI(); }
+    }
 }
 
 async function verifyTokenValidity() {
@@ -359,13 +354,12 @@ function initGis() {
                     localStorage.setItem('drive_email', userEmail);
                     await createAppFolder();
                     isDriveConnected = true;
-                    updateDriveUI(); updateAutoSyncUI();
+                    updateDriveUI();
                     hideLoading();
                     toastMsg(translate('driveConnected'), "success");
                     startTokenRefresh();
                     await loadBackupList();
                     openLayer('driveBackup');
-                    initialSyncCheck();
                 } catch (e) {
                     console.error('Error getting user info:', e);
                     userEmail = '';
@@ -394,7 +388,7 @@ async function createAppFolder() {
     } catch (error) { console.error('Error creating folder:', error); toastMsg(translate('folderCreateFailed'), "error"); }
 }
 
-// ✔✔✔ الاتصال المباشر: بدون شاشة «هل تريد عمل نسخة احتياطية؟»
+// ✔ اتصال مباشر بدون شاشة «هل تريد عمل نسخة احتياطية؟»
 function handleDriveClick() {
     if (isDriveConnected) { openLayer('driveBackup'); return; }
     const savedToken = localStorage.getItem('drive_token');
@@ -404,20 +398,15 @@ function handleDriveClick() {
         userEmail = localStorage.getItem('drive_email') || '';
         appFolderId = localStorage.getItem('drive_folder_id') || null;
         isDriveConnected = true;
-        updateDriveUI(); updateAutoSyncUI(); startTokenRefresh();
+        updateDriveUI(); startTokenRefresh();
         openLayer('driveBackup');
         loadBackupList();
-        initialSyncCheck();
         return;
     }
     if (!tokenClient) { toastMsg(translate('loadingAuth'), "info"); return; }
     showLoading(translate('loadingAuth'));
     tokenClient.requestAccessToken({ prompt: 'consent' });
 }
-
-// توافُق مع أي رابط قديم (لم تعد تُستخدم من الواجهة الجديدة)
-function handleBackupConfirm() { handleDriveClick(); }
-function handleViewBackups() { handleDriveClick(); }
 
 function handleDriveBackup() { if (!isDriveConnected) { toastMsg(translate('driveNotConnected'), "error"); return; } performBackup(); }
 
@@ -430,7 +419,7 @@ function signOut() {
     localStorage.removeItem('drive_folder_id');
     localStorage.removeItem('drive_token_expiry');
     isDriveConnected = false; userEmail = ''; appFolderId = null; backupFiles = [];
-    updateDriveUI(); updateAutoSyncUI();
+    updateDriveUI();
     toastMsg(translate('signedOut'), "info");
 }
 
@@ -564,7 +553,6 @@ async function restoreBackup(fileId) {
         toastMsg(translate('dataRestored'), "success");
         await loadBackupList();
         renderDriveBackupList();
-        pushSync();
     } catch (error) {
         hideLoading();
         console.error('Error restoring backup:', error);
@@ -617,9 +605,8 @@ async function importData(event) {
     reader.onload = async (e) => {
         try {
             const imported = JSON.parse(e.target.result);
-            await clearAllStores();
-            if (imported.bal && Array.isArray(imported.bal.changes)) { imported.bal.clientId = 1; await bulkAddToStore('bal', [imported.bal]); }
-            for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await bulkAddToStore(sn, imported[sn]); }
+            if (imported.bal && Array.isArray(imported.bal.changes)) { imported.bal.clientId = 1; await addDataToStore('bal', [imported.bal]); }
+            for (const sn of ['exp', 'rig', 'deb', 'inc']) { if (imported[sn] && Array.isArray(imported[sn])) await addDataToStore(sn, imported[sn]); }
             if (imported.currency) {
                 currentCurrency = imported.currency;
                 localStorage.setItem('currencyCode', currentCurrency.code);
@@ -631,7 +618,6 @@ async function importData(event) {
             updateStats();
             updateBalanceDisplay();
             toastMsg(translate('importSuccess'), "success");
-            pushSync();
         } catch (err) {
             hideLoading();
             toastMsg(translate('importFailed'), "error");
@@ -713,7 +699,7 @@ function toastMsg(message, type = "info") {
 const ARABIC_CURRENCIES = [
     { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
     { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
-    { code: 'AED', symbol: 'د.إ', flag: '🇦🇪', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
+    { code: 'AED', symbol: 'د.إ', flag: '🇦', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
     { code: 'QAR', symbol: 'ر.ق', flag: '🇶🇦', name: { ar: 'الريال القطري', en: 'Qatari Riyal', ur: 'قطری ریال' } },
     { code: 'KWD', symbol: 'د.ك', flag: '🇰🇼', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
     { code: 'BHD', symbol: 'د.ب', flag: '🇧🇭', name: { ar: 'الدينار البحريني', en: 'Bahraini Dinar', ur: 'بحرینی دینار' } },
@@ -724,7 +710,7 @@ const ARABIC_CURRENCIES = [
     { code: 'LBP', symbol: 'ل.ل', flag: '🇱🇧', name: { ar: 'الليرة اللبنانية', en: 'Lebanese Lira', ur: 'لبنانی لیرا' } },
     { code: 'SYP', symbol: 'ل.س', flag: '🇸🇾', name: { ar: 'الليرة السورية', en: 'Syrian Lira', ur: 'شامی لیرا' } },
     { code: 'ILS', symbol: '₪', flag: '🇵🇸', name: { ar: 'الشيكل الفلسطيني', en: 'Israeli Shekel', ur: 'اسرائیلی شیکل' } },
-    { code: 'EGP', symbol: 'ج.م', flag: '🇪🇬', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
+    { code: 'EGP', symbol: 'ج.م', flag: '🇪', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
     { code: 'LYD', symbol: 'ل.د', flag: '🇱🇾', name: { ar: 'الدينار الليبي', en: 'Libyan Dinar', ur: 'لیبیائی دینار' } },
     { code: 'TND', symbol: 'د.ت', flag: '🇹🇳', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
     { code: 'DZD', symbol: 'دج', flag: '🇩🇿', name: { ar: 'الدينار الجزائري', en: 'Algerian Dinar', ur: 'الجزائری دینار' } },
@@ -734,13 +720,13 @@ const ARABIC_CURRENCIES = [
     { code: 'DJF', symbol: 'ف.ج', flag: '🇩🇯', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
     { code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
     { code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
-    { code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
+    { code: 'USD', symbol: '$', flag: '🇺', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
     { code: 'EUR', symbol: '€', flag: '🇪🇺', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
     { code: 'BDT', symbol: '৳', flag: '🇧🇩', name: { ar: 'التاكا البنغلاديشي', en: 'Bangladeshi Taka', ur: 'بنگلادیشی ٹاکا' } },
     { code: 'INR', symbol: '₹', flag: '🇮🇳', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
-    { code: 'PKR', symbol: '₨', flag: '🇵', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
+    { code: 'PKR', symbol: '₨', flag: '🇵🇰', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
     { code: 'PHP', symbol: '₱', flag: '🇵🇭', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
-    { code: 'CNY', symbol: '¥', flag: '🇨🇳', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
+    { code: 'CNY', symbol: '¥', flag: '🇨', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
 ];
 let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SAR')) || ARABIC_CURRENCIES[0];
 
@@ -1070,7 +1056,7 @@ function updateDebtFields(type, currentData = null) {
     const amountInput = document.getElementById('dAmount');
     const statusSelect = document.getElementById('dStatus');
     const entityInput = document.getElementById('dEntity');
-    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩 التزامات عائلية', '📅 اشتراكات دورية', '👨‍ رواتب', '💡 كهرباء', '💧 ماء'];
+    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍ رواتب', '💡 كهرباء', '💧 ماء'];
     if (entityTypes.includes(type)) {
         if (entityInput) {
             entityInput.style.display = 'block';
@@ -1651,22 +1637,51 @@ function renderNotifications() {
 }
 
 // =============================================================
-// 13. UPDATE STATS (مساعد مالي ذكي + إجماليات واضحة)
+// 13. UPDATE STATS (مساعدك المالي + فلتر الفترة)
 // =============================================================
 const ADVISOR = {
-    ar: { titleGood: 'مساعدك المالي ✨', titleBad: 'مساعدك المالي ⚠️', good: 'وضعك المالي جيد هذا الشهر: مصروفاتك أقل من دخلك.', over: 'تنبيه: مصروفاتك أعلى من دخلك هذا الشهر؛ راجع قسم المصروفات.', noIncome: 'لا يوجد دخل مسجل هذا الشهر مع وجود مصروفات؛ أضف دخلك من قسم الدخل.', noData: 'لا توجد عمليات هذا الشهر بعد؛ ابدأ بتسجيل دخل أو مصروف.', tipR: 'لديك حقوق غير محصلة بقيمة', tipD: 'لديك التزامات غير مدفوعة بقيمة' },
-    en: { titleGood: 'Your Financial Assistant ✨', titleBad: 'Your Financial Assistant ⚠️', good: 'Your status is good this month: expenses are less than income.', over: 'Alert: expenses exceed income this month; review Expenses.', noIncome: 'No income recorded this month but you have expenses; add income.', noData: 'No transactions this month yet; start by adding income or expense.', tipR: 'You have uncollected rights of', tipD: 'You have unpaid obligations of' },
-    ur: { titleGood: 'آپ کا مالیاتی معاون ✨', titleBad: 'آپ کا مالیاتی معاون ⚠️', good: 'اس مہینے آپ کی صورتحال اچھی ہے: اخراجات آمدنی سے کم ہیں۔', over: 'انتباہ: اس مہینے اخراجات آمدنی سے زیادہ ہیں؛ اخراجات کا جائزہ لیں۔', noIncome: 'اس مہینے آمدنی درج نہیں مگر اخراجات ہیں؛ آمدنی شامل کریں۔', noData: 'اس مہینے ابھی کوئی عمل نہیں؛ آمدنی یا خرچ درج کریں۔', tipR: 'آپ کے پاس وصولی کے بقایا حقوق ہیں بذریعہ', tipD: 'آپ پر غیر ادا شدہ ذمہ داریاں ہیں بذریعہ' }
+    ar: { good: 'وضعك المالي جيد: مصروفاتك أقل من دخلك.', over: 'تنبيه: مصروفاتك أعلى من دخلك؛ راجع قسم المصروفات.', noIncome: 'لا يوجد دخل مسجل مع وجود مصروفات؛ أضف دخلك من قسم الدخل.', noData: 'لا توجد عمليات في هذه الفترة بعد؛ ابدأ بتسجيل دخل أو مصروف.', tipR: 'لديك حقوق غير محصلة بقيمة', tipD: 'لديك التزامات غير مدفوعة بقيمة' },
+    en: { good: 'Your status is good: expenses are less than income.', over: 'Alert: expenses exceed income; review Expenses.', noIncome: 'No income recorded but you have expenses; add income.', noData: 'No transactions in this period yet; start by adding income or expense.', tipR: 'You have uncollected rights of', tipD: 'You have unpaid obligations of' },
+    ur: { good: 'آپ کی صورتحال اچھی ہے: اخراجات آمدنی سے کم ہیں۔', over: 'انتباہ: اخراجات آمدنی سے زیادہ ہیں؛ اخراجات کا جائزہ لیں۔', noIncome: 'آمدنی درج نہیں مگر اخراجات ہیں؛ آمدنی شامل کریں۔', noData: 'اس مدت میں ابھی کوئی عمل نہیں؛ آمدنی یا خرچ درج کریں۔', tipR: 'آپ کے پاس وصولی کے بقایا حقوق ہیں بذریعہ', tipD: 'آپ پر غیر ادا شدہ ذمہ داریاں ہیں بذریعہ' }
 };
 
-function updateStats() {
+function inStatsPeriod(dateStr, period) {
+    if (period === 'all' || !dateStr) return true;
+    const d = new Date(dateStr);
+    if (isNaN(d)) return true;
     const now = new Date();
-    const inMonth = d => { if (!d) return false; const dt = new Date(d); return !isNaN(dt) && dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear(); };
+    if (period === 'today') return d.toDateString() === now.toDateString();
+    if (period === 'week') { const r = getWeekRange(); return d >= r.start && d <= r.end; }
+    if (period === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === 'year') return d.getFullYear() === now.getFullYear();
+    return true;
+}
+
+function getWeekRange() {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    return { start: startOfWeek, end: endOfWeek };
+}
+
+function setStatsPeriod(period) {
+    statsPeriodFilter = period;
+    localStorage.setItem('statsPeriodFilter', period);
+    updateStats();
+}
+
+function updateStats() {
     const sum = (l, f) => l.reduce((a, i) => a + parseAmount(i[f] || 0), 0);
-    const incList = db.inc.filter(i => inMonth(i.التاريخ));
-    const expList = db.exp.filter(i => inMonth(i.التاريخ));
-    const rigList = db.rig.filter(i => inMonth(i.تاريخ_الاستحقاق || i.التاريخ));
-    const debList = db.deb.filter(i => inMonth(i.تاريخ_الاستحقاق || i.التاريخ));
+    const period = statsPeriodFilter;
+    const incList = db.inc.filter(i => inStatsPeriod(i.التاريخ, period));
+    const expList = db.exp.filter(i => inStatsPeriod(i.التاريخ, period));
+    const rigList = db.rig.filter(i => inStatsPeriod(i.تاريخ_الاستحقاق || i.التاريخ, period));
+    const debList = db.deb.filter(i => inStatsPeriod(i.تاريخ_الاستحقاق || i.التاريخ, period));
     const incTotal = sum(incList, 'المبلغ');
     const expTotal = sum(expList, 'المبلغ');
     const rigTotal = sum(rigList, 'المبلغ');
@@ -1681,14 +1696,6 @@ function updateStats() {
     const cur = (currentLang === 'ur') ? 'ur' : (currentLang === 'en') ? 'en' : 'ar';
     const A = ADVISOR[cur];
     const money = x => `${getFormattedAmount(x)} ${currentCurrency.symbol}`;
-    if (document.getElementById('sRigTotal')) {
-        set('sIncTotal', '<span class="pulse-dot"></span>' + formatCurrency(incTotal, true));
-        set('sExpTotal', formatCurrency(expTotal, true));
-        set('sRigTotal', formatCurrency(rigTotal, rigTotal > 0));
-        set('sRigPaid', '<span class="pulse-dot"></span>' + formatCurrency(rigPaid, true));
-        set('sDebTotal', formatCurrency(debTotal, debTotal > 0));
-        set('sDebPaid', formatCurrency(debPaid, false));
-    }
     if (document.getElementById('sIncTotal')) {
         set('sIncTotal', formatCurrency(incTotal, true));
         const ib = document.getElementById('sIncBar'); if (ib && ib.parentElement) ib.parentElement.style.display = 'none';
@@ -1712,7 +1719,7 @@ function updateStats() {
         const sIcon = document.getElementById('sStatusIcon');
         if (banner) banner.className = 'stat-status ' + (aType === 'good' ? 'good' : 'bad');
         if (sIcon) sIcon.className = 'fas ' + (aType === 'good' ? 'fa-check-circle' : 'fa-exclamation-circle');
-        setText('sStatusTitle', aType === 'good' ? A.titleGood : A.titleBad);
+        setText('sStatusTitle', aType === 'good' ? translate('goodTitle') : translate('badTitle'));
         setText('sStatusMsg', msg);
     }
 }
@@ -1769,7 +1776,6 @@ function resetAllData() {
                         updateStats();
                         updateBalanceDisplay();
                         toastMsg(translate('dataReset'), "success");
-                        pushSync();
                     });
                 });
             }
@@ -1930,138 +1936,247 @@ function toggleDarkMode() {
 loadDarkModePreference();
 
 // =============================================================
-// 18. 🔴 المزامنة التلقائية الحيّة (مفتاح تشغيل/إيقاف + آخر تحديث)
+// 18. 🧩 الحزمة الذكية: ضغط + سلة محذوفات + مزامنة حيّة + توافق Capacitor
 // =============================================================
-const SYNC_NAME = 'ميزانيتك_الذكية_مزامنة.json';
-let deviceId = localStorage.getItem('deviceId');
-if (!deviceId) { deviceId = 'dev-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6); localStorage.setItem('deviceId', deviceId); }
-let liveSeenTs = null;
+(function(){
+if (window.__smartSuiteLoaded) return; window.__smartSuiteLoaded = true;
 
-function getTotalRecordCount() { return (db.exp?.length || 0) + (db.rig?.length || 0) + (db.deb?.length || 0) + (db.inc?.length || 0); }
-
-function liveData() { return JSON.stringify({ dev: deviceId, t: Date.now(), data: { exp: db.exp, rig: db.rig, deb: db.deb, bal: db.bal, inc: db.inc, currency: currentCurrency } }); }
-
-async function liveFind() {
-    if (!isDriveConnected || !accessToken) return null;
-    const q = encodeURIComponent("name='" + SYNC_NAME + "' and trashed=false");
-    const r = await fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,modifiedTime)', { headers: { 'Authorization': 'Bearer ' + accessToken } });
-    if (!r.ok) return null;
-    const j = await r.json();
-    return (j.files && j.files[0]) || null;
+// ---------- أدوات الضغط (gzip مع fallback) ----------
+async function compressText(str){
+  if (!('CompressionStream' in window)) return { bin:false, out:str };
+  try{
+    const stream = new Blob([str],{type:'application/json'}).stream().pipeThrough(new CompressionStream('gzip'));
+    const buf = await new Response(stream).arrayBuffer();
+    return { bin:true, out:buf };
+  }catch(e){ return { bin:false, out:str }; }
+}
+function bufToB64(buf){ const b=new Uint8Array(buf); let s=''; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s); }
+function b64ToBuf(b64){ const s=atob(b64); const b=new Uint8Array(s.length); for(let i=0;i<s.length;i++) b[i]=s.charCodeAt(i); return b.buffer; }
+async function decompressAuto(input){
+  let buf = (typeof input==='string') ? b64ToBuf(input) : input;
+  const u = new Uint8Array(buf);
+  const isGz = u.length>2 && u[0]===0x1f && u[1]===0x8b;
+  if (isGz && 'DecompressionStream' in window){
+    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return await new Response(stream).text();
+  }
+  if (typeof input==='string' && !isGz) return input;
+  return new TextDecoder().decode(buf);
+}
+// تنزيل متوافق مع Capacitor (مشاركة إن توفرت وإلا تنزيل عادي)
+function downloadFile(name, blob){
+  function anchor(){ const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); }
+  try{
+    const f=new File([blob],name,{type:blob.type});
+    if (navigator.canShare && navigator.canShare({files:[f]})) { navigator.share({files:[f],title:name}).catch(anchor); }
+    else anchor();
+  }catch(e){ anchor(); }
 }
 
-function updateLastSyncLine() {
-    const el = document.getElementById('lastSyncLine');
-    if (!el) return;
-    if (lastSyncTimestamp) {
-        const d = new Date(parseInt(lastSyncTimestamp));
-        const locale = (currentLang === 'ur') ? 'ur-PK' : (currentLang || 'ar');
-        el.textContent = 'آخر تحديث: ' + d.toLocaleString(locale, { numberingSystem: 'latn', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-    } else {
-        el.textContent = 'آخر تحديث: —';
+// ---------- سلة المحذوفات (5 نسخ مضغوطة) ----------
+const TRASH_KEY='smartTrash', TRASH_MAX=5;
+function getTrash(){ try{ return JSON.parse(localStorage.getItem(TRASH_KEY)||'[]'); }catch(e){ return []; } }
+function setTrash(t){ localStorage.setItem(TRASH_KEY, JSON.stringify(t)); }
+function recCount(){ return (db.exp?db.exp.length:0)+(db.rig?db.rig.length:0)+(db.deb?db.deb.length:0)+(db.inc?db.inc.length:0); }
+async function trashPush(){
+  try{
+    const snap = JSON.stringify({exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency});
+    const c = await compressText(snap);
+    const item = { id:Date.now(), date:new Date().toISOString(), raw:snap.length, bin:c.bin, comp: c.bin?bufToB64(c.out):c.out };
+    const t=getTrash(); t.unshift(item); while(t.length>TRASH_MAX) t.pop(); setTrash(t);
+  }catch(e){ console.log('trashPush:',e); }
+}
+function clearAllStoresLocal(){
+  return new Promise(res=>{ const tx=IDB_connection.transaction(STORE_NAMES,'readwrite'); let d=0;
+    STORE_NAMES.forEach(sn=>{ const r=tx.objectStore(sn).clear(); r.onsuccess=()=>{ d++; if(d===STORE_NAMES.length) res(); }; }); });
+}
+async function applyImported(im){
+  await clearAllStoresLocal();
+  if (im.bal && im.bal.changes){ im.bal.clientId=1; await addDataToStore('bal',[im.bal]); }
+  for (const sn of ['exp','rig','deb','inc']) if (im[sn]) await addDataToStore(sn, im[sn]);
+  if (im.currency){ currentCurrency=im.currency; localStorage.setItem('currencyCode', currentCurrency.code); }
+  await loadAllData(); updateStats(); updateBalanceDisplay();
+}
+function openTrash(){ if(!LAYERS['trash']) LAYERS['trash']={elementId:'trashModal',type:'modal'}; openLayer('trash'); renderTrash(); }
+function renderTrash(){
+  const el=document.getElementById('trashList'); if(!el) return;
+  const t=getTrash();
+  if(!t.length){ el.innerHTML='<p style="text-align:center;color:#999;padding:30px 0;">🗑️ سلة المحذوفات فارغة</p>'; return; }
+  el.innerHTML = t.map(it=>{
+    const d=new Date(it.date);
+    const size = it.bin ? Math.max(1,Math.round(it.comp.length*0.75/1024)) : Math.max(1,Math.round(it.raw/1024));
+    return `<div class="list-item" style="border-right-color:var(--warning);">
+      <div style="font-weight:bold;display:flex;justify-content:space-between;"><span>🗑️ نسخة محذوفة</span><span style="color:#888;font-size:0.8em;">${size}KB</span></div>
+      <div class="details"><span>${d.toLocaleString('ar',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</span>
+      <span><button class="secondary" style="width:auto;padding:4px 10px;" onclick="restoreTrash(${it.id})">استعادة</button>
+      <button class="secondary" style="width:auto;padding:4px 10px;color:var(--danger);" onclick="deleteTrash(${it.id})">حذف</button></span></div></div>`;
+  }).join('');
+}
+window.restoreTrash = async function(id){
+  const it=getTrash().find(x=>x.id===id); if(!it) return;
+  if(!confirm(translate('confirmRestore'))) return;
+  showLoading(translate('restoringData'));
+  try{
+    if(recCount()>0) await trashPush();
+    const text=await decompressAuto(it.comp);
+    await applyImported(JSON.parse(text));
+    hideLoading(); closeLayer('trash'); toastMsg(translate('dataRestored'),'success'); pushSync();
+  }catch(e){ hideLoading(); toastMsg(translate('restoreFailed'),'error'); }
+};
+window.deleteTrash = function(id){ setTrash(getTrash().filter(x=>x.id!==id)); renderTrash(); };
+
+// ---------- المزامنة الحيّة ----------
+const SYNC_NAME='ميزانيتك_الذكية_مزامنة.json';
+let deviceId=localStorage.getItem('deviceId');
+if(!deviceId){ deviceId='dev-'+Date.now()+'-'+Math.random().toString(36).substr(2,6); localStorage.setItem('deviceId',deviceId); }
+let autoSync=localStorage.getItem('autoSyncEnabled')!=='false';
+let lastSync=localStorage.getItem('lastSyncTimestamp')||null;
+let liveSeenTs=null;
+function liveData(){ return JSON.stringify({dev:deviceId,t:Date.now(),data:{exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency}}); }
+async function liveFind(){
+  if(!isDriveConnected||!accessToken) return null;
+  const q=encodeURIComponent("name='"+SYNC_NAME+"' and trashed=false");
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id,modifiedTime)',{headers:{'Authorization':'Bearer '+accessToken}});
+  if(!r.ok) return null; const j=await r.json(); return (j.files&&j.files[0])||null;
+}
+function fmtLast(){ const el=document.getElementById('lastSyncLine'); if(!el)return;
+  if(lastSync){ const d=new Date(parseInt(lastSync)); el.textContent='آخر تحديث: '+d.toLocaleString('ar',{hour:'numeric',minute:'2-digit',day:'numeric',month:'short'}); }
+  else el.textContent='آخر تحديث: —'; }
+function markSynced(){ lastSync=Date.now(); localStorage.setItem('lastSyncTimestamp',String(lastSync)); fmtLast(); }
+async function pushSync(){
+  if(!autoSync||!isDriveConnected||!accessToken) return;
+  try{
+    const f=await liveFind(); const body=liveData();
+    if(f){ await fetch('https://www.googleapis.com/upload/drive/v3/files/'+f.id+'?uploadType=media',{method:'PATCH',headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},body}); }
+    else{ const form=new FormData(); form.append('metadata',new Blob([JSON.stringify({name:SYNC_NAME,mimeType:'application/json'})],{type:'application/json'})); form.append('file',new Blob([body],{type:'application/json'})); await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Authorization':'Bearer '+accessToken},body:form}); }
+    markSynced();
+  }catch(e){ console.log('pushSync:',e); }
+}
+async function applyRemote(remote){
+  if(recCount()>0) await trashPush(); // حماية: احفظ الحالي في السلة قبل الاستبدال
+  await applyImported(remote.data);
+}
+async function pullSync(){
+  if(!autoSync||!isDriveConnected||!accessToken) return;
+  try{
+    const f=await liveFind(); if(!f) return;
+    const ts=new Date(f.modifiedTime).getTime();
+    if(liveSeenTs===null){ liveSeenTs=ts; return; }
+    if(ts>liveSeenTs+2000){
+      liveSeenTs=ts;
+      const r=await fetch('https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media',{headers:{'Authorization':'Bearer '+accessToken}});
+      if(!r.ok) return;
+      const remote=JSON.parse(await r.text());
+      if(remote.dev===deviceId) return;
+      toastMsg('🔄 تعديل جديد من جهاز آخر — جارٍ التحديث...','info');
+      await applyRemote(remote); markSynced();
+      toastMsg('✅ تم تحديث بياناتك بآخر التغييرات','success');
     }
+  }catch(e){ console.log('pullSync:',e); }
+}
+async function initialSyncCheck(){
+  if(!autoSync||!isDriveConnected||!accessToken) return;
+  try{
+    const f=await liveFind();
+    if(!f){ if(recCount()>0) pushSync(); return; }
+    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media',{headers:{'Authorization':'Bearer '+accessToken}});
+    if(!r.ok) return;
+    const remote=JSON.parse(await r.text());
+    const rc=(remote.data.exp?remote.data.exp.length:0)+(remote.data.rig?remote.data.rig.length:0)+(remote.data.deb?remote.data.deb.length:0)+(remote.data.inc?remote.data.inc.length:0);
+    if(recCount()===0 && rc>0 && remote.dev!==deviceId){ toastMsg('☁️ وُجدت بياناتك على جهاز آخر — جارٍ الاستعادة...','info'); await applyImported(remote.data); toastMsg('✅ تم استعادة بياناتك','success'); }
+    liveSeenTs=new Date(f.modifiedTime).getTime(); markSynced();
+  }catch(e){ console.log('initialSyncCheck:',e); }
 }
 
-function updateAutoSyncUI() {
-    const t = document.getElementById('autoSyncToggle');
-    if (t) t.checked = autoSyncEnabled;
-    updateLastSyncLine();
+// ---------- حقن الواجهة (مفتاح المزامنة + آخر تحديث + سلة المحذوفات) ----------
+function injectSyncUI(){
+  const driveBtn=document.getElementById('driveMenuItem'); if(!driveBtn) return;
+  if(!document.getElementById('autoSyncToggle')){
+    const row=document.createElement('div'); row.className='sidebar-switch-item';
+    row.innerHTML='<i class="fas fa-sync-alt"></i><span>المزامنة التلقائية</span><label class="switch"><input type="checkbox" id="autoSyncToggle"><span class="slider"></span></label>';
+    driveBtn.insertAdjacentElement('afterend',row);
+    const line=document.createElement('div'); line.id='lastSyncLine'; line.style.cssText='padding:0 20px 10px;font-size:0.8em;color:#888;';
+    row.insertAdjacentElement('afterend',line);
+    const t=row.querySelector('#autoSyncToggle'); t.checked=autoSync;
+    t.onchange=function(){ autoSync=t.checked; localStorage.setItem('autoSyncEnabled',t.checked?'true':'false'); fmtLast(); if(t.checked&&isDriveConnected)pushSync(); toastMsg(t.checked?'🔄 تم تفعيل المزامنة التلقائية':'⏸️ تم إيقاف المزامنة التلقائية','info'); };
+  }
+  if(!document.getElementById('trashBtn')){
+    const line=document.getElementById('lastSyncLine');
+    const b=document.createElement('button'); b.className='sidebar-menu-item'; b.id='trashBtn';
+    b.innerHTML='<i class="fas fa-trash-alt"></i><span>سلة المحذوفات</span>'; b.onclick=openTrash;
+    if(line) line.insertAdjacentElement('afterend',b); else driveBtn.insertAdjacentElement('afterend',b);
+    const m=document.createElement('div'); m.id='trashModal'; m.className='modal';
+    m.innerHTML='<header><button onclick="closeLayer(\'trash\')"><i class="fas fa-times"></i></button><div class="title">🗑️ سلة المحذوفات</div></header><div class="modal-content"><div id="trashList"></div></div>';
+    document.body.appendChild(m);
+  }
+  fmtLast();
 }
 
-function toggleAutoSync(checked) {
-    autoSyncEnabled = checked;
-    localStorage.setItem('autoSyncEnabled', checked ? 'true' : 'false');
-    updateAutoSyncUI();
-    if (checked && isDriveConnected) pushSync();
-    toastMsg(checked ? '🔄 تم تفعيل المزامنة التلقائية' : '⏸️ تم إيقاف المزامنة التلقائية', 'info');
-}
+// ---------- تجاوزات: تصدير/نسخ/استيراد مضغوط + حماية الحذف ----------
+const _reset=window.resetAllData;
+window.resetAllData=async function(){ if(recCount()>0) await trashPush(); return _reset.apply(this,arguments); };
+const _export=window.performExport;
+window.performExport=async function(){
+  const f=document.getElementById('exportFileName'); const name=f?f.value.trim():'';
+  if(!name){ toastMsg(translate('enterFileName'),'error'); return; }
+  closeLayer('exportName');
+  const data={exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency};
+  const json=JSON.stringify(data,null,2); const c=await compressText(json);
+  if(c.bin) downloadFile(name+'.json.gz', new Blob([c.out],{type:'application/gzip'}));
+  else downloadFile(name+'.json', new Blob([json],{type:'application/json'}));
+  toastMsg(translate('exportSuccess'),'success');
+};
+window.performBackup=async function(){
+  if(!isDriveConnected){ toastMsg(translate('driveNotConnected'),'error'); return; }
+  showLoading(translate('savingBackup'));
+  try{
+    const data={exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency,backupDate:new Date().toISOString()};
+    const json=JSON.stringify(data,null,2); const c=await compressText(json);
+    const body=c.bin?new Blob([c.out],{type:'application/gzip'}):new Blob([json],{type:'application/json'});
+    const num=String(getNextBackupNumber()).padStart(3,'0'); const n=new Date(); const p=x=>String(x).padStart(2,'0');
+    const fileName=num+'_'+translate('backupFileNamePrefix')+'_'+n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate())+'_'+p(n.getHours())+'-'+p(n.getMinutes())+'.json';
+    const form=new FormData(); form.append('metadata',new Blob([JSON.stringify({name:fileName,parents:[appFolderId],mimeType:'application/json'})],{type:'application/json'})); form.append('file',body);
+    const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Authorization':'Bearer '+accessToken},body:form});
+    if(!r.ok) throw new Error('up');
+    hideLoading(); toastMsg(translate('backupSaved'),'success'); loadBackupList();
+  }catch(e){ hideLoading(); toastMsg(translate('backupFailed'),'error'); }
+};
+window.restoreBackup=async function(fileId){
+  if(!confirm(translate('confirmRestore'))) return;
+  showLoading(translate('restoringData'));
+  try{
+    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'?alt=media',{headers:{'Authorization':'Bearer '+accessToken}});
+    if(!r.ok) throw new Error('dl');
+    const text=await decompressAuto(await r.arrayBuffer());
+    if(recCount()>0) await trashPush();
+    await applyImported(JSON.parse(text));
+    hideLoading(); toastMsg(translate('dataRestored'),'success'); loadBackupList(); pushSync();
+  }catch(e){ hideLoading(); toastMsg(translate('restoreFailed'),'error'); }
+};
+window.importData=function(event){
+  const file=event.target.files[0]; if(!file) return;
+  if(!confirm(translate('confirmImport'))){ event.target.value=null; return; }
+  showLoading(translate('importingData'));
+  const reader=new FileReader();
+  reader.onload=async(e)=>{ try{ const text=await decompressAuto(e.target.result); const im=JSON.parse(text);
+    if(im.bal&&im.bal.changes){ im.bal.clientId=1; await addDataToStore('bal',[im.bal]); }
+    for(const sn of['exp','rig','deb','inc']) if(im[sn]) await addDataToStore(sn,im[sn]);
+    if(im.currency){ currentCurrency=im.currency; localStorage.setItem('currencyCode',currentCurrency.code); }
+    await loadAllData(); hideLoading(); updateStats(); updateBalanceDisplay(); toastMsg(translate('importSuccess'),'success'); pushSync();
+  }catch(err){ hideLoading(); toastMsg(translate('importFailed'),'error'); } finally{ event.target.value=null; } };
+  reader.readAsArrayBuffer(file);
+};
 
-function markSynced() {
-    lastSyncTimestamp = Date.now();
-    localStorage.setItem('lastSyncTimestamp', lastSyncTimestamp);
-    updateLastSyncLine();
-}
+// ---------- ربط الدفع/الحذف بالمزامنة + تشغيل ----------
+const _psc=window.postSaveCleanup; window.postSaveCleanup=function(){ const r=_psc.apply(this,arguments); pushSync(); return r; };
+const _dt=window.deleteTransaction; window.deleteTransaction=async function(){ const r=await _dt.apply(this,arguments); pushSync(); return r; };
+const _pb=window.processBalanceAction; window.processBalanceAction=async function(){ const r=await _pb.apply(this,arguments); pushSync(); return r; };
+const _osb=window.openSidebar; window.openSidebar=function(){ if(_osb)_osb(); injectSyncUI(); };
+const _udui=window.updateDriveUI; window.updateDriveUI=function(){ _udui(); injectSyncUI(); if(isDriveConnected) initialSyncCheck(); };
 
-async function pushSync() {
-    if (!autoSyncEnabled || !isDriveConnected || !accessToken) return;
-    try {
-        const f = await liveFind();
-        const body = liveData();
-        if (f) {
-            await fetch('https://www.googleapis.com/upload/drive/v3/files/' + f.id + '?uploadType=media', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' }, body });
-        } else {
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify({ name: SYNC_NAME, mimeType: 'application/json' })], { type: 'application/json' }));
-            form.append('file', new Blob([body], { type: 'application/json' }));
-            await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': 'Bearer ' + accessToken }, body: form });
-        }
-        markSynced();
-    } catch (e) { console.log('pushSync:', e); }
-}
-
-async function applyRemote(remote) {
-    await clearAllStores();
-    if (remote.data.bal) { remote.data.bal.clientId = 1; await bulkAddToStore('bal', [remote.data.bal]); }
-    for (const sn of ['exp', 'rig', 'deb', 'inc']) if (remote.data[sn]) await bulkAddToStore(sn, remote.data[sn]);
-    if (remote.data.currency) {
-        currentCurrency = remote.data.currency;
-        localStorage.setItem('currencyCode', currentCurrency.code);
-        const l = document.getElementById('sidebarCurrencyLabel');
-        if (l) l.textContent = currentCurrency.symbol;
-    }
-    await loadAllData();
-    updateStats();
-    updateBalanceDisplay();
-}
-
-async function pullSync() {
-    if (!autoSyncEnabled || !isDriveConnected || !accessToken) return;
-    try {
-        const f = await liveFind();
-        if (!f) return;
-        const ts = new Date(f.modifiedTime).getTime();
-        if (liveSeenTs === null) { liveSeenTs = ts; return; }
-        if (ts > liveSeenTs + 2000) {
-            liveSeenTs = ts;
-            const r = await fetch('https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media', { headers: { 'Authorization': 'Bearer ' + accessToken } });
-            if (!r.ok) return;
-            const remote = JSON.parse(await r.text());
-            if (remote.dev === deviceId) return;
-            toastMsg('🔄 معاملة جديدة من جهاز آخر — جارٍ التحديث...', 'info');
-            await applyRemote(remote);
-            markSynced();
-            toastMsg('✅ تم تحديث بياناتك بآخر التغييرات', 'success');
-        }
-    } catch (e) { console.log('pullSync:', e); }
-}
-
-async function initialSyncCheck() {
-    if (!autoSyncEnabled || !isDriveConnected || !accessToken) return;
-    try {
-        const f = await liveFind();
-        if (!f) { if (getTotalRecordCount() > 0) pushSync(); return; }
-        const r = await fetch('https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media', { headers: { 'Authorization': 'Bearer ' + accessToken } });
-        if (!r.ok) return;
-        const remote = JSON.parse(await r.text());
-        const localCount = getTotalRecordCount();
-        const remoteCount = (remote.data.exp?.length || 0) + (remote.data.rig?.length || 0) + (remote.data.deb?.length || 0) + (remote.data.inc?.length || 0);
-        if (localCount === 0 && remoteCount > 0 && remote.dev !== deviceId) {
-            toastMsg('☁️ تم العثور على بياناتك على جهاز آخر — جارٍ الاستعادة...', 'info');
-            await applyRemote(remote);
-            toastMsg('✅ تم استعادة بياناتك', 'success');
-        }
-        liveSeenTs = new Date(f.modifiedTime).getTime();
-        markSynced();
-    } catch (e) { console.log('initialSyncCheck:', e); }
-}
-
-// ✔ دفع تلقائي عند كل إضافة / تعديل / حذف / إيداع / سحب (فقط إذا كانت المزامنة مفعّلة)
-const _ps = postSaveCleanup; postSaveCleanup = function () { const r = _ps.apply(this, arguments); pushSync(); return r; };
-const _dt2 = deleteTransaction; deleteTransaction = async function () { const r = await _dt2.apply(this, arguments); pushSync(); return r; };
-const _pb = processBalanceAction; processBalanceAction = async function () { const r = await _pb.apply(this, arguments); pushSync(); return r; };
-
-// ✔ فحص التغييرات القادمة من الأجهزة الأخرى كل 25 ثانية
-setInterval(() => { pullSync(); }, 25000);
+setInterval(pullSync, 25000);
+setTimeout(function(){ injectSyncUI(); fmtLast(); }, 1500);
+})();
 
 // =============================================================
 // 19. INITIALIZATION
@@ -2074,11 +2189,10 @@ window.onload = () => {
     loadTranslations().then(() => { applyTranslations(currentLang); });
     const now = getLocalDateString();
     ['eDate', 'rDueDate', 'dDueDate', 'iDate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = now; });
+    const statsPeriodEl = document.getElementById('statsPeriod');
+    if (statsPeriodEl) statsPeriodEl.value = statsPeriodFilter;
     const currencyLabel = document.getElementById('sidebarCurrencyLabel');
     if (currencyLabel) currencyLabel.textContent = currentCurrency.symbol;
-    const ast = document.getElementById('autoSyncToggle');
-    if (ast) ast.checked = autoSyncEnabled;
-    updateLastSyncLine();
     updateBalanceDisplay();
     updateStats();
     updateDriveUI();
