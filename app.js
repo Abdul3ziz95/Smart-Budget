@@ -46,10 +46,7 @@ const LAYERS = {
   'driveBackup': { elementId: 'driveBackupModal', type: 'modal' },
   'exportName': { elementId: 'exportNameModal', type: 'modal' },
   'language': { elementId: 'languageModal', type: 'modal' },
-  'notifications': { elementId: 'notificationsModal', type: 'modal' },
-  'syncLog': { elementId: 'syncLogModal', type: 'modal' },
-  'conflict': { elementId: 'conflictModal', type: 'modal' },
-  'deviceName': { elementId: 'deviceNameModal', type: 'modal' }
+  'notifications': { elementId: 'notificationsModal', type: 'modal' }
 };
 let historyStack = [];
 
@@ -84,9 +81,6 @@ function _visualOpen(layerName, data = {}) {
     else if (layerName === 'exportName') { const f = document.getElementById('exportFileName'); if (f) { f.value = translate('defaultFileName'); f.focus(); f.select(); } }
     else if (layerName === 'language') { updateLanguageModalCheckmarks(); }
     else if (layerName === 'notifications') { cleanupExpiredReads(); renderNotifications(); }
-    else if (layerName === 'syncLog') { renderSyncLog(); }
-    else if (layerName === 'conflict') { renderConflictUI(data); }
-    else if (layerName === 'deviceName') { renderDeviceNameModal(); }
   } else if (layer.type === 'menu') {
     el.classList.add('open');
     const ov = document.querySelector(layerName === 'imageSource' ? '#imageSourceOverlay' : '.sidebar-overlay');
@@ -253,14 +247,12 @@ function applyTranslations(lang) {
   const driveBackupModal = document.getElementById('driveBackupModal'); if (driveBackupModal && driveBackupModal.style.display === 'flex') renderDriveBackupList();
   const currencyModal = document.getElementById('currencyModal'); if (currencyModal && currencyModal.style.display === 'flex') renderCurrencyList();
   const notificationsModal = document.getElementById('notificationsModal'); if (notificationsModal && notificationsModal.style.display === 'flex') renderNotifications();
-  const syncLogModal = document.getElementById('syncLogModal'); if (syncLogModal && syncLogModal.style.display === 'flex') renderSyncLog();
   const detailModal = document.getElementById('detailModal'); if (detailModal && detailModal.style.display === 'flex' && editMode) { const arr = db[editMode.type]; const o = arr && arr[editMode.index]; if (o) _renderDetailContent(o, editMode.type); }
   const rDyn = document.getElementById('rDynamicFields'); if (rDyn && rDyn.innerHTML.trim() !== '') { const rType = document.getElementById('rType'); const rCur = (editMode && editMode.type === 'rig') ? db.rig[editMode.index] : null; updateRightFields(rType ? rType.value : '', rCur); }
   const dDyn = document.getElementById('dDynamicFields'); if (dDyn && dDyn.innerHTML.trim() !== '') { const dType = document.getElementById('dType'); const dCur = (editMode && editMode.type === 'deb') ? db.deb[editMode.index] : null; updateDebtFields(dType ? dType.value : '', dCur); }
   const bam = document.getElementById('balanceActionModal'); if (bam && bam.style.display === 'flex' && balanceActionType) { const tEl = document.getElementById('actionModalTitle'); if (tEl) tEl.textContent = balanceActionType === 'deposit' ? translate('depositTitle') : translate('withdrawTitle'); }
   const countEl = document.getElementById('driveBackupCount'); if (countEl) countEl.textContent = translate('backupCountLabel') + ' ' + (backupFiles ? backupFiles.length : 0);
   updateLanguageModalCheckmarks();
-  updateSyncStatusUI();
   localStorage.setItem('appLang', lang);
 }
 
@@ -295,7 +287,7 @@ function restoreDriveState() {
       accessToken = savedToken; userEmail = savedEmail; appFolderId = savedFolderId || null;
       isDriveConnected = true;
       updateDriveUI(); startTokenRefresh();
-      setTimeout(() => { if (accessToken) { loadBackupList(); verifyTokenValidity(); SyncEngine.init(); } }, 1000);
+      setTimeout(() => { if (accessToken) { loadBackupList(); verifyTokenValidity(); } }, 1000);
     } else {
       if (tokenClient) { tokenClient.requestAccessToken({ prompt: '' }); }
       else { setTimeout(() => { if (tokenClient) { tokenClient.requestAccessToken({ prompt: '' }); } }, 2000); }
@@ -357,7 +349,6 @@ function initGis() {
           toastMsg(translate('driveConnected'), "success");
           startTokenRefresh();
           await loadBackupList();
-          SyncEngine.init();
           openLayer('driveBackup');
         } catch (e) {
           hideLoading();
@@ -396,7 +387,6 @@ function handleDriveClick() {
     updateDriveUI(); startTokenRefresh();
     openLayer('driveBackup');
     loadBackupList();
-    SyncEngine.init();
     return;
   }
   if (!tokenClient) { toastMsg(translate('loadingAuth'), "info"); return; }
@@ -409,7 +399,7 @@ function handleDriveBackup() { if (!isDriveConnected) { toastMsg(translate('driv
 function signOut() {
   if (!confirm(translate('confirmSignOut'))) return;
   stopTokenRefresh();
-  SyncEngine.stop();
+  SmartSync.stop();
   accessToken = null;
   localStorage.removeItem('drive_token');
   localStorage.removeItem('drive_email');
@@ -446,7 +436,6 @@ function updateDriveUI() {
     if (isDriveConnected) { modalStatus.className = 'status connected'; modalStatus.textContent = translate('driveConnectedStatus'); }
     else { modalStatus.className = 'status disconnected'; modalStatus.textContent = translate('driveDisconnectedStatus'); }
   }
-  updateSyncStatusUI();
 }
 
 async function loadBackupList() {
@@ -549,7 +538,7 @@ async function restoreBackup(fileId) {
     toastMsg(translate('dataRestored'), "success");
     await loadBackupList();
     renderDriveBackupList();
-    SyncEngine.pushNow('restore_backup');
+    SmartSync.push('restore');
   } catch (error) {
     hideLoading();
     toastMsg(translate('restoreFailed') + ': ' + error.message, "error");
@@ -614,7 +603,7 @@ async function importData(event) {
       updateStats();
       updateBalanceDisplay();
       toastMsg(translate('importSuccess'), "success");
-      SyncEngine.pushNow('import_data');
+      SmartSync.push('import');
     } catch (err) {
       hideLoading();
       toastMsg(translate('importFailed'), "error");
@@ -682,7 +671,7 @@ function toastMsg(message, type = "info") {
   const t = document.getElementById('toast');
   if (!t) return;
   t.className = 'toast ' + type;
-  const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle', warning: 'fa-exclamation-triangle' };
+  const iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
   t.innerHTML = `<span class="toast-icon ${type}"><i class="fas ${iconMap[type] || 'fa-info-circle'}"></i></span> ${message}`;
   t.classList.add('show');
   setTimeout(() => { t.classList.remove('show'); }, 3500);
@@ -904,7 +893,7 @@ async function processBalanceAction() {
   if (ok) {
     toastMsg(balanceActionType === 'deposit' ? translate('depositSuccess') : translate('withdrawSuccess'), "success");
     closeLayer('balanceAction');
-    SyncEngine.pushNow('balance_action');
+    SmartSync.push('balance');
   }
 }
 
@@ -960,7 +949,6 @@ async function addIncome() {
     await processBalanceChange(amount, 'income', `${translate('incomeLogPrefix')}: ${translateStoredValue(data.الفئة)} (${data.الوصف})`, data.clientId, isEditing, oldAmount);
     toastMsg(isEditing ? translate('incomeEdited') : translate('incomeSaved'), "success");
     postSaveCleanup(isEditing, 'inc');
-    SyncEngine.pushNow(isEditing ? 'edit_income' : 'add_income');
   } catch (err) { toastMsg(translate('saveFailed'), "error"); }
 }
 
@@ -990,7 +978,6 @@ async function addExpense() {
     await processBalanceChange(amount, 'expense', `${translate('expenseLogPrefix')}: ${translateStoredValue(data.الفئة)} (${data.الوصف})`, data.clientId, isEditing, oldAmount);
     toastMsg(isEditing ? translate('expenseEdited') : translate('expenseSaved'), "success");
     postSaveCleanup(isEditing, 'exp');
-    SyncEngine.pushNow(isEditing ? 'edit_expense' : 'add_expense');
   } catch (err) { toastMsg(translate('saveFailed'), "error"); }
 }
 
@@ -1038,7 +1025,6 @@ async function addRight() {
     await processBalanceChange(paid, 'right_collection', `${translate('rightLogPrefix')}: ${translateStoredValue(data.النوع)} (${data.الجهة})`, data.clientId, isEditing, oldPaid);
     toastMsg(isEditing ? translate('rightEdited') : translate('rightSaved'), "success");
     postSaveCleanup(isEditing, 'rig');
-    SyncEngine.pushNow(isEditing ? 'edit_right' : 'add_right');
   } catch (err) { toastMsg(translate('saveFailed'), "error"); }
 }
 
@@ -1171,7 +1157,6 @@ async function addDebt() {
     await processBalanceChange(paidAmount, 'debt_payment', `${translate('debtLogPrefix')}: ${translateStoredValue(data.النوع)} (${data.الجهة})`, data.clientId, isEditing, oldPaid);
     toastMsg(isEditing ? translate('debtEdited') : translate('debtSaved'), "success");
     postSaveCleanup(isEditing, 'deb');
-    SyncEngine.pushNow(isEditing ? 'edit_debt' : 'add_debt');
   } catch (err) { toastMsg(translate('saveFailed'), "error"); }
 }
 
@@ -1180,6 +1165,7 @@ function postSaveCleanup(isEditing, type) {
   loadAllData().then(() => { updateStats(); updateBalanceDisplay(); });
   editMode = null;
   clearFields();
+  SmartSync.push(isEditing ? 'edit' : 'add');
 }
 
 // =============================================================
@@ -1431,7 +1417,7 @@ async function deleteTransaction() {
     updateBalanceDisplay();
     closeAllLayers();
     openTab('overview');
-    SyncEngine.pushNow('delete_transaction');
+    SmartSync.push('delete');
   } catch (err) { toastMsg(translate('deleteFailed'), "error"); }
 }
 
@@ -1486,7 +1472,7 @@ function getUpcomingItems() {
   return items.sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 
-function getUnreadCount() { return getUpcomingItems().filter(i => !i.read).length + SyncEngine.getUnreadSyncNotifCount(); }
+function getUnreadCount() { return getUpcomingItems().filter(i => !i.read).length + SmartSync.getUnreadCount(); }
 
 function updateNotificationBadge() {
   const badge = document.getElementById('notifBadge');
@@ -1540,30 +1526,23 @@ function renderNotifications() {
   const el = document.getElementById('notificationsContent');
   if (!el) return;
   const items = getUpcomingItems();
-  const syncNotifs = SyncEngine.getSyncNotifications();
-  const hasSyncNotifs = syncNotifs.length > 0;
-  const hasFinNotifs = items.length > 0;
+  const syncNotifs = SmartSync.getNotifications();
+  let html = '';
 
-  if (!hasSyncNotifs && !hasFinNotifs) {
+  if (syncNotifs.length > 0) {
+    html += `<div class="notif-group-title" style="color:var(--p);"><i class="fas fa-sync-alt"></i> ${currentLang === 'ar' ? 'إشعارات المزامنة' : currentLang === 'en' ? 'Sync Notifications' : 'مطابقت کی اطلاعات'} <span class="count-pill">${syncNotifs.length}</span></div>`;
+    html += syncNotifs.map(n => {
+      const isUnread = !n.read;
+      return `<div class="notif-item ${isUnread ? 'upcoming' : 'read'}" style="border-right-color:var(--p);" ${isUnread ? `onclick="SmartSync.markRead('${n.id}')"` : ''}><div class="notif-head"><span class="notif-name"><i class="fas fa-sync-alt" style="color:var(--p);margin-left:7px;"></i> ${n.text}</span>${isUnread ? `<span class="notif-tag" style="background:var(--p);color:#fff;">${currentLang === 'ar' ? 'جديد' : 'New'}</span>` : `<span class="notif-tag read-tag"><i class="fas fa-check"></i> ${translate('readNotification')}</span>`}</div><div class="notif-body"><span style="font-size:0.85em;color:#888;"><i class="fas fa-laptop" style="margin-left:4px;"></i> ${n.deviceName}</span><span style="font-size:0.85em;color:#888;"><i class="far fa-clock" style="margin-left:4px;"></i> ${formatDateTime(n.time)}</span></div></div>`;
+    }).join('');
+  }
+
+  if (!items.length && !syncNotifs.length) {
     el.innerHTML = `<div class="notif-empty-state"><i class="fas fa-bell-slash"></i><p>${translate('noNotifications')}</p><small>${translate('noNotificationsHint')}</small></div>`;
     return;
   }
 
-  let html = '';
-
-  // Sync notifications section
-  if (hasSyncNotifs) {
-    html += `<div class="notif-group-title" style="color:var(--p);"><i class="fas fa-sync-alt"></i> ${translate('syncNotifications')} <span class="count-pill">${syncNotifs.length}</span></div>`;
-    html += syncNotifs.map(n => {
-      const icon = n.action === 'add' ? 'fa-plus-circle' : n.action === 'edit' ? 'fa-edit' : 'fa-trash';
-      const color = n.action === 'add' ? 'var(--success)' : n.action === 'edit' ? 'var(--warning)' : 'var(--danger)';
-      const isUnread = !n.read;
-      return `<div class="notif-item ${isUnread ? 'upcoming' : 'read'}" style="border-right-color:${color};" ${isUnread ? `onclick="SyncEngine.markNotifRead('${n.id}')"` : ''}><div class="notif-head"><span class="notif-name"><i class="fas ${icon}" style="color:${color};margin-left:7px;"></i> ${n.text}</span>${isUnread ? `<span class="notif-tag" style="background:var(--p);color:#fff;">${translate('newSyncNotif')}</span>` : `<span class="notif-tag read-tag"><i class="fas fa-check"></i> ${translate('readNotification')}</span>`}</div><div class="notif-body"><span style="font-size:0.85em;color:#888;"><i class="fas fa-laptop" style="margin-left:4px;"></i> ${n.deviceName}</span><span style="font-size:0.85em;color:#888;"><i class="far fa-clock" style="margin-left:4px;"></i> ${formatDateTime(n.time)}</span></div>${isUnread ? `<div class="notif-read-hint"><i class="fas fa-hand-pointer"></i> ${translate('clickToRead')}</div>` : ''}</div>`;
-    }).join('');
-  }
-
-  // Financial notifications
-  if (hasFinNotifs) {
+  if (items.length) {
     const unread = items.filter(i => !i.read);
     const read = items.filter(i => i.read);
     html += `<div class="notif-summary"><div class="notif-sum-card overdue-card"><span class="sum-label">${translate('unreadNotifications')}</span><span class="sum-value">${unread.length}</span></div><div class="notif-sum-card upcoming-card"><span class="sum-label">${translate('readNotifications')}</span><span class="sum-value">${read.length}</span></div></div>`;
@@ -1679,7 +1658,7 @@ function renderCurrencyList() {
   const searchEl = document.getElementById('currencySearch');
   const q = searchEl ? searchEl.value.toLowerCase() : '';
   const filtered = ARABIC_CURRENCIES.filter(c => getCurrencyName(c).toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.name.ar || '').includes(q) || (c.name.en || '').toLowerCase().includes(q) || (c.name.ur || '').includes(q));
-  list.innerHTML = filtered.map(c => `<button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code')"><span>${c.flag} <strong>${c.symbol}</strong> ${getCurrencyName(c)} (${c.code})</span>${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}</button>`).join('');
+  list.innerHTML = filtered.map(c => `<button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')"><span>${c.flag} <strong>${c.symbol}</strong> ${getCurrencyName(c)} (${c.code})</span>${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}</button>`).join('');
 }
 
 function setCurrency(code) {
@@ -1693,7 +1672,7 @@ function setCurrency(code) {
     updateStats();
     closeLayer('currency');
     toastMsg(`${translate('currencySet')} ${getCurrencyName(sel)} 💱`, "success");
-    SyncEngine.pushNow('currency_change');
+    SmartSync.push('currency');
   }
 }
 
@@ -1715,7 +1694,7 @@ function resetAllData() {
             updateStats();
             updateBalanceDisplay();
             toastMsg(translate('dataReset'), "success");
-            SyncEngine.pushNow('reset_data');
+            SmartSync.push('reset');
           });
         });
       }
@@ -1871,87 +1850,67 @@ function toggleDarkMode() {
 loadDarkModePreference();
 
 // =============================================================
-// 18. 🔄 SMART SYNC ENGINE 2.0 — المزامنة الذكية الفورية
+// 18. 🔄 SMART SYNC ENGINE — المزامنة الذكية (حقن ذاتي)
 // =============================================================
-const SyncEngine = {
-  SYNC_FILE_NAME: 'ميزانيتك_الذكية_مزامنة.json',
-  POLL_ACTIVE: 15000,
-  POLL_BACKGROUND: 60000,
-  deviceId: localStorage.getItem('sync_device_id') || `dev-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`,
+const SmartSync = {
+  FILE_NAME: 'ميزانيتك_الذكية_مزامنة.json',
+  deviceId: localStorage.getItem('sync_device_id') || ('dev-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6)),
   deviceName: localStorage.getItem('sync_device_name') || '',
   revision: parseInt(localStorage.getItem('sync_revision') || '0'),
-  lastSyncTime: localStorage.getItem('sync_last_time') || null,
+  lastSync: localStorage.getItem('sync_last_time') || null,
+  notifications: JSON.parse(localStorage.getItem('sync_notifs') || '[]'),
   syncLog: JSON.parse(localStorage.getItem('sync_log') || '[]'),
-  syncNotifications: JSON.parse(localStorage.getItem('sync_notifications') || '[]'),
-  isSyncing: false,
+  autoSync: localStorage.getItem('sync_auto') !== 'false',
   isOnline: navigator.onLine,
-  autoSync: localStorage.getItem('sync_auto_enabled') !== 'false',
-  pollInterval: null,
-  lastSeenModifiedTime: null,
+  polling: null,
+  lastSeen: null,
+  syncing: false,
   pendingPush: false,
+  conflictRemote: null,
 
   init() {
-    if (!this.deviceName) {
-      this.deviceName = this.detectDeviceName();
-      localStorage.setItem('sync_device_name', this.deviceName);
-    }
     localStorage.setItem('sync_device_id', this.deviceId);
+    if (!this.deviceName) { this.deviceName = this.detectDevice(); localStorage.setItem('sync_device_name', this.deviceName); }
+    this.injectStyles();
+    this.injectHeaderIndicator();
+    this.injectSidebarControls();
+    this.injectModals();
     this.startPolling();
-    this.updateStatusUI();
-    this.updateLastSyncDisplay();
-    window.addEventListener('online', () => { this.isOnline = true; this.updateStatusUI(); this.pushNow('reconnect'); });
-    window.addEventListener('offline', () => { this.isOnline = false; this.updateStatusUI(); });
-    document.addEventListener('visibilitychange', () => { this.restartPolling(); });
-    this.initialCheck();
+    this.updateUI();
+    this.updateLastSync();
+    window.addEventListener('online', () => { this.isOnline = true; this.updateUI(); this.push('reconnect'); });
+    window.addEventListener('offline', () => { this.isOnline = false; this.updateUI(); });
+    document.addEventListener('visibilitychange', () => this.startPolling());
+    setTimeout(() => this.initialCheck(), 3000);
   },
 
-  stop() {
-    if (this.pollInterval) { clearInterval(this.pollInterval); this.pollInterval = null; }
-    this.updateStatusUI();
-  },
+  stop() { if (this.polling) { clearInterval(this.polling); this.polling = null; } },
 
-  detectDeviceName() {
+  detectDevice() {
     const ua = navigator.userAgent;
-    let name = '';
-    if (/iPhone/.test(ua)) name = '📱 آيفون';
-    else if (/iPad/.test(ua)) name = '📱 آيباد';
-    else if (/Android/.test(ua)) name = '📱 أندرويد';
-    else if (/Mac/.test(ua)) name = '💻 ماك';
-    else if (/Windows/.test(ua)) name = '💻 ويندوز';
-    else if (/Linux/.test(ua)) name = '🐧 لينكس';
-    else name = '🖥️ جهاز';
-    return name + ' ' + Math.random().toString(36).substr(2, 4);
+    if (/iPhone/.test(ua)) return '📱 آيفون';
+    if (/iPad/.test(ua)) return '📱 آيباد';
+    if (/Android/.test(ua)) return '📱 أندرويد';
+    if (/Mac/.test(ua)) return '💻 ماك';
+    if (/Windows/.test(ua)) return '💻 ويندوز';
+    if (/Linux/.test(ua)) return '🐧 لينكس';
+    return '🖥️ جهاز';
   },
 
   startPolling() {
-    this.stopPolling();
-    const interval = document.hidden ? this.POLL_BACKGROUND : this.POLL_ACTIVE;
-    this.pollInterval = setInterval(() => this.pull(), interval);
+    this.stop();
+    const interval = document.hidden ? 60000 : 15000;
+    this.polling = setInterval(() => this.pull(), interval);
   },
 
-  stopPolling() {
-    if (this.pollInterval) { clearInterval(this.pollInterval); this.pollInterval = null; }
+  getData() {
+    return { v: 2, dev: this.deviceId, devName: this.deviceName, rev: this.revision, t: Date.now(), data: { exp: db.exp, rig: db.rig, deb: db.deb, bal: db.bal, inc: db.inc, currency: currentCurrency } };
   },
 
-  restartPolling() {
-    this.startPolling();
-  },
-
-  getSyncData() {
-    return {
-      version: 2,
-      deviceId: this.deviceId,
-      deviceName: this.deviceName,
-      revision: this.revision,
-      timestamp: Date.now(),
-      data: { exp: db.exp, rig: db.rig, deb: db.deb, bal: db.bal, inc: db.inc, currency: currentCurrency }
-    };
-  },
-
-  async findSyncFile() {
+  async findFile() {
     if (!isDriveConnected || !accessToken) return null;
     try {
-      const q = encodeURIComponent(`name='${this.SYNC_FILE_NAME}' and trashed=false`);
+      const q = encodeURIComponent(`name='${this.FILE_NAME}' and trashed=false`);
       const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,modifiedTime)`, { headers: { 'Authorization': 'Bearer ' + accessToken } });
       if (!r.ok) return null;
       const j = await r.json();
@@ -1959,96 +1918,80 @@ const SyncEngine = {
     } catch (e) { return null; }
   },
 
-  async pushNow(reason = 'manual') {
+  async push(reason) {
     if (!this.autoSync || !isDriveConnected || !accessToken || !this.isOnline) return;
-    if (this.isSyncing) { this.pendingPush = true; return; }
-    this.isSyncing = true;
-    this.updateStatusUI('syncing');
+    if (this.syncing) { this.pendingPush = true; return; }
+    this.syncing = true;
+    this.updateUI('syncing');
     try {
       this.revision++;
       localStorage.setItem('sync_revision', String(this.revision));
-      const body = JSON.stringify(this.getSyncData());
-      const file = await this.findSyncFile();
+      const body = JSON.stringify(this.getData());
+      const file = await this.findFile();
       if (file) {
-        await fetch(`https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=media`, {
-          method: 'PATCH',
-          headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-          body: body
-        });
+        await fetch(`https://www.googleapis.com/upload/drive/v3/files/${file.id}?uploadType=media`, { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' }, body });
       } else {
         const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify({ name: this.SYNC_FILE_NAME, mimeType: 'application/json' })], { type: 'application/json' }));
+        form.append('metadata', new Blob([JSON.stringify({ name: this.FILE_NAME, mimeType: 'application/json' })], { type: 'application/json' }));
         form.append('file', new Blob([body], { type: 'application/json' }));
         await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': 'Bearer ' + accessToken }, body: form });
       }
-      this.lastSyncTime = Date.now();
-      localStorage.setItem('sync_last_time', String(this.lastSyncTime));
-      this.addSyncLogEntry('push', reason, 'success');
-      this.updateStatusUI('synced');
-      this.updateLastSyncDisplay();
+      this.lastSync = Date.now();
+      localStorage.setItem('sync_last_time', String(this.lastSync));
+      this.addLog('push', reason, 'ok');
+      this.updateUI('synced');
+      this.updateLastSync();
     } catch (e) {
-      this.addSyncLogEntry('push', reason, 'error');
-      this.updateStatusUI('error');
+      this.addLog('push', reason, 'error');
+      this.updateUI('error');
     }
-    this.isSyncing = false;
-    if (this.pendingPush) { this.pendingPush = false; setTimeout(() => this.pushNow('queued'), 1000); }
+    this.syncing = false;
+    if (this.pendingPush) { this.pendingPush = false; setTimeout(() => this.push('queue'), 2000); }
   },
 
   async pull() {
-    if (!this.autoSync || !isDriveConnected || !accessToken || !this.isOnline || this.isSyncing) return;
+    if (!this.autoSync || !isDriveConnected || !accessToken || !this.isOnline || this.syncing) return;
     try {
-      const file = await this.findSyncFile();
+      const file = await this.findFile();
       if (!file) return;
       const ts = new Date(file.modifiedTime).getTime();
-      if (this.lastSeenModifiedTime === null) { this.lastSeenModifiedTime = ts; return; }
-      if (ts > this.lastSeenModifiedTime + 2000) {
-        this.lastSeenModifiedTime = ts;
+      if (this.lastSeen === null) { this.lastSeen = ts; return; }
+      if (ts > this.lastSeen + 2000) {
+        this.lastSeen = ts;
         const r = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, { headers: { 'Authorization': 'Bearer ' + accessToken } });
         if (!r.ok) return;
         const remote = JSON.parse(await r.text());
-        if (remote.deviceId === this.deviceId) return;
-        if (remote.revision > this.revision) {
-          this.handleRemoteUpdate(remote);
+        if (remote.dev === this.deviceId) return;
+        if (remote.rev > this.revision) {
+          const hasLocal = this.revision > 0 && this.lastSync && (Date.now() - parseInt(this.lastSync) < 30000);
+          if (hasLocal) { this.showConflict(remote); } else { this.applyRemote(remote); }
         }
       }
-    } catch (e) { console.log('SyncEngine.pull:', e); }
-  },
-
-  handleRemoteUpdate(remote) {
-    const hasLocalChanges = this.revision > 0 && this.lastSyncTime && (Date.now() - this.lastSyncTime < 30000);
-    if (hasLocalChanges && remote.revision > this.revision) {
-      this.showConflictModal(remote);
-    } else {
-      this.applyRemote(remote);
-    }
+    } catch (e) { console.log('SmartSync.pull:', e); }
   },
 
   applyRemote(remote) {
-    const oldData = JSON.stringify({ exp: db.exp, rig: db.rig, deb: db.deb, inc: db.inc });
-    this.applyImportedData(remote.data);
-    this.revision = remote.revision;
+    this.applyData(remote.data);
+    this.revision = remote.rev;
     localStorage.setItem('sync_revision', String(this.revision));
-    this.lastSyncTime = Date.now();
-    localStorage.setItem('sync_last_time', String(this.lastSyncTime));
-    this.lastSeenModifiedTime = Date.now();
-    this.addSyncLogEntry('pull', `from ${remote.deviceName}`, 'success');
-    this.addSyncNotification(remote);
-    this.updateStatusUI('synced');
-    this.updateLastSyncDisplay();
+    this.lastSync = Date.now();
+    localStorage.setItem('sync_last_time', String(this.lastSync));
+    this.lastSeen = Date.now();
+    this.addLog('pull', remote.devName || 'جهاز آخر', 'ok');
+    this.addNotification(remote);
+    this.updateUI('synced');
+    this.updateLastSync();
     updateNotificationBadge();
-    toastMsg(`🔄 ${translate('syncUpdatedFrom')} ${remote.deviceName}`, 'info');
+    toastMsg(`🔄 ${currentLang === 'ar' ? 'تم التحديث من' : 'Updated from'} ${remote.devName || 'جهاز آخر'}`, 'info');
   },
 
-  applyImportedData(data) {
+  applyData(data) {
     if (data.exp) db.exp = data.exp;
     if (data.rig) db.rig = data.rig;
     if (data.deb) db.deb = data.deb;
     if (data.bal) db.bal = data.bal;
     if (data.inc) db.inc = data.inc;
-    if (data.currency) {
-      currentCurrency = data.currency;
-      localStorage.setItem('currencyCode', currentCurrency.code);
-    }
+    if (data.currency) { currentCurrency = data.currency; localStorage.setItem('currencyCode', currentCurrency.code); }
     currentBalance = parseAmount(db.bal.amount || 0);
     (async () => {
       await clearAllStores();
@@ -2060,200 +2003,228 @@ const SyncEngine = {
     })();
   },
 
-  showConflictModal(remote) {
-    openLayer('conflict', { remote: remote });
+  showConflict(remote) {
+    this.conflictRemote = remote;
+    const modal = document.getElementById('syncConflictModal');
+    if (modal) modal.style.display = 'flex';
   },
 
-  resolveConflict(choice, remote) {
-    if (choice === 'remote') {
-      this.applyRemote(remote);
-    } else if (choice === 'local') {
-      this.revision = remote.revision + 1;
+  resolveConflict(choice) {
+    const modal = document.getElementById('syncConflictModal');
+    if (modal) modal.style.display = 'none';
+    if (!this.conflictRemote) return;
+    if (choice === 'remote') { this.applyRemote(this.conflictRemote); }
+    else if (choice === 'local') {
+      this.revision = this.conflictRemote.rev + 1;
       localStorage.setItem('sync_revision', String(this.revision));
-      this.pushNow('conflict_local_wins');
-      this.addSyncLogEntry('conflict', 'kept local', 'success');
+      this.push('conflict_local');
+      this.addLog('conflict', 'kept local', 'ok');
     }
-    closeLayer('conflict');
+    this.conflictRemote = null;
   },
 
-  addSyncNotification(remote) {
-    const notif = {
-      id: `sync-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      deviceName: remote.deviceName || 'جهاز آخر',
-      deviceId: remote.deviceId,
-      time: new Date().toISOString(),
-      action: 'update',
-      text: `${translate('syncDataUpdated')}`,
-      read: false
-    };
-    this.syncNotifications.unshift(notif);
-    if (this.syncNotifications.length > 50) this.syncNotifications = this.syncNotifications.slice(0, 50);
-    localStorage.setItem('sync_notifications', JSON.stringify(this.syncNotifications));
+  addNotification(remote) {
+    this.notifications.unshift({ id: 'sn-' + Date.now(), deviceName: remote.devName || 'جهاز آخر', time: new Date().toISOString(), text: currentLang === 'ar' ? 'تم تحديث البيانات' : 'Data updated', read: false });
+    if (this.notifications.length > 30) this.notifications = this.notifications.slice(0, 30);
+    localStorage.setItem('sync_notifs', JSON.stringify(this.notifications));
   },
 
-  getSyncNotifications() { return this.syncNotifications; },
-  getUnreadSyncNotifCount() { return this.syncNotifications.filter(n => !n.read).length; },
+  getNotifications() { return this.notifications; },
+  getUnreadCount() { return this.notifications.filter(n => !n.read).length; },
+  markRead(id) { const n = this.notifications.find(x => x.id === id); if (n) { n.read = true; localStorage.setItem('sync_notifs', JSON.stringify(this.notifications)); } renderNotifications(); updateNotificationBadge(); },
 
-  markNotifRead(id) {
-    const n = this.syncNotifications.find(x => x.id === id);
-    if (n) { n.read = true; localStorage.setItem('sync_notifications', JSON.stringify(this.syncNotifications)); }
-    renderNotifications();
-    updateNotificationBadge();
-  },
-
-  clearSyncNotifications() {
-    this.syncNotifications = [];
-    localStorage.setItem('sync_notifications', '[]');
-    renderNotifications();
-    updateNotificationBadge();
-  },
-
-  addSyncLogEntry(type, detail, status) {
-    const entry = { type, detail, status, time: new Date().toISOString() };
-    this.syncLog.unshift(entry);
-    if (this.syncLog.length > 100) this.syncLog = this.syncLog.slice(0, 100);
+  addLog(type, detail, status) {
+    this.syncLog.unshift({ type, detail, status, time: new Date().toISOString() });
+    if (this.syncLog.length > 50) this.syncLog = this.syncLog.slice(0, 50);
     localStorage.setItem('sync_log', JSON.stringify(this.syncLog));
   },
-
-  getSyncLog() { return this.syncLog; },
-  clearSyncLog() { this.syncLog = []; localStorage.setItem('sync_log', '[]'); renderSyncLog(); },
 
   async initialCheck() {
     if (!this.autoSync || !isDriveConnected || !accessToken) return;
     try {
-      const file = await this.findSyncFile();
-      if (!file) { if (this.getRecordCount() > 0) this.pushNow('initial'); return; }
+      const file = await this.findFile();
+      if (!file) { if (this.count() > 0) this.push('initial'); return; }
       const r = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, { headers: { 'Authorization': 'Bearer ' + accessToken } });
       if (!r.ok) return;
       const remote = JSON.parse(await r.text());
       const rc = (remote.data.exp ? remote.data.exp.length : 0) + (remote.data.rig ? remote.data.rig.length : 0) + (remote.data.deb ? remote.data.deb.length : 0) + (remote.data.inc ? remote.data.inc.length : 0);
-      if (this.getRecordCount() === 0 && rc > 0 && remote.deviceId !== this.deviceId) {
-        toastMsg(`☁️ ${translate('syncFoundData')}`, 'info');
-        this.applyImportedData(remote.data);
-        this.revision = remote.revision;
+      if (this.count() === 0 && rc > 0 && remote.dev !== this.deviceId) {
+        toastMsg('☁️ ' + (currentLang === 'ar' ? 'وُجدت بيانات على جهاز آخر' : 'Data found on another device'), 'info');
+        this.applyData(remote.data);
+        this.revision = remote.rev;
         localStorage.setItem('sync_revision', String(this.revision));
-        toastMsg(`✅ ${translate('syncRestored')}`, 'success');
+        toastMsg('✅ ' + (currentLang === 'ar' ? 'تم استعادة بياناتك' : 'Data restored'), 'success');
       }
-      this.lastSeenModifiedTime = new Date(file.modifiedTime).getTime();
-      this.lastSyncTime = Date.now();
-      localStorage.setItem('sync_last_time', String(this.lastSyncTime));
-      this.updateLastSyncDisplay();
-    } catch (e) { console.log('SyncEngine.initialCheck:', e); }
+      this.lastSeen = new Date(file.modifiedTime).getTime();
+      this.lastSync = Date.now();
+      localStorage.setItem('sync_last_time', String(this.lastSync));
+      this.updateLastSync();
+    } catch (e) { console.log('SmartSync.initialCheck:', e); }
   },
 
-  getRecordCount() { return (db.exp ? db.exp.length : 0) + (db.rig ? db.rig.length : 0) + (db.deb ? db.deb.length : 0) + (db.inc ? db.inc.length : 0); },
+  count() { return (db.exp ? db.exp.length : 0) + (db.rig ? db.rig.length : 0) + (db.deb ? db.deb.length : 0) + (db.inc ? db.inc.length : 0); },
 
-  updateStatusUI(state) {
-    const indicator = document.getElementById('syncStatusIndicator');
-    const dot = document.getElementById('syncStatusDot');
-    const text = document.getElementById('syncStatusText');
-    if (!indicator) return;
-    if (!isDriveConnected || !this.autoSync) {
-      indicator.className = 'sync-status disconnected';
-      if (dot) dot.className = 'sync-dot red';
-      if (text) text.textContent = translate('syncNotConnected');
-    } else if (state === 'syncing' || this.isSyncing) {
-      indicator.className = 'sync-status syncing';
-      if (dot) dot.className = 'sync-dot yellow';
-      if (text) text.textContent = translate('syncInProgress');
-    } else if (!this.isOnline) {
-      indicator.className = 'sync-status offline';
-      if (dot) dot.className = 'sync-dot red';
-      if (text) text.textContent = translate('syncOffline');
-    } else {
-      indicator.className = 'sync-status connected';
-      if (dot) dot.className = 'sync-dot green';
-      if (text) text.textContent = translate('syncConnected');
-    }
-  },
-
-  updateLastSyncDisplay() {
-    const el = document.getElementById('syncLastTime');
-    if (!el) return;
-    if (!this.lastSyncTime) { el.textContent = translate('syncNever'); return; }
-    const diff = Date.now() - parseInt(this.lastSyncTime);
-    if (diff < 5000) el.textContent = translate('syncJustNow');
-    else if (diff < 60000) el.textContent = translate('syncSecondsAgo').replace('{n}', Math.floor(diff / 1000));
-    else if (diff < 3600000) el.textContent = translate('syncMinutesAgo').replace('{n}', Math.floor(diff / 60000));
-    else el.textContent = formatDateTime(new Date(parseInt(this.lastSyncTime)).toISOString());
-  },
-
-  toggleAutoSync(enabled) {
+  toggleAuto(enabled) {
     this.autoSync = enabled;
-    localStorage.setItem('sync_auto_enabled', enabled ? 'true' : 'false');
-    if (enabled && isDriveConnected) this.pushNow('toggle_on');
-    this.updateStatusUI();
-    toastMsg(enabled ? `🔄 ${translate('syncEnabled')}` : `⏸️ ${translate('syncDisabled')}`, 'info');
+    localStorage.setItem('sync_auto', enabled ? 'true' : 'false');
+    if (enabled && isDriveConnected) this.push('toggle');
+    this.updateUI();
+    toastMsg(enabled ? '🔄 ' + (currentLang === 'ar' ? 'تم تفعيل المزامنة' : 'Sync enabled') : '⏸️ ' + (currentLang === 'ar' ? 'تم إيقاف المزامنة' : 'Sync disabled'), 'info');
   },
 
   setDeviceName(name) {
     this.deviceName = name;
     localStorage.setItem('sync_device_name', name);
-    this.pushNow('device_rename');
-    toastMsg(`✅ ${translate('syncDeviceNameSet')}: ${name}`, 'success');
+    this.push('rename');
+    toastMsg('✅ ' + name, 'success');
+  },
+
+  updateUI(state) {
+    const ind = document.getElementById('syncIndicator');
+    if (!ind) return;
+    if (!isDriveConnected || !this.autoSync) { ind.className = 'sync-ind disconnected'; ind.innerHTML = '<span class="sync-dot red"></span>'; ind.title = 'غير متصل'; }
+    else if (state === 'syncing' || this.syncing) { ind.className = 'sync-ind syncing'; ind.innerHTML = '<span class="sync-dot yellow"></span>'; ind.title = 'جارٍ المزامنة...'; }
+    else if (!this.isOnline) { ind.className = 'sync-ind offline'; ind.innerHTML = '<span class="sync-dot red"></span>'; ind.title = 'غير متصل بالإنترنت'; }
+    else { ind.className = 'sync-ind connected'; ind.innerHTML = '<span class="sync-dot green"></span>'; ind.title = 'متصل ومُزامن'; }
+  },
+
+  updateLastSync() {
+    const el = document.getElementById('syncLastTimeLine');
+    if (!el) return;
+    if (!this.lastSync) { el.textContent = currentLang === 'ar' ? 'آخر مزامنة: لم تتم بعد' : 'Last sync: Never'; return; }
+    const diff = Date.now() - parseInt(this.lastSync);
+    let txt;
+    if (diff < 5000) txt = currentLang === 'ar' ? 'قبل لحظات' : 'Just now';
+    else if (diff < 60000) txt = (currentLang === 'ar' ? 'قبل ' : '') + Math.floor(diff / 1000) + (currentLang === 'ar' ? ' ثانية' : 's ago');
+    else if (diff < 3600000) txt = (currentLang === 'ar' ? 'قبل ' : '') + Math.floor(diff / 60000) + (currentLang === 'ar' ? ' دقيقة' : 'm ago');
+    else txt = formatDateTime(new Date(parseInt(this.lastSync)).toISOString());
+    el.textContent = (currentLang === 'ar' ? 'آخر مزامنة: ' : 'Last sync: ') + txt;
+  },
+
+  // حقن التنسيقات
+  injectStyles() {
+    if (document.getElementById('syncStyles')) return;
+    const s = document.createElement('style');
+    s.id = 'syncStyles';
+    s.textContent = `
+      .sync-ind{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:16px;cursor:pointer;transition:all .3s;}
+      .sync-ind.connected{background:rgba(42,157,143,.2);}
+      .sync-ind.syncing{background:rgba(251,192,45,.2);}
+      .sync-ind.offline,.sync-ind.disconnected{background:rgba(156,163,175,.2);}
+      .sync-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+      .sync-dot.green{background:#2a9d8f;animation:syncPulse 1.5s infinite;}
+      .sync-dot.yellow{background:#fbc02d;animation:syncPulse 1s infinite;}
+      .sync-dot.red{background:#ef476f;}
+      @keyframes syncPulse{0%{box-shadow:0 0 0 0 rgba(42,157,143,.6);}70%{box-shadow:0 0 0 6px rgba(42,157,143,0);}100%{box-shadow:0 0 0 0 rgba(42,157,143,0);}}
+      #syncLastTimeLine{padding:4px 20px 10px;font-size:.8em;color:#888;}
+    `;
+    document.head.appendChild(s);
+  },
+
+  // حقن المؤشر في الهيدر
+  injectHeaderIndicator() {
+    if (document.getElementById('syncIndicator')) return;
+    const bell = document.getElementById('notificationBell');
+    if (!bell) return;
+    const ind = document.createElement('div');
+    ind.id = 'syncIndicator';
+    ind.className = 'sync-ind disconnected';
+    ind.innerHTML = '<span class="sync-dot red"></span>';
+    ind.onclick = () => this.openSyncLog();
+    bell.parentNode.insertBefore(ind, bell);
+  },
+
+  // حقن عناصر الشريط الجانبي
+  injectSidebarControls() {
+    if (document.getElementById('syncAutoToggle')) return;
+    const driveBtn = document.getElementById('driveMenuItem');
+    if (!driveBtn) return;
+    const divider = document.createElement('div');
+    divider.className = 'sidebar-divider';
+    driveBtn.insertAdjacentElement('afterend', divider);
+
+    const toggleRow = document.createElement('div');
+    toggleRow.className = 'sidebar-switch-item';
+    toggleRow.innerHTML = `<i class="fas fa-sync-alt"></i><span>${currentLang === 'ar' ? 'المزامنة التلقائية' : 'Auto Sync'}</span><label class="switch"><input type="checkbox" id="syncAutoToggle"><span class="slider"></span></label>`;
+    divider.insertAdjacentElement('afterend', toggleRow);
+    const toggle = toggleRow.querySelector('#syncAutoToggle');
+    toggle.checked = this.autoSync;
+    toggle.onchange = () => this.toggleAuto(toggle.checked);
+
+    const lastLine = document.createElement('div');
+    lastLine.id = 'syncLastTimeLine';
+    toggleRow.insertAdjacentElement('afterend', lastLine);
+
+    const syncNowBtn = document.createElement('button');
+    syncNowBtn.className = 'sidebar-menu-item';
+    syncNowBtn.innerHTML = `<i class="fas fa-cloud-upload-alt"></i><span>${currentLang === 'ar' ? 'مزامنة الآن' : 'Sync Now'}</span>`;
+    syncNowBtn.onclick = () => { this.push('manual'); closeLayer('sidebar'); };
+    lastLine.insertAdjacentElement('afterend', syncNowBtn);
+
+    const logBtn = document.createElement('button');
+    logBtn.className = 'sidebar-menu-item';
+    logBtn.innerHTML = `<i class="fas fa-history"></i><span>${currentLang === 'ar' ? 'سجل المزامنة' : 'Sync Log'}</span>`;
+    logBtn.onclick = () => { this.openSyncLog(); closeLayer('sidebar'); };
+    syncNowBtn.insertAdjacentElement('afterend', logBtn);
+
+    const nameBtn = document.createElement('button');
+    nameBtn.className = 'sidebar-menu-item';
+    nameBtn.innerHTML = `<i class="fas fa-laptop"></i><span>${currentLang === 'ar' ? 'اسم الجهاز' : 'Device Name'}</span>`;
+    nameBtn.onclick = () => { this.openDeviceName(); closeLayer('sidebar'); };
+    logBtn.insertAdjacentElement('afterend', nameBtn);
+
+    this.updateLastSync();
+  },
+
+  // حقن النوافذ المنبثقة
+  injectModals() {
+    if (document.getElementById('syncLogModal')) return;
+    const html = `
+      <div id="syncLogModal" class="modal"><header><button onclick="closeLayer('syncLog')"><i class="fas fa-times"></i></button><div class="title">📋 ${currentLang === 'ar' ? 'سجل المزامنة' : 'Sync Log'}</div><button onclick="SmartSync.clearLog()" style="color:var(--danger);font-size:.8em;"><i class="fas fa-trash"></i></button></header><div class="modal-content"><div id="syncLogContent"></div></div></div>
+      <div id="syncDeviceModal" class="modal"><header><button onclick="closeLayer('syncDevice')"><i class="fas fa-times"></i></button><div class="title">💻 ${currentLang === 'ar' ? 'اسم الجهاز' : 'Device Name'}</div></header><div class="modal-content"><div class="card" style="border-top-color:var(--p);"><p style="color:#666;font-size:.9em;">${currentLang === 'ar' ? 'اختر اسماً مميزاً لهذا الجهاز' : 'Choose a unique name for this device'}</p><input type="text" id="syncDeviceInput" value="${this.deviceName}" placeholder="${currentLang === 'ar' ? 'مثال: جوال أحمد' : 'e.g., Ahmad Phone'}" style="margin:15px 0;"/><button class="action" onclick="SmartSync.saveDeviceName()">${currentLang === 'ar' ? 'حفظ' : 'Save'}</button></div></div></div>
+      <div id="syncConflictModal" class="modal" style="display:none;"><header><div class="title">⚔️ ${currentLang === 'ar' ? 'تعارض المزامنة' : 'Sync Conflict'}</div></header><div class="modal-content"><div class="card" style="border-top-color:var(--warning);text-align:center;"><i class="fas fa-exclamation-triangle" style="font-size:3em;color:var(--warning);margin-bottom:15px;"></i><h3>${currentLang === 'ar' ? 'تم تعديل البيانات من جهاز آخر' : 'Data modified from another device'}</h3><p style="color:#666;">${currentLang === 'ar' ? 'هل تريد استخدام النسخة البعيدة أم الاحتفاظ بنسختك؟' : 'Use remote version or keep yours?'}</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;"><button class="action" style="background:var(--p);" onclick="SmartSync.resolveConflict('remote')"><i class="fas fa-cloud-download-alt"></i><br>${currentLang === 'ar' ? 'استخدام النسخة الأخرى' : 'Use Remote'}</button><button class="action" style="background:var(--success);" onclick="SmartSync.resolveConflict('local')"><i class="fas fa-save"></i><br>${currentLang === 'ar' ? 'الاحتفاظ بنسختي' : 'Keep Mine'}</button></div><p style="font-size:.85em;color:#999;margin-top:15px;">⚠️ ${currentLang === 'ar' ? 'اختيار أي نسخة سيستبدل بياناتك الحالية' : 'Choosing either will replace your data'}</p></div></div></div>
+    `;
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    while (container.firstChild) document.body.appendChild(container.firstChild);
+    LAYERS['syncLog'] = { elementId: 'syncLogModal', type: 'modal' };
+    LAYERS['syncDevice'] = { elementId: 'syncDeviceModal', type: 'modal' };
+  },
+
+  openSyncLog() {
+    this.injectModals();
+    openLayer('syncLog');
+    this.renderLog();
+  },
+
+  renderLog() {
+    const el = document.getElementById('syncLogContent');
+    if (!el) return;
+    if (!this.syncLog.length) { el.innerHTML = `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-history" style="font-size:2em;display:block;margin-bottom:10px;"></i>${currentLang === 'ar' ? 'السجل فارغ' : 'Log is empty'}</p>`; return; }
+    el.innerHTML = this.syncLog.map(e => {
+      const icon = e.type === 'push' ? 'fa-arrow-up' : e.type === 'pull' ? 'fa-arrow-down' : 'fa-exclamation-triangle';
+      const color = e.status === 'ok' ? 'var(--success)' : 'var(--danger)';
+      const label = e.type === 'push' ? (currentLang === 'ar' ? 'رفع' : 'Upload') : e.type === 'pull' ? (currentLang === 'ar' ? 'تنزيل' : 'Download') : (currentLang === 'ar' ? 'تعارض' : 'Conflict');
+      return `<div class="list-item" style="border-right-color:${color};padding:12px 16px;cursor:default;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:600;font-size:.9em;"><i class="fas ${icon}" style="color:${color};margin-left:8px;"></i>${label}: ${e.detail}</span><span style="font-size:.8em;color:#888;">${formatDateTime(e.time)}</span></div></div>`;
+    }).join('');
+  },
+
+  clearLog() { this.syncLog = []; localStorage.setItem('sync_log', '[]'); this.renderLog(); },
+
+  openDeviceName() {
+    this.injectModals();
+    openLayer('syncDevice');
+    const input = document.getElementById('syncDeviceInput');
+    if (input) input.value = this.deviceName;
+  },
+
+  saveDeviceName() {
+    const input = document.getElementById('syncDeviceInput');
+    if (!input || !input.value.trim()) { toastMsg(currentLang === 'ar' ? 'الرجاء إدخال اسم' : 'Please enter a name', 'error'); return; }
+    this.setDeviceName(input.value.trim());
+    closeLayer('syncDevice');
   }
 };
-
-function updateSyncStatusUI() { SyncEngine.updateStatusUI(); }
-function openSyncLog() { openLayer('syncLog'); }
-function openDeviceNameModal() { openLayer('deviceName'); }
-
-function renderSyncLog() {
-  const el = document.getElementById('syncLogContent');
-  if (!el) return;
-  const log = SyncEngine.getSyncLog();
-  if (!log.length) {
-    el.innerHTML = `<p style="text-align:center;color:#999;padding:30px 0;"><i class="fas fa-history" style="font-size:2em;display:block;margin-bottom:10px;"></i>${translate('syncLogEmpty')}</p>`;
-    return;
-  }
-  el.innerHTML = log.map(entry => {
-    const icon = entry.type === 'push' ? 'fa-arrow-up' : entry.type === 'pull' ? 'fa-arrow-down' : 'fa-exclamation-triangle';
-    const color = entry.status === 'success' ? 'var(--success)' : entry.status === 'error' ? 'var(--danger)' : 'var(--warning)';
-    const typeLabel = entry.type === 'push' ? translate('syncPush') : entry.type === 'pull' ? translate('syncPull') : translate('syncConflict');
-    return `<div class="list-item" style="border-right-color:${color};padding:12px 16px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:600;font-size:0.9em;"><i class="fas ${icon}" style="color:${color};margin-left:8px;"></i>${typeLabel}: ${entry.detail}</span><span style="font-size:0.8em;color:#888;">${formatDateTime(entry.time)}</span></div></div>`;
-  }).join('');
-}
-
-function renderConflictUI(data) {
-  const el = document.getElementById('conflictContent');
-  if (!el || !data || !data.remote) return;
-  const remote = data.remote;
-  el.innerHTML = `
-    <div class="card" style="border-top-color:var(--warning);text-align:center;">
-      <i class="fas fa-exclamation-triangle" style="font-size:3em;color:var(--warning);margin-bottom:15px;"></i>
-      <h3 style="margin-top:0;">${translate('conflictTitle')}</h3>
-      <p style="color:#666;margin-bottom:20px;">${translate('conflictDesc').replace('{device}', remote.deviceName || 'جهاز آخر')}</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;">
-        <button class="action" style="background:var(--p);" onclick="SyncEngine.resolveConflict('remote', SyncEngine._conflictRemote)">
-          <i class="fas fa-cloud-download-alt" style="margin-left:8px;"></i><br>${translate('conflictUseRemote')}
-        </button>
-        <button class="action" style="background:var(--success);" onclick="SyncEngine.resolveConflict('local', SyncEngine._conflictRemote)">
-          <i class="fas fa-save" style="margin-left:8px;"></i><br>${translate('conflictKeepLocal')}
-        </button>
-      </div>
-      <p style="font-size:0.85em;color:#999;margin-top:15px;">${translate('conflictWarning')}</p>
-    </div>`;
-  SyncEngine._conflictRemote = remote;
-}
-
-function renderDeviceNameModal() {
-  const el = document.getElementById('deviceNameContent');
-  if (!el) return;
-  el.innerHTML = `
-    <div class="card" style="border-top-color:var(--p);">
-      <h3 style="margin-top:0;color:var(--p);"><i class="fas fa-laptop" style="margin-left:8px;"></i>${translate('deviceNameTitle')}</h3>
-      <p style="color:#666;font-size:0.9em;">${translate('deviceNameDesc')}</p>
-      <input type="text" id="deviceNameInput" value="${SyncEngine.deviceName}" placeholder="${translate('deviceNamePlaceholder')}" style="margin:15px 0;" />
-      <button class="action" onclick="saveDeviceName()">${translate('deviceNameSave')}</button>
-    </div>`;
-}
-
-function saveDeviceName() {
-  const input = document.getElementById('deviceNameInput');
-  if (!input || !input.value.trim()) { toastMsg(translate('deviceNameRequired'), 'error'); return; }
-  SyncEngine.setDeviceName(input.value.trim());
-  closeLayer('deviceName');
-}
 
 // =============================================================
 // 19. INITIALIZATION
@@ -2275,8 +2246,8 @@ window.onload = () => {
   updateDriveUI();
   updateNotificationBadge();
   setTimeout(() => { initGapi(); initGis(); restoreDriveState(); }, 1000);
-  // Sync status update interval
-  setInterval(() => { SyncEngine.updateLastSyncDisplay(); }, 10000);
+  setTimeout(() => { SmartSync.init(); }, 1500);
+  setInterval(() => SmartSync.updateLastSync(), 10000);
 };
 
-console.log('ميزانيتك الذكية جاهزة ✅ — محرك المزامنة الذكي 2.0');
+console.log('ميزانيتك الذكية جاهزة ✅ — المزامنة الذكية 2.0');
