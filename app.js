@@ -57,7 +57,15 @@ function _visualOpen(layerName, data = {}) {
     if (!el) return;
     if (layer.type === 'modal') {
         el.style.display = 'flex';
-        if (layerName === 'log') { currentLog = data.logType; buildLogFilters(); renderLog(); }
+        if (layerName === 'log') {
+            currentLog = data.logType;
+            const lt = document.getElementById('logTitle');
+            if (lt) {
+                const tMap = { inc: 'incomeLog', exp: 'expenseLog', rig: 'rightsLog', deb: 'debtsLog' };
+                lt.textContent = translate(tMap[currentLog] || 'incomeLog');
+            }
+            buildLogFilters(); renderLog();
+        }
         else if (layerName === 'detail') {
             const o = db[data.logType]?.find(item => item.clientId === data.id || item.id === data.id);
             if (!o) { toastMsg(translate('notFound'), "error"); return; }
@@ -170,12 +178,13 @@ const OPTION_I18N = {
     'راتب': 'incomeSalary', 'عمل حر': 'incomeFreelance', 'تجارة': 'incomeBusiness', 'استثمار': 'incomeInvestment', 'عمولة': 'incomeCommission', 'هدية': 'incomeGift', 'مكافأة': 'incomeBonus', 'الضمان الاجتماعي': 'incomeSocialSecurity', 'المعاش التقاعدي': 'incomePension', 'دخل آخر': 'incomeOther',
     'طعام': 'expenseFood', 'مواصلات': 'expenseTransport', 'وقود': 'expenseFuel', 'مقاهي': 'expenseCafe', 'رعاية شخصية': 'expensePersonalCare', 'أجهزة إلكترونية': 'expenseElectronics', 'صحة': 'expenseHealth', 'ترفيه': 'expenseEntertainment', 'تسوق': 'expenseShopping', 'تعليم': 'expenseEducation', 'صيانة وإصلاح': 'expenseMaintenance', 'أخرى': 'expenseOther',
     'بيع آجل': 'rightCreditSale', 'سلفة': 'rightLoan', 'إيجار مستحق': 'rightRentDue', 'شراكة': 'rightPartnership', 'حق آخر': 'rightOther',
-    '🏠 إيجار': 'debtRent', '💡 كهرباء': 'debtElectricity', '💧 ماء': 'debtWater', '💡 فواتير الخدمات': 'debtUtilities', '📱 الاتصالات والإنترنت': 'debtInternet', '🏦 قروض وتمويل': 'debtLoans', '👤 دين شخصي': 'debtPersonal', '🛒 مشتريات بالتقسيط': 'debtInstallments', '🎓 رسوم تعليمية': 'debtTuition', '🏥 مصاريف طبية مستحقة': 'debtMedical', '🚗 تمويل السيارة': 'debtCarFinance', '👨‍ التزامات عائلية': 'debtFamily', '📅 اشتراكات دورية': 'debtSubscriptions', '👨‍💼 رواتب': 'debtSalaries', '📦 أخرى': 'debtOther',
+    '🏠 إيجار': 'debtRent', '💡 كهرباء': 'debtElectricity', '💧 ماء': 'debtWater', '💡 فواتير الخدمات': 'debtUtilities', '📱 الاتصالات والإنترنت': 'debtInternet', '🏦 قروض وتمويل': 'debtLoans', '👤 دين شخصي': 'debtPersonal', '🛒 مشتريات بالتقسيط': 'debtInstallments', '🎓 رسوم تعليمية': 'debtTuition', '🏥 مصاريف طبية مستحقة': 'debtMedical', '🚗 تمويل السيارة': 'debtCarFinance', '👨‍👩 التزامات عائلية': 'debtFamily', '👨‍ التزامات عائلية': 'debtFamily', '📅 اشتراكات دورية': 'debtSubscriptions', '👨‍💼 رواتب': 'debtSalaries', '📦 أخرى': 'debtOther',
     'مدفوع': 'statusPaid', 'مدفوع جزئياً': 'statusPartiallyPaid', 'غير مدفوع': 'statusUnpaid', 'متأخر': 'statusOverdue',
     '📂 فئة الدخل': 'incomeCategoryPlaceholder', '🛒 الفئة (نفقات متغيرة)': 'expenseCategoryPlaceholder', '🤝 نوع الحق': 'rightTypePlaceholder', '🧾 نوع الالتزام': 'debtTypePlaceholder', '✅ الحالة': 'statusPlaceholder', '⏱️ التنبيه قبل الاستحقاق (اختياري)': 'notifTimingPlaceholder',
     '⏱️ قبل ساعة': 'notif1Hour', '⏱️ قبل 24 ساعة': 'notif24Hours', '⏱️ قبل 7 أيام': 'notif7Days',
     '⏱️ 1 Hour before': 'notif1Hour', '⏱️ 24 Hours before': 'notif24Hours', '⏱️ 7 Days before': 'notif7Days',
-    '⏱️ 1 گھنٹہ پہلے': 'notif1Hour', '⏱️ 24 گھنٹے پہلے': 'notif24Hours', '⏱️ 7 دن پہلے': 'notif7Days'
+    '⏱️ 1 گھنٹہ پہلے': 'notif1Hour', '⏱️ 24 گھنٹے پہلے': 'notif24Hours', '⏱️ 7 دن پہلے': 'notif7Days',
+    'الكل': 'statsPeriodAll', 'اليوم': 'statsPeriodToday', 'هذا الأسبوع': 'statsPeriodWeek', 'هذا الشهر': 'statsPeriodMonth', 'هذه السنة': 'statsPeriodYear'
 };
 
 function translateStoredValue(val) { if (!val || typeof val !== 'string') return val || ''; const key = OPTION_I18N[val.trim()]; return key ? translate(key) : val; }
@@ -246,7 +255,7 @@ function applyTranslations(lang) {
     if (langLabel) { const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' }; langLabel.textContent = langNames[lang] || '🇸 العربية'; }
     updateBalanceDisplay();
     updateStats();
-    const logModal = document.getElementById('logModal'); if (logModal && logModal.style.display === 'flex') { buildLogFilters(); renderLog(); }
+    const logModal = document.getElementById('logModal'); if (logModal && logModal.style.display === 'flex') { const lt = document.getElementById('logTitle'); if (lt) { const tMap = { inc: 'incomeLog', exp: 'expenseLog', rig: 'rightsLog', deb: 'debtsLog' }; lt.textContent = translate(tMap[currentLog] || 'incomeLog'); } buildLogFilters(); renderLog(); }
     const balanceLogModal = document.getElementById('balanceLogModal'); if (balanceLogModal && balanceLogModal.style.display === 'flex') { buildBalanceFilters(); renderBalanceLog(); }
     const driveBackupModal = document.getElementById('driveBackupModal'); if (driveBackupModal && driveBackupModal.style.display === 'flex') renderDriveBackupList();
     const currencyModal = document.getElementById('currencyModal'); if (currencyModal && currencyModal.style.display === 'flex') renderCurrencyList();
@@ -258,11 +267,15 @@ function applyTranslations(lang) {
     const countEl = document.getElementById('driveBackupCount'); if (countEl) countEl.textContent = translate('backupCountLabel') + ' ' + (backupFiles ? backupFiles.length : 0);
     updateLanguageModalCheckmarks();
     localStorage.setItem('appLang', lang);
+    // إعادة ترجمة العناصر المحقونة ديناميكيًا (المزامنة + السلة)
+    if (typeof window.__fmtLast === 'function') window.__fmtLast();
+    if (typeof window.__refreshTrash === 'function') window.__refreshTrash();
 }
 
 function translate(key) { if (!translations[currentLang] || translations[currentLang][key] === undefined) { return translations['ar']?.[key] || key; } return translations[currentLang][key]; }
 
 function setLanguage(lang) { if (lang === currentLang) { closeLayer('language'); return; } applyTranslations(lang); closeLayer('language'); toastMsg(translate('languageChanged') || 'Language changed', 'success'); }
+
 function openLanguageModal() { openLayer('language'); }
 
 function updateLanguageModalCheckmarks() {
@@ -388,7 +401,6 @@ async function createAppFolder() {
     } catch (error) { console.error('Error creating folder:', error); toastMsg(translate('folderCreateFailed'), "error"); }
 }
 
-// ✔ اتصال مباشر بدون شاشة «هل تريد عمل نسخة احتياطية؟»
 function handleDriveClick() {
     if (isDriveConnected) { openLayer('driveBackup'); return; }
     const savedToken = localStorage.getItem('drive_token');
@@ -462,7 +474,6 @@ async function loadBackupList() {
 }
 
 function parseBackupNumber(name) { const m = (name || '').match(/^(\d+)/); if (!m) return null; const n = parseInt(m[1], 10); return isNaN(n) ? null : n; }
-
 function getNextBackupNumber() { let max = 0; (backupFiles || []).forEach(f => { const n = parseBackupNumber(f.name); if (n && n > max) max = n; }); return max + 1; }
 
 function renderDriveBackupList() {
@@ -677,7 +688,6 @@ function showLoading(message = translate('processing')) {
     if (msg) msg.textContent = message;
     if (overlay) overlay.classList.add('show');
 }
-
 function hideLoading() { const overlay = document.getElementById('loadingOverlay'); if (overlay) overlay.classList.remove('show'); }
 
 // =============================================================
@@ -699,7 +709,7 @@ function toastMsg(message, type = "info") {
 const ARABIC_CURRENCIES = [
     { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
     { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
-    { code: 'AED', symbol: 'د.إ', flag: '🇦', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
+    { code: 'AED', symbol: 'د.إ', flag: '🇦🇪', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
     { code: 'QAR', symbol: 'ر.ق', flag: '🇶🇦', name: { ar: 'الريال القطري', en: 'Qatari Riyal', ur: 'قطری ریال' } },
     { code: 'KWD', symbol: 'د.ك', flag: '🇰🇼', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
     { code: 'BHD', symbol: 'د.ب', flag: '🇧🇭', name: { ar: 'الدينار البحريني', en: 'Bahraini Dinar', ur: 'بحرینی دینار' } },
@@ -710,7 +720,7 @@ const ARABIC_CURRENCIES = [
     { code: 'LBP', symbol: 'ل.ل', flag: '🇱🇧', name: { ar: 'الليرة اللبنانية', en: 'Lebanese Lira', ur: 'لبنانی لیرا' } },
     { code: 'SYP', symbol: 'ل.س', flag: '🇸🇾', name: { ar: 'الليرة السورية', en: 'Syrian Lira', ur: 'شامی لیرا' } },
     { code: 'ILS', symbol: '₪', flag: '🇵🇸', name: { ar: 'الشيكل الفلسطيني', en: 'Israeli Shekel', ur: 'اسرائیلی شیکل' } },
-    { code: 'EGP', symbol: 'ج.م', flag: '🇪', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
+    { code: 'EGP', symbol: 'ج.م', flag: '🇪🇬', name: { ar: 'الجنيه المصري', en: 'Egyptian Pound', ur: 'مصری پاؤنڈ' } },
     { code: 'LYD', symbol: 'ل.د', flag: '🇱🇾', name: { ar: 'الدينار الليبي', en: 'Libyan Dinar', ur: 'لیبیائی دینار' } },
     { code: 'TND', symbol: 'د.ت', flag: '🇹🇳', name: { ar: 'الدينار التونسي', en: 'Tunisian Dinar', ur: 'تونسی دینار' } },
     { code: 'DZD', symbol: 'دج', flag: '🇩🇿', name: { ar: 'الدينار الجزائري', en: 'Algerian Dinar', ur: 'الجزائری دینار' } },
@@ -720,13 +730,13 @@ const ARABIC_CURRENCIES = [
     { code: 'DJF', symbol: 'ف.ج', flag: '🇩🇯', name: { ar: 'الفرنك الجيبوتي', en: 'Djiboutian Franc', ur: 'جبوتی فرینک' } },
     { code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
     { code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
-    { code: 'USD', symbol: '$', flag: '🇺', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
+    { code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
     { code: 'EUR', symbol: '€', flag: '🇪🇺', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
     { code: 'BDT', symbol: '৳', flag: '🇧🇩', name: { ar: 'التاكا البنغلاديشي', en: 'Bangladeshi Taka', ur: 'بنگلادیشی ٹاکا' } },
     { code: 'INR', symbol: '₹', flag: '🇮🇳', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
     { code: 'PKR', symbol: '₨', flag: '🇵🇰', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
     { code: 'PHP', symbol: '₱', flag: '🇵🇭', name: { ar: 'البيزو الفلبيني', en: 'Philippine Peso', ur: 'فلپائنی پیسو' } },
-    { code: 'CNY', symbol: '¥', flag: '🇨', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
+    { code: 'CNY', symbol: '¥', flag: '🇨🇳', name: { ar: 'اليوان الصيني', en: 'Chinese Yuan', ur: 'چینی یوآن' } }
 ];
 let currentCurrency = ARABIC_CURRENCIES.find(c => c.code === (localStorage.getItem('currencyCode') || 'SAR')) || ARABIC_CURRENCIES[0];
 
@@ -770,7 +780,6 @@ function getFormattedAmount(num) {
 }
 
 function getLocalDateString(date = new Date()) { const pad = n => String(n).padStart(2, '0'); return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`; }
-
 function getLocalDateTimeString(date = new Date()) { const pad = n => String(n).padStart(2, '0'); return `${getLocalDateString(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`; }
 
 function formatCurrency(amount, withColor = false) {
@@ -825,9 +834,10 @@ function clearFields() {
 }
 
 // =============================================================
-// 9. TAB NAVIGATION
+// 9. TAB NAVIGATION (مع طيّ ملخص الإحصائيات عند تغيير القسم)
 // =============================================================
 function openTab(id, keepEdit = false) {
+    closeStatsSummary();
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     const section = document.getElementById(id);
     if (section) section.classList.add('active');
@@ -1056,7 +1066,7 @@ function updateDebtFields(type, currentData = null) {
     const amountInput = document.getElementById('dAmount');
     const statusSelect = document.getElementById('dStatus');
     const entityInput = document.getElementById('dEntity');
-    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍ التزامات عائلية', '📅 اشتراكات دورية', '👨‍ رواتب', '💡 كهرباء', '💧 ماء'];
+    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
     if (entityTypes.includes(type)) {
         if (entityInput) {
             entityInput.style.display = 'block';
@@ -1480,9 +1490,7 @@ function getReadNotifications() {
         return Array.isArray(list) ? list : [];
     } catch (e) { return []; }
 }
-
 function saveReadNotifications(list) { localStorage.setItem('readNotifications', JSON.stringify(list)); }
-
 function cleanupExpiredReads() {
     const readList = getReadNotifications();
     const now = Date.now();
@@ -1491,7 +1499,6 @@ function cleanupExpiredReads() {
     if (filtered.length !== readList.length) saveReadNotifications(filtered);
     return filtered;
 }
-
 function getNotificationId(item) { return `${item.type}|${item.id}|${item.date}`; }
 
 function getUpcomingItems() {
@@ -1592,10 +1599,7 @@ function renderNotifications() {
     }
     const unread = items.filter(i => !i.read);
     const read = items.filter(i => i.read);
-    let html = `<div class="notif-summary">
-        <div class="notif-sum-card overdue-card"> <span class="sum-label">${translate('unreadNotifications')}</span> <span class="sum-value">${unread.length}</span> </div>
-        <div class="notif-sum-card upcoming-card"> <span class="sum-label">${translate('readNotifications')}</span> <span class="sum-value">${read.length}</span> </div>
-    </div>`;
+    let html = `<div class="notif-summary"> <div class="notif-sum-card overdue-card"> <span class="sum-label">${translate('unreadNotifications')}</span> <span class="sum-value">${unread.length}</span> </div> <div class="notif-sum-card upcoming-card"> <span class="sum-label">${translate('readNotifications')}</span> <span class="sum-value">${read.length}</span> </div> </div>`;
     const renderItem = (i) => {
         const nid = getNotificationId(i);
         const cls = i.read ? 'notif-item read' : (i.overdue ? 'notif-item overdue' : 'notif-item upcoming');
@@ -1609,21 +1613,7 @@ function renderNotifications() {
             : `<span class="notif-tag">${tag}</span>`;
         const entity = (i.entity && i.entity !== '—') ? `<span class="notif-entity"><i class="fas fa-user"></i> ${i.entity}</span>` : '';
         const clickAttr = i.read ? '' : `onclick="viewNotification('${nid}')"`;
-        return `<div class="${cls}" ${clickAttr}>
-            <div class="notif-head">
-                <span class="notif-name"><i class="fas ${icon}"></i> ${translateStoredValue(i.name)}</span>
-                ${readBadge}
-            </div>
-            <span class="notif-type-badge" style="background:${typeColor};">
-                <i class="fas ${arrowIcon}"></i> ${typeLabel}
-            </span>
-            <div class="notif-body">
-                <span class="notif-amount">${formatCurrency(i.amount)}</span>
-                <span class="notif-date"><i class="far fa-clock"></i> ${formatDateTime(i.date)}</span>
-            </div>
-            ${entity}
-            ${i.read ? '' : `<div class="notif-read-hint"><i class="fas fa-hand-pointer"></i> ${translate('clickToRead')}</div>`}
-        </div>`;
+        return `<div class="${cls}" ${clickAttr}> <div class="notif-head"> <span class="notif-name"><i class="fas ${icon}"></i> ${translateStoredValue(i.name)}</span> ${readBadge} </div> <span class="notif-type-badge" style="background:${typeColor};"> <i class="fas ${arrowIcon}"></i> ${typeLabel} </span> <div class="notif-body"> <span class="notif-amount">${formatCurrency(i.amount)}</span> <span class="notif-date"><i class="far fa-clock"></i> ${formatDateTime(i.date)}</span> </div> ${entity} ${i.read ? '' : `<div class="notif-read-hint"><i class="fas fa-hand-pointer"></i> ${translate('clickToRead')}</div>`} </div>`;
     };
     if (unread.length) {
         html += `<div class="notif-group-title unread-title"> <i class="fas fa-bell"></i> ${translate('unreadNotifications')} <span class="count-pill">${unread.length}</span> </div>`;
@@ -1736,9 +1726,7 @@ function renderCurrencyList() {
         getCurrencyName(c).toLowerCase().includes(q) || c.code.toLowerCase().includes(q) ||
         (c.name.ar || '').includes(q) || (c.name.en || '').toLowerCase().includes(q) || (c.name.ur || '').includes(q)
     );
-    list.innerHTML = filtered.map(c => `<button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')">
-        <span>${c.flag} <strong>${c.symbol}</strong> ${getCurrencyName(c)} (${c.code})</span> ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''}
-    </button>`).join('');
+    list.innerHTML = filtered.map(c => `<button class="secondary" style="margin:5px 0;border:1px solid ${c.code === currentCurrency.code ? 'var(--p)' : 'var(--border-color)'};display:flex;justify-content:space-between;align-items:center;" onclick="setCurrency('${c.code}')"> <span>${c.flag} <strong>${c.symbol}</strong> ${getCurrencyName(c)} (${c.code})</span> ${c.code === currentCurrency.code ? '<i class="fas fa-check" style="color:var(--success);"></i>' : ''} </button>`).join('');
 }
 
 function setCurrency(code) {
@@ -1938,248 +1926,305 @@ loadDarkModePreference();
 // =============================================================
 // 18. 🧩 الحزمة الذكية: ضغط + سلة محذوفات + مزامنة حيّة + توافق Capacitor
 // =============================================================
-(function(){
-if (window.__smartSuiteLoaded) return; window.__smartSuiteLoaded = true;
+(function () {
+    if (window.__smartSuiteLoaded) return; window.__smartSuiteLoaded = true;
 
-// ---------- أدوات الضغط (gzip مع fallback) ----------
-async function compressText(str){
-  if (!('CompressionStream' in window)) return { bin:false, out:str };
-  try{
-    const stream = new Blob([str],{type:'application/json'}).stream().pipeThrough(new CompressionStream('gzip'));
-    const buf = await new Response(stream).arrayBuffer();
-    return { bin:true, out:buf };
-  }catch(e){ return { bin:false, out:str }; }
-}
-function bufToB64(buf){ const b=new Uint8Array(buf); let s=''; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s); }
-function b64ToBuf(b64){ const s=atob(b64); const b=new Uint8Array(s.length); for(let i=0;i<s.length;i++) b[i]=s.charCodeAt(i); return b.buffer; }
-async function decompressAuto(input){
-  let buf = (typeof input==='string') ? b64ToBuf(input) : input;
-  const u = new Uint8Array(buf);
-  const isGz = u.length>2 && u[0]===0x1f && u[1]===0x8b;
-  if (isGz && 'DecompressionStream' in window){
-    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
-    return await new Response(stream).text();
-  }
-  if (typeof input==='string' && !isGz) return input;
-  return new TextDecoder().decode(buf);
-}
-// تنزيل متوافق مع Capacitor (مشاركة إن توفرت وإلا تنزيل عادي)
-function downloadFile(name, blob){
-  function anchor(){ const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000); }
-  try{
-    const f=new File([blob],name,{type:blob.type});
-    if (navigator.canShare && navigator.canShare({files:[f]})) { navigator.share({files:[f],title:name}).catch(anchor); }
-    else anchor();
-  }catch(e){ anchor(); }
-}
-
-// ---------- سلة المحذوفات (5 نسخ مضغوطة) ----------
-const TRASH_KEY='smartTrash', TRASH_MAX=5;
-function getTrash(){ try{ return JSON.parse(localStorage.getItem(TRASH_KEY)||'[]'); }catch(e){ return []; } }
-function setTrash(t){ localStorage.setItem(TRASH_KEY, JSON.stringify(t)); }
-function recCount(){ return (db.exp?db.exp.length:0)+(db.rig?db.rig.length:0)+(db.deb?db.deb.length:0)+(db.inc?db.inc.length:0); }
-async function trashPush(){
-  try{
-    const snap = JSON.stringify({exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency});
-    const c = await compressText(snap);
-    const item = { id:Date.now(), date:new Date().toISOString(), raw:snap.length, bin:c.bin, comp: c.bin?bufToB64(c.out):c.out };
-    const t=getTrash(); t.unshift(item); while(t.length>TRASH_MAX) t.pop(); setTrash(t);
-  }catch(e){ console.log('trashPush:',e); }
-}
-function clearAllStoresLocal(){
-  return new Promise(res=>{ const tx=IDB_connection.transaction(STORE_NAMES,'readwrite'); let d=0;
-    STORE_NAMES.forEach(sn=>{ const r=tx.objectStore(sn).clear(); r.onsuccess=()=>{ d++; if(d===STORE_NAMES.length) res(); }; }); });
-}
-async function applyImported(im){
-  await clearAllStoresLocal();
-  if (im.bal && im.bal.changes){ im.bal.clientId=1; await addDataToStore('bal',[im.bal]); }
-  for (const sn of ['exp','rig','deb','inc']) if (im[sn]) await addDataToStore(sn, im[sn]);
-  if (im.currency){ currentCurrency=im.currency; localStorage.setItem('currencyCode', currentCurrency.code); }
-  await loadAllData(); updateStats(); updateBalanceDisplay();
-}
-function openTrash(){ if(!LAYERS['trash']) LAYERS['trash']={elementId:'trashModal',type:'modal'}; openLayer('trash'); renderTrash(); }
-function renderTrash(){
-  const el=document.getElementById('trashList'); if(!el) return;
-  const t=getTrash();
-  if(!t.length){ el.innerHTML='<p style="text-align:center;color:#999;padding:30px 0;">🗑️ سلة المحذوفات فارغة</p>'; return; }
-  el.innerHTML = t.map(it=>{
-    const d=new Date(it.date);
-    const size = it.bin ? Math.max(1,Math.round(it.comp.length*0.75/1024)) : Math.max(1,Math.round(it.raw/1024));
-    return `<div class="list-item" style="border-right-color:var(--warning);">
-      <div style="font-weight:bold;display:flex;justify-content:space-between;"><span>🗑️ نسخة محذوفة</span><span style="color:#888;font-size:0.8em;">${size}KB</span></div>
-      <div class="details"><span>${d.toLocaleString('ar',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</span>
-      <span><button class="secondary" style="width:auto;padding:4px 10px;" onclick="restoreTrash(${it.id})">استعادة</button>
-      <button class="secondary" style="width:auto;padding:4px 10px;color:var(--danger);" onclick="deleteTrash(${it.id})">حذف</button></span></div></div>`;
-  }).join('');
-}
-window.restoreTrash = async function(id){
-  const it=getTrash().find(x=>x.id===id); if(!it) return;
-  if(!confirm(translate('confirmRestore'))) return;
-  showLoading(translate('restoringData'));
-  try{
-    if(recCount()>0) await trashPush();
-    const text=await decompressAuto(it.comp);
-    await applyImported(JSON.parse(text));
-    hideLoading(); closeLayer('trash'); toastMsg(translate('dataRestored'),'success'); pushSync();
-  }catch(e){ hideLoading(); toastMsg(translate('restoreFailed'),'error'); }
-};
-window.deleteTrash = function(id){ setTrash(getTrash().filter(x=>x.id!==id)); renderTrash(); };
-
-// ---------- المزامنة الحيّة ----------
-const SYNC_NAME='ميزانيتك_الذكية_مزامنة.json';
-let deviceId=localStorage.getItem('deviceId');
-if(!deviceId){ deviceId='dev-'+Date.now()+'-'+Math.random().toString(36).substr(2,6); localStorage.setItem('deviceId',deviceId); }
-let autoSync=localStorage.getItem('autoSyncEnabled')!=='false';
-let lastSync=localStorage.getItem('lastSyncTimestamp')||null;
-let liveSeenTs=null;
-function liveData(){ return JSON.stringify({dev:deviceId,t:Date.now(),data:{exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency}}); }
-async function liveFind(){
-  if(!isDriveConnected||!accessToken) return null;
-  const q=encodeURIComponent("name='"+SYNC_NAME+"' and trashed=false");
-  const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id,modifiedTime)',{headers:{'Authorization':'Bearer '+accessToken}});
-  if(!r.ok) return null; const j=await r.json(); return (j.files&&j.files[0])||null;
-}
-function fmtLast(){ const el=document.getElementById('lastSyncLine'); if(!el)return;
-  if(lastSync){ const d=new Date(parseInt(lastSync)); el.textContent='آخر تحديث: '+d.toLocaleString('ar',{hour:'numeric',minute:'2-digit',day:'numeric',month:'short'}); }
-  else el.textContent='آخر تحديث: —'; }
-function markSynced(){ lastSync=Date.now(); localStorage.setItem('lastSyncTimestamp',String(lastSync)); fmtLast(); }
-async function pushSync(){
-  if(!autoSync||!isDriveConnected||!accessToken) return;
-  try{
-    const f=await liveFind(); const body=liveData();
-    if(f){ await fetch('https://www.googleapis.com/upload/drive/v3/files/'+f.id+'?uploadType=media',{method:'PATCH',headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},body}); }
-    else{ const form=new FormData(); form.append('metadata',new Blob([JSON.stringify({name:SYNC_NAME,mimeType:'application/json'})],{type:'application/json'})); form.append('file',new Blob([body],{type:'application/json'})); await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Authorization':'Bearer '+accessToken},body:form}); }
-    markSynced();
-  }catch(e){ console.log('pushSync:',e); }
-}
-async function applyRemote(remote){
-  if(recCount()>0) await trashPush(); // حماية: احفظ الحالي في السلة قبل الاستبدال
-  await applyImported(remote.data);
-}
-async function pullSync(){
-  if(!autoSync||!isDriveConnected||!accessToken) return;
-  try{
-    const f=await liveFind(); if(!f) return;
-    const ts=new Date(f.modifiedTime).getTime();
-    if(liveSeenTs===null){ liveSeenTs=ts; return; }
-    if(ts>liveSeenTs+2000){
-      liveSeenTs=ts;
-      const r=await fetch('https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media',{headers:{'Authorization':'Bearer '+accessToken}});
-      if(!r.ok) return;
-      const remote=JSON.parse(await r.text());
-      if(remote.dev===deviceId) return;
-      toastMsg('🔄 تعديل جديد من جهاز آخر — جارٍ التحديث...','info');
-      await applyRemote(remote); markSynced();
-      toastMsg('✅ تم تحديث بياناتك بآخر التغييرات','success');
+    // ---------- أدوات الضغط (gzip مع fallback) ----------
+    async function compressText(str) {
+        if (!('CompressionStream' in window)) return { bin: false, out: str };
+        try {
+            const stream = new Blob([str], { type: 'application/json' }).stream().pipeThrough(new CompressionStream('gzip'));
+            const buf = await new Response(stream).arrayBuffer();
+            return { bin: true, out: buf };
+        } catch (e) { return { bin: false, out: str }; }
     }
-  }catch(e){ console.log('pullSync:',e); }
-}
-async function initialSyncCheck(){
-  if(!autoSync||!isDriveConnected||!accessToken) return;
-  try{
-    const f=await liveFind();
-    if(!f){ if(recCount()>0) pushSync(); return; }
-    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+f.id+'?alt=media',{headers:{'Authorization':'Bearer '+accessToken}});
-    if(!r.ok) return;
-    const remote=JSON.parse(await r.text());
-    const rc=(remote.data.exp?remote.data.exp.length:0)+(remote.data.rig?remote.data.rig.length:0)+(remote.data.deb?remote.data.deb.length:0)+(remote.data.inc?remote.data.inc.length:0);
-    if(recCount()===0 && rc>0 && remote.dev!==deviceId){ toastMsg('☁️ وُجدت بياناتك على جهاز آخر — جارٍ الاستعادة...','info'); await applyImported(remote.data); toastMsg('✅ تم استعادة بياناتك','success'); }
-    liveSeenTs=new Date(f.modifiedTime).getTime(); markSynced();
-  }catch(e){ console.log('initialSyncCheck:',e); }
-}
+    function bufToB64(buf) { const b = new Uint8Array(buf); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+    function b64ToBuf(b64) { const s = atob(b64); const b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b.buffer; }
+    async function decompressAuto(input) {
+        let buf = (typeof input === 'string') ? b64ToBuf(input) : input;
+        const u = new Uint8Array(buf);
+        const isGz = u.length > 2 && u[0] === 0x1f && u[1] === 0x8b;
+        if (isGz && 'DecompressionStream' in window) {
+            const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
+            return await new Response(stream).text();
+        }
+        if (typeof input === 'string' && !isGz) return input;
+        return new TextDecoder().decode(buf);
+    }
 
-// ---------- حقن الواجهة (مفتاح المزامنة + آخر تحديث + سلة المحذوفات) ----------
-function injectSyncUI(){
-  const driveBtn=document.getElementById('driveMenuItem'); if(!driveBtn) return;
-  if(!document.getElementById('autoSyncToggle')){
-    const row=document.createElement('div'); row.className='sidebar-switch-item';
-    row.innerHTML='<i class="fas fa-sync-alt"></i><span>المزامنة التلقائية</span><label class="switch"><input type="checkbox" id="autoSyncToggle"><span class="slider"></span></label>';
-    driveBtn.insertAdjacentElement('afterend',row);
-    const line=document.createElement('div'); line.id='lastSyncLine'; line.style.cssText='padding:0 20px 10px;font-size:0.8em;color:#888;';
-    row.insertAdjacentElement('afterend',line);
-    const t=row.querySelector('#autoSyncToggle'); t.checked=autoSync;
-    t.onchange=function(){ autoSync=t.checked; localStorage.setItem('autoSyncEnabled',t.checked?'true':'false'); fmtLast(); if(t.checked&&isDriveConnected)pushSync(); toastMsg(t.checked?'🔄 تم تفعيل المزامنة التلقائية':'⏸️ تم إيقاف المزامنة التلقائية','info'); };
-  }
-  if(!document.getElementById('trashBtn')){
-    const line=document.getElementById('lastSyncLine');
-    const b=document.createElement('button'); b.className='sidebar-menu-item'; b.id='trashBtn';
-    b.innerHTML='<i class="fas fa-trash-alt"></i><span>سلة المحذوفات</span>'; b.onclick=openTrash;
-    if(line) line.insertAdjacentElement('afterend',b); else driveBtn.insertAdjacentElement('afterend',b);
-    const m=document.createElement('div'); m.id='trashModal'; m.className='modal';
-    m.innerHTML='<header><button onclick="closeLayer(\'trash\')"><i class="fas fa-times"></i></button><div class="title">🗑️ سلة المحذوفات</div></header><div class="modal-content"><div id="trashList"></div></div>';
-    document.body.appendChild(m);
-  }
-  fmtLast();
-}
+    // تنزيل متوافق مع Capacitor (مشاركة إن توفرت وإلا تنزيل عادي)
+    function downloadFile(name, blob) {
+        function anchor() { const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000); }
+        try {
+            const f = new File([blob], name, { type: blob.type });
+            if (navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: name }).catch(anchor); }
+            else anchor();
+        } catch (e) { anchor(); }
+    }
 
-// ---------- تجاوزات: تصدير/نسخ/استيراد مضغوط + حماية الحذف ----------
-const _reset=window.resetAllData;
-window.resetAllData=async function(){ if(recCount()>0) await trashPush(); return _reset.apply(this,arguments); };
-const _export=window.performExport;
-window.performExport=async function(){
-  const f=document.getElementById('exportFileName'); const name=f?f.value.trim():'';
-  if(!name){ toastMsg(translate('enterFileName'),'error'); return; }
-  closeLayer('exportName');
-  const data={exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency};
-  const json=JSON.stringify(data,null,2); const c=await compressText(json);
-  if(c.bin) downloadFile(name+'.json.gz', new Blob([c.out],{type:'application/gzip'}));
-  else downloadFile(name+'.json', new Blob([json],{type:'application/json'}));
-  toastMsg(translate('exportSuccess'),'success');
-};
-window.performBackup=async function(){
-  if(!isDriveConnected){ toastMsg(translate('driveNotConnected'),'error'); return; }
-  showLoading(translate('savingBackup'));
-  try{
-    const data={exp:db.exp,rig:db.rig,deb:db.deb,bal:db.bal,inc:db.inc,currency:currentCurrency,backupDate:new Date().toISOString()};
-    const json=JSON.stringify(data,null,2); const c=await compressText(json);
-    const body=c.bin?new Blob([c.out],{type:'application/gzip'}):new Blob([json],{type:'application/json'});
-    const num=String(getNextBackupNumber()).padStart(3,'0'); const n=new Date(); const p=x=>String(x).padStart(2,'0');
-    const fileName=num+'_'+translate('backupFileNamePrefix')+'_'+n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate())+'_'+p(n.getHours())+'-'+p(n.getMinutes())+'.json';
-    const form=new FormData(); form.append('metadata',new Blob([JSON.stringify({name:fileName,parents:[appFolderId],mimeType:'application/json'})],{type:'application/json'})); form.append('file',body);
-    const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Authorization':'Bearer '+accessToken},body:form});
-    if(!r.ok) throw new Error('up');
-    hideLoading(); toastMsg(translate('backupSaved'),'success'); loadBackupList();
-  }catch(e){ hideLoading(); toastMsg(translate('backupFailed'),'error'); }
-};
-window.restoreBackup=async function(fileId){
-  if(!confirm(translate('confirmRestore'))) return;
-  showLoading(translate('restoringData'));
-  try{
-    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'?alt=media',{headers:{'Authorization':'Bearer '+accessToken}});
-    if(!r.ok) throw new Error('dl');
-    const text=await decompressAuto(await r.arrayBuffer());
-    if(recCount()>0) await trashPush();
-    await applyImported(JSON.parse(text));
-    hideLoading(); toastMsg(translate('dataRestored'),'success'); loadBackupList(); pushSync();
-  }catch(e){ hideLoading(); toastMsg(translate('restoreFailed'),'error'); }
-};
-window.importData=function(event){
-  const file=event.target.files[0]; if(!file) return;
-  if(!confirm(translate('confirmImport'))){ event.target.value=null; return; }
-  showLoading(translate('importingData'));
-  const reader=new FileReader();
-  reader.onload=async(e)=>{ try{ const text=await decompressAuto(e.target.result); const im=JSON.parse(text);
-    if(im.bal&&im.bal.changes){ im.bal.clientId=1; await addDataToStore('bal',[im.bal]); }
-    for(const sn of['exp','rig','deb','inc']) if(im[sn]) await addDataToStore(sn,im[sn]);
-    if(im.currency){ currentCurrency=im.currency; localStorage.setItem('currencyCode',currentCurrency.code); }
-    await loadAllData(); hideLoading(); updateStats(); updateBalanceDisplay(); toastMsg(translate('importSuccess'),'success'); pushSync();
-  }catch(err){ hideLoading(); toastMsg(translate('importFailed'),'error'); } finally{ event.target.value=null; } };
-  reader.readAsArrayBuffer(file);
-};
+    // ---------- سلة المحذوفات (5 نسخ مضغوطة) ----------
+    const TRASH_KEY = 'smartTrash', TRASH_MAX = 5;
+    function getTrash() { try { return JSON.parse(localStorage.getItem(TRASH_KEY) || '[]'); } catch (e) { return []; } }
+    function setTrash(t) { localStorage.setItem(TRASH_KEY, JSON.stringify(t)); }
+    function recCount() { return (db.exp ? db.exp.length : 0) + (db.rig ? db.rig.length : 0) + (db.deb ? db.deb.length : 0) + (db.inc ? db.inc.length : 0); }
 
-// ---------- ربط الدفع/الحذف بالمزامنة + تشغيل ----------
-const _psc=window.postSaveCleanup; window.postSaveCleanup=function(){ const r=_psc.apply(this,arguments); pushSync(); return r; };
-const _dt=window.deleteTransaction; window.deleteTransaction=async function(){ const r=await _dt.apply(this,arguments); pushSync(); return r; };
-const _pb=window.processBalanceAction; window.processBalanceAction=async function(){ const r=await _pb.apply(this,arguments); pushSync(); return r; };
-const _osb=window.openSidebar; window.openSidebar=function(){ if(_osb)_osb(); injectSyncUI(); };
-const _udui=window.updateDriveUI; window.updateDriveUI=function(){ _udui(); injectSyncUI(); if(isDriveConnected) initialSyncCheck(); };
+    async function trashPush() {
+        try {
+            const snap = JSON.stringify({ exp: db.exp, rig: db.rig, deb: db.deb, bal: db.bal, inc: db.inc, currency: currentCurrency });
+            const c = await compressText(snap);
+            const item = { id: Date.now(), date: new Date().toISOString(), raw: snap.length, bin: c.bin, comp: c.bin ? bufToB64(c.out) : c.out };
+            const t = getTrash(); t.unshift(item); while (t.length > TRASH_MAX) t.pop(); setTrash(t);
+        } catch (e) { console.log('trashPush:', e); }
+    }
 
-setInterval(pullSync, 25000);
-setTimeout(function(){ injectSyncUI(); fmtLast(); }, 1500);
+    function clearAllStoresLocal() {
+        return new Promise(res => {
+            const tx = IDB_connection.transaction(STORE_NAMES, 'readwrite'); let d = 0;
+            STORE_NAMES.forEach(sn => { const r = tx.objectStore(sn).clear(); r.onsuccess = () => { d++; if (d === STORE_NAMES.length) res(); }; });
+        });
+    }
+
+    async function applyImported(im) {
+        await clearAllStoresLocal();
+        if (im.bal && im.bal.changes) { im.bal.clientId = 1; await addDataToStore('bal', [im.bal]); }
+        for (const sn of ['exp', 'rig', 'deb', 'inc']) if (im[sn]) await addDataToStore(sn, im[sn]);
+        if (im.currency) { currentCurrency = im.currency; localStorage.setItem('currencyCode', currentCurrency.code); }
+        await loadAllData(); updateStats(); updateBalanceDisplay();
+    }
+
+    function openTrash() { if (!LAYERS['trash']) LAYERS['trash'] = { elementId: 'trashModal', type: 'modal' }; openLayer('trash'); renderTrash(); }
+
+    // ✔ مترجمة بالكامل + تواريخ حسب اللغة المختارة
+    function renderTrash() {
+        const el = document.getElementById('trashList'); if (!el) return;
+        const t = getTrash();
+        const locale = (currentLang === 'ur') ? 'ur-PK' : (currentLang || 'ar');
+        if (!t.length) { el.innerHTML = '<p style="text-align:center;color:#999;padding:30px 0;">🗑️ ' + translate('trashEmpty') + '</p>'; return; }
+        el.innerHTML = t.map(it => {
+            const d = new Date(it.date);
+            const size = it.bin ? Math.max(1, Math.round(it.comp.length * 0.75 / 1024)) : Math.max(1, Math.round(it.raw / 1024));
+            return `<div class="list-item" style="border-right-color:var(--warning);"> <div style="font-weight:bold;display:flex;justify-content:space-between;"><span>🗑️ ${translate('trashSnapshot')}</span><span style="color:#888;font-size:0.8em;">${size}KB</span></div> <div class="details"><span>${d.toLocaleString(locale, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span> <span><button class="secondary" style="width:auto;padding:4px 10px;" onclick="restoreTrash(${it.id})">${translate('trashRestore')}</button> <button class="secondary" style="width:auto;padding:4px 10px;color:var(--danger);" onclick="deleteTrash(${it.id})">${translate('trashDelete')}</button></span></div></div>`;
+        }).join('');
+    }
+
+    window.restoreTrash = async function (id) {
+        const it = getTrash().find(x => x.id === id); if (!it) return;
+        if (!confirm(translate('confirmRestore'))) return;
+        showLoading(translate('restoringData'));
+        try {
+            if (recCount() > 0) await trashPush();
+            const text = await decompressAuto(it.comp);
+            await applyImported(JSON.parse(text));
+            hideLoading(); closeLayer('trash'); toastMsg(translate('dataRestored'), 'success'); pushSync();
+        } catch (e) { hideLoading(); toastMsg(translate('restoreFailed'), 'error'); }
+    };
+    window.deleteTrash = function (id) { setTrash(getTrash().filter(x => x.id !== id)); renderTrash(); };
+    window.__refreshTrash = function () { const tm = document.getElementById('trashModal'); if (tm && tm.style.display === 'flex') renderTrash(); };
+
+    // ---------- المزامنة الحيّة ----------
+    const SYNC_NAME = 'ميزانيتك_الذكية_مزامنة.json';
+    let deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) { deviceId = 'dev-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6); localStorage.setItem('deviceId', deviceId); }
+    let autoSync = localStorage.getItem('autoSyncEnabled') !== 'false';
+    let lastSync = localStorage.getItem('lastSyncTimestamp') || null;
+    let liveSeenTs = null;
+
+    function liveData() { return JSON.stringify({ dev: deviceId, t: Date.now(), data: { exp: db.exp, rig: db.rig, deb: db.deb, bal: db.bal, inc: db.inc, currency: currentCurrency } }); }
+
+    async function liveFind() {
+        if (!isDriveConnected || !accessToken) return null;
+        const q = encodeURIComponent("name='" + SYNC_NAME + "' and trashed=false");
+        const r = await fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,modifiedTime)', { headers: { 'Authorization': 'Bearer ' + accessToken } });
+        if (!r.ok) return null; const j = await r.json(); return (j.files && j.files[0]) || null;
+    }
+
+    // ✔ مترجمة + لغة التاريخ حسب اللغة المختارة
+    function fmtLast() {
+        const el = document.getElementById('lastSyncLine'); if (!el) return;
+        const locale = (currentLang === 'ur') ? 'ur-PK' : (currentLang || 'ar');
+        if (lastSync) { const d = new Date(parseInt(lastSync)); el.textContent = translate('lastUpdate') + ': ' + d.toLocaleString(locale, { hour: 'numeric', minute: '2-digit', day: 'numeric', month: 'short' }); }
+        else el.textContent = translate('lastUpdate') + ': —';
+    }
+    window.__fmtLast = fmtLast;
+
+    function markSynced() { lastSync = Date.now(); localStorage.setItem('lastSyncTimestamp', String(lastSync)); fmtLast(); }
+
+    async function pushSync() {
+        if (!autoSync || !isDriveConnected || !accessToken) return;
+        try {
+            const f = await liveFind(); const body = liveData();
+            if (f) { await fetch('https://www.googleapis.com/upload/drive/v3/files/' + f.id + '?uploadType=media', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' }, body }); }
+            else { const form = new FormData(); form.append('metadata', new Blob([JSON.stringify({ name: SYNC_NAME, mimeType: 'application/json' })], { type: 'application/json' })); form.append('file', new Blob([body], { type: 'application/json' })); await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': 'Bearer ' + accessToken }, body: form }); }
+            markSynced();
+        } catch (e) { console.log('pushSync:', e); }
+    }
+
+    async function applyRemote(remote) {
+        if (recCount() > 0) await trashPush(); // حماية: احفظ الحالي في السلة قبل الاستبدال
+        await applyImported(remote.data);
+    }
+
+    async function pullSync() {
+        if (!autoSync || !isDriveConnected || !accessToken) return;
+        try {
+            const f = await liveFind(); if (!f) return;
+            const ts = new Date(f.modifiedTime).getTime();
+            if (liveSeenTs === null) { liveSeenTs = ts; return; }
+            if (ts > liveSeenTs + 2000) {
+                liveSeenTs = ts;
+                const r = await fetch('https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media', { headers: { 'Authorization': 'Bearer ' + accessToken } });
+                if (!r.ok) return;
+                const remote = JSON.parse(await r.text());
+                if (remote.dev === deviceId) return;
+                toastMsg(translate('syncIncoming'), 'info');
+                await applyRemote(remote); markSynced();
+                toastMsg(translate('syncUpdated'), 'success');
+            }
+        } catch (e) { console.log('pullSync:', e); }
+    }
+
+    async function initialSyncCheck() {
+        if (!autoSync || !isDriveConnected || !accessToken) return;
+        try {
+            const f = await liveFind();
+            if (!f) { if (recCount() > 0) pushSync(); return; }
+            const r = await fetch('https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media', { headers: { 'Authorization': 'Bearer ' + accessToken } });
+            if (!r.ok) return;
+            const remote = JSON.parse(await r.text());
+            const rc = (remote.data.exp ? remote.data.exp.length : 0) + (remote.data.rig ? remote.data.rig.length : 0) + (remote.data.deb ? remote.data.deb.length : 0) + (remote.data.inc ? remote.data.inc.length : 0);
+            if (recCount() === 0 && rc > 0 && remote.dev !== deviceId) { toastMsg(translate('syncFound'), 'info'); await applyImported(remote.data); toastMsg(translate('syncRestored'), 'success'); }
+            liveSeenTs = new Date(f.modifiedTime).getTime(); markSynced();
+        } catch (e) { console.log('initialSyncCheck:', e); }
+    }
+
+    // ---------- حقن الواجهة (مفتاح المزامنة + آخر تحديث + سلة المحذوفات) — مترجمة ----------
+    function injectSyncUI() {
+        const driveBtn = document.getElementById('driveMenuItem'); if (!driveBtn) return;
+        if (!document.getElementById('autoSyncToggle')) {
+            const row = document.createElement('div'); row.className = 'sidebar-switch-item';
+            row.innerHTML = '<i class="fas fa-sync-alt"></i> <span data-i18n="autoSyncLabel">' + translate('autoSyncLabel') + '</span> <label class="switch"><input type="checkbox" id="autoSyncToggle"><span class="slider"></span></label>';
+            driveBtn.insertAdjacentElement('afterend', row);
+            const line = document.createElement('div'); line.id = 'lastSyncLine'; line.style.cssText = 'padding:0 20px 10px;font-size:0.8em;color:#888;';
+            row.insertAdjacentElement('afterend', line);
+            const t = row.querySelector('#autoSyncToggle'); t.checked = autoSync;
+            t.onchange = function () { autoSync = t.checked; localStorage.setItem('autoSyncEnabled', t.checked ? 'true' : 'false'); fmtLast(); if (t.checked && isDriveConnected) pushSync(); toastMsg(t.checked ? translate('autoSyncOn') : translate('autoSyncOff'), 'info'); };
+        }
+        if (!document.getElementById('trashBtn')) {
+            const line = document.getElementById('lastSyncLine');
+            const b = document.createElement('button'); b.className = 'sidebar-menu-item'; b.id = 'trashBtn';
+            b.innerHTML = '<i class="fas fa-trash-alt"></i> <span data-i18n="trashTitle">' + translate('trashTitle') + '</span>'; b.onclick = openTrash;
+            if (line) line.insertAdjacentElement('afterend', b); else driveBtn.insertAdjacentElement('afterend', b);
+            const m = document.createElement('div'); m.id = 'trashModal'; m.className = 'modal';
+            m.innerHTML = '<header><button onclick="closeLayer(\'trash\')"><i class="fas fa-times"></i></button><div class="title">🗑️ <span data-i18n="trashTitle">' + translate('trashTitle') + '</span></div></header><div class="modal-content"><div id="trashList"></div></div>';
+            document.body.appendChild(m);
+        }
+        fmtLast();
+    }
+
+    // ---------- تجاوزات: تصدير/نسخ/استيراد مضغوط + حماية الحذف ----------
+    const _reset = window.resetAllData;
+    window.resetAllData = async function () { if (recCount() > 0) await trashPush(); return _reset.apply(this, arguments); };
+
+    const _exportFn = window.performExport;
+    window.performExport = async function () {
+        const f = document.getElementById('exportFileName'); const name = f ? f.value.trim() : '';
+        if (!name) { toastMsg(translate('enterFileName'), 'error'); return; }
+        closeLayer('exportName');
+        const data = { exp: db.exp, rig: db.rig, deb: db.deb, bal: db.bal, inc: db.inc, currency: currentCurrency };
+        const json = JSON.stringify(data, null, 2); const c = await compressText(json);
+        if (c.bin) downloadFile(name + '.json.gz', new Blob([c.out], { type: 'application/gzip' }));
+        else downloadFile(name + '.json', new Blob([json], { type: 'application/json' }));
+        toastMsg(translate('exportSuccess'), 'success');
+    };
+
+    window.performBackup = async function () {
+        if (!isDriveConnected) { toastMsg(translate('driveNotConnected'), 'error'); return; }
+        showLoading(translate('savingBackup'));
+        try {
+            const data = { exp: db.exp, rig: db.rig, deb: db.deb, bal: db.bal, inc: db.inc, currency: currentCurrency, backupDate: new Date().toISOString() };
+            const json = JSON.stringify(data, null, 2); const c = await compressText(json);
+            const body = c.bin ? new Blob([c.out], { type: 'application/gzip' }) : new Blob([json], { type: 'application/json' });
+            const num = String(getNextBackupNumber()).padStart(3, '0'); const n = new Date(); const p = x => String(x).padStart(2, '0');
+            const fileName = num + ' ' + translate('backupFileNamePrefix') + ' ' + n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate()) + ' ' + p(n.getHours()) + '-' + p(n.getMinutes()) + '.json';
+            const form = new FormData(); form.append('metadata', new Blob([JSON.stringify({ name: fileName, parents: [appFolderId], mimeType: 'application/json' })], { type: 'application/json' })); form.append('file', body);
+            const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': 'Bearer ' + accessToken }, body: form });
+            if (!r.ok) throw new Error('up');
+            hideLoading(); toastMsg(translate('backupSaved'), 'success'); loadBackupList();
+        } catch (e) { hideLoading(); toastMsg(translate('backupFailed'), 'error'); }
+    };
+
+    window.restoreBackup = async function (fileId) {
+        if (!confirm(translate('confirmRestore'))) return;
+        showLoading(translate('restoringData'));
+        try {
+            const r = await fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', { headers: { 'Authorization': 'Bearer ' + accessToken } });
+            if (!r.ok) throw new Error('dl');
+            const text = await decompressAuto(await r.arrayBuffer());
+            if (recCount() > 0) await trashPush();
+            await applyImported(JSON.parse(text));
+            hideLoading(); toastMsg(translate('dataRestored'), 'success'); loadBackupList(); pushSync();
+        } catch (e) { hideLoading(); toastMsg(translate('restoreFailed'), 'error'); }
+    };
+
+    window.importData = function (event) {
+        const file = event.target.files[0]; if (!file) return;
+        if (!confirm(translate('confirmImport'))) { event.target.value = null; return; }
+        showLoading(translate('importingData'));
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const text = await decompressAuto(e.target.result); const im = JSON.parse(text);
+                if (im.bal && im.bal.changes) { im.bal.clientId = 1; await addDataToStore('bal', [im.bal]); }
+                for (const sn of ['exp', 'rig', 'deb', 'inc']) if (im[sn]) await addDataToStore(sn, im[sn]);
+                if (im.currency) { currentCurrency = im.currency; localStorage.setItem('currencyCode', currentCurrency.code); }
+                await loadAllData(); hideLoading(); updateStats(); updateBalanceDisplay(); toastMsg(translate('importSuccess'), 'success'); pushSync();
+            } catch (err) { hideLoading(); toastMsg(translate('importFailed'), 'error'); } finally { event.target.value = null; }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    // ---------- ربط الدفع/الحذف بالمزامنة + تشغيل ----------
+    const _psc = window.postSaveCleanup; window.postSaveCleanup = function () { const r = _psc.apply(this, arguments); pushSync(); return r; };
+    const _dt = window.deleteTransaction; window.deleteTransaction = async function () { const r = await _dt.apply(this, arguments); pushSync(); return r; };
+    const _pb = window.processBalanceAction; window.processBalanceAction = async function () { const r = await _pb.apply(this, arguments); pushSync(); return r; };
+    const _osb = window.openSidebar; window.openSidebar = function () { if (_osb) _osb(); injectSyncUI(); };
+    const _udui = window.updateDriveUI; window.updateDriveUI = function () { _udui(); injectSyncUI(); if (isDriveConnected) initialSyncCheck(); };
+
+    setInterval(pullSync, 25000);
+    setTimeout(function () { injectSyncUI(); fmtLast(); }, 1500);
 })();
 
 // =============================================================
-// 19. INITIALIZATION
+// 19. 📊 ملخص الإحصائيات المنطوي (زر + طي تلقائي)
+// =============================================================
+function toggleStatsSummary() {
+    const stats = document.querySelector('#overview .stats-summary');
+    const btn = document.getElementById('statsToggleBtn');
+    if (!stats) return;
+    const isOpen = stats.style.display !== 'none';
+    stats.style.display = isOpen ? 'none' : 'block';
+    if (btn) btn.classList.toggle('open', !isOpen);
+    if (!isOpen) updateStats();
+}
+
+function closeStatsSummary() {
+    const stats = document.querySelector('#overview .stats-summary');
+    const btn = document.getElementById('statsToggleBtn');
+    if (stats) stats.style.display = 'none';
+    if (btn) btn.classList.remove('open');
+}
+
+// الضغط خارج الملخص → ينطوي
+document.addEventListener('click', function (e) {
+    const stats = document.querySelector('#overview .stats-summary');
+    const btn = document.getElementById('statsToggleBtn');
+    if (!stats || stats.style.display === 'none') return;
+    if (stats.contains(e.target) || (btn && btn.contains(e.target))) return;
+    closeStatsSummary();
+});
+
+// =============================================================
+// 20. INITIALIZATION
 // =============================================================
 window.onload = () => {
     if (!history.state || history.state.layer === undefined) {
