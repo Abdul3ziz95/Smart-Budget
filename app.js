@@ -175,7 +175,7 @@ const OPTION_I18N = {
     'راتب': 'incomeSalary', 'عمل حر': 'incomeFreelance', 'تجارة': 'incomeBusiness', 'استثمار': 'incomeInvestment', 'عمولة': 'incomeCommission', 'هدية': 'incomeGift', 'مكافأة': 'incomeBonus', 'الضمان الاجتماعي': 'incomeSocialSecurity', 'المعاش التقاعدي': 'incomePension', 'دخل آخر': 'incomeOther',
     'طعام': 'expenseFood', 'مواصلات': 'expenseTransport', 'وقود': 'expenseFuel', 'مقاهي': 'expenseCafe', 'رعاية شخصية': 'expensePersonalCare', 'أجهزة إلكترونية': 'expenseElectronics', 'صحة': 'expenseHealth', 'ترفيه': 'expenseEntertainment', 'تسوق': 'expenseShopping', 'تعليم': 'expenseEducation', 'صيانة وإصلاح': 'expenseMaintenance', 'أخرى': 'expenseOther',
     'بيع آجل': 'rightCreditSale', 'سلفة': 'rightLoan', 'إيجار مستحق': 'rightRentDue', 'شراكة': 'rightPartnership', 'حق آخر': 'rightOther',
-    '🏠 إيجار': 'debtRent', '💡 كهرباء': 'debtElectricity', '💧 ماء': 'debtWater', '💡 فواتير الخدمات': 'debtUtilities', '📱 الاتصالات والإنترنت': 'debtInternet', '🏦 قروض وتمويل': 'debtLoans', '👤 دين شخصي': 'debtPersonal', '🛒 مشتريات بالتقسيط': 'debtInstallments', '🎓 رسوم تعليمية': 'debtTuition', '🏥 مصاريف طبية مستحقة': 'debtMedical', '🚗 تمويل السيارة': 'debtCarFinance', '👨‍👩 التزامات عائلية': 'debtFamily', '👨‍ التزامات عائلية': 'debtFamily', '📅 اشتراكات دورية': 'debtSubscriptions', '👨‍ رواتب': 'debtSalaries', '👨‍ رواتب': 'debtSalaries', '📦 أخرى': 'debtOther',
+    '🏠 إيجار': 'debtRent', '💡 كهرباء': 'debtElectricity', '💧 ماء': 'debtWater', '💡 فواتير الخدمات': 'debtUtilities', '📱 الاتصالات والإنترنت': 'debtInternet', '🏦 قروض وتمويل': 'debtLoans', '👤 دين شخصي': 'debtPersonal', '🛒 مشتريات بالتقسيط': 'debtInstallments', '🎓 رسوم تعليمية': 'debtTuition', '🏥 مصاريف طبية مستحقة': 'debtMedical', '🚗 تمويل السيارة': 'debtCarFinance', '👨‍👩 التزامات عائلية': 'debtFamily', '👨‍ التزامات عائلية': 'debtFamily', '📅 اشتراكات دورية': 'debtSubscriptions', '👨‍ رواتب': 'debtSalaries', '📦 أخرى': 'debtOther',
     'مدفوع': 'statusPaid', 'مدفوع جزئياً': 'statusPartiallyPaid', 'غير مدفوع': 'statusUnpaid', 'متأخر': 'statusOverdue',
     '📂 فئة الدخل': 'incomeCategoryPlaceholder', '🛒 الفئة (نفقات متغيرة)': 'expenseCategoryPlaceholder', '🤝 نوع الحق': 'rightTypePlaceholder', '🧾 نوع الالتزام': 'debtTypePlaceholder', '✅ الحالة': 'statusPlaceholder', '⏱️ التنبيه قبل الاستحقاق (اختياري)': 'notifTimingPlaceholder',
     '⏱️ قبل ساعة': 'notif1Hour', '⏱️ قبل 24 ساعة': 'notif24Hours', '⏱️ قبل 7 أيام': 'notif7Days',
@@ -249,7 +249,7 @@ function applyTranslations(lang) {
     translatePlaceholders();
     translateAllOptions();
     const langLabel = document.getElementById('sidebarLanguageLabel');
-    if (langLabel) { const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' }; langLabel.textContent = langNames[lang] || '🇸🇦 العربية'; }
+    if (langLabel) { const langNames = { ar: '🇸🇦 العربية', en: '🇬🇧 English', ur: '🇵🇰 اردو' }; langLabel.textContent = langNames[lang] || '🇸 العربية'; }
     updateBalanceDisplay();
     updateStats();
     const logModal = document.getElementById('logModal'); if (logModal && logModal.style.display === 'flex') { const lt = document.getElementById('logTitle'); if (lt) { const tMap = { inc: 'incomeLog', exp: 'expenseLog', rig: 'rightsLog', deb: 'debtsLog' }; lt.textContent = translate(tMap[currentLog] || 'incomeLog'); } buildLogFilters(); renderLog(); }
@@ -704,13 +704,13 @@ function toastMsg(message, type = "info") {
 // =============================================================
 const ARABIC_CURRENCIES = [
     { code: 'SAR', symbol: '﷼', flag: '🇸🇦', name: { ar: 'الريال السعودي', en: 'Saudi Riyal', ur: 'سعودی ریال' } },
-    { code: 'SDG', symbol: 'ج.س', flag: '🇸🇩', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
+    { code: 'SDG', symbol: 'ج.س', flag: '🇸', name: { ar: 'الجنيه السوداني', en: 'Sudanese Pound', ur: 'سوڈانی پاؤنڈ' } },
     { code: 'AED', symbol: 'د.إ', flag: '🇦🇪', name: { ar: 'الدرهم الإماراتي', en: 'UAE Dirham', ur: 'اماراتی درہم' } },
     { code: 'QAR', symbol: 'ر.ق', flag: '🇶🇦', name: { ar: 'الريال القطري', en: 'Qatari Riyal', ur: 'قطری ریال' } },
-    { code: 'KWD', symbol: 'د.ك', flag: '🇰', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
+    { code: 'KWD', symbol: 'د.ك', flag: '🇰🇼', name: { ar: 'الدينار الكويتي', en: 'Kuwaiti Dinar', ur: 'کویتی دینار' } },
     { code: 'BHD', symbol: 'د.ب', flag: '🇧🇭', name: { ar: 'الدينار البحريني', en: 'Bahraini Dinar', ur: 'بحرینی دینار' } },
-    { code: 'OMR', symbol: 'ر.ع', flag: '🇴🇲', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
-    { code: 'YER', symbol: 'ر.ي', flag: '🇾', name: { ar: 'الريال اليمني', en: 'Yemeni Rial', ur: 'یمنی ریال' } },
+    { code: 'OMR', symbol: 'ر.ع', flag: '🇴', name: { ar: 'الريال العُماني', en: 'Omani Rial', ur: 'عمانی ریال' } },
+    { code: 'YER', symbol: 'ر.ي', flag: '🇾🇪', name: { ar: 'الريال اليمني', en: 'Yemeni Rial', ur: 'یمنی ریال' } },
     { code: 'IQD', symbol: 'ع.د', flag: '🇮🇶', name: { ar: 'الدينار العراقي', en: 'Iraqi Dinar', ur: 'عراقی دینار' } },
     { code: 'JOD', symbol: 'د.أ', flag: '🇯🇴', name: { ar: 'الدينار الأردني', en: 'Jordanian Dinar', ur: 'اردنی دینار' } },
     { code: 'LBP', symbol: 'ل.ل', flag: '🇱🇧', name: { ar: 'الليرة اللبنانية', en: 'Lebanese Lira', ur: 'لبنانی لیرا' } },
@@ -727,7 +727,7 @@ const ARABIC_CURRENCIES = [
     { code: 'KMF', symbol: 'ف.ق', flag: '🇰🇲', name: { ar: 'الفرنك القمري', en: 'Comorian Franc', ur: 'قموری فرینک' } },
     { code: 'SSP', symbol: 'ج.س.ج', flag: '🇸🇸', name: { ar: 'جنيه جنوب السودان', en: 'South Sudanese Pound', ur: 'جنوب سوڈانی پاؤنڈ' } },
     { code: 'USD', symbol: '$', flag: '🇺🇸', name: { ar: 'الدولار الأمريكي', en: 'US Dollar', ur: 'امریکی ڈالر' } },
-    { code: 'EUR', symbol: '€', flag: '🇪🇺', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
+    { code: 'EUR', symbol: '€', flag: '🇪', name: { ar: 'اليورو', en: 'Euro', ur: 'یورو' } },
     { code: 'BDT', symbol: '৳', flag: '🇧🇩', name: { ar: 'التاكا البنغلاديشي', en: 'Bangladeshi Taka', ur: 'بنگلادیشی ٹاکا' } },
     { code: 'INR', symbol: '₹', flag: '🇮🇳', name: { ar: 'الروبية الهندية', en: 'Indian Rupee', ur: 'بھارتی روپیہ' } },
     { code: 'PKR', symbol: '₨', flag: '🇵🇰', name: { ar: 'الروبية الباكستانية', en: 'Pakistani Rupee', ur: 'پاکستانی روپیہ' } },
@@ -1062,7 +1062,7 @@ function updateDebtFields(type, currentData = null) {
     const amountInput = document.getElementById('dAmount');
     const statusSelect = document.getElementById('dStatus');
     const entityInput = document.getElementById('dEntity');
-    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨👩 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
+    const entityTypes = ['🏠 إيجار', '👤 دين شخصي', '📱 الاتصالات والإنترنت', '🎓 رسوم تعليمية', '🏥 مصاريف طبية مستحقة', '🚗 تمويل السيارة', '👨‍👩 التزامات عائلية', '📅 اشتراكات دورية', '👨‍💼 رواتب', '💡 كهرباء', '💧 ماء'];
     if (entityTypes.includes(type)) {
         if (entityInput) {
             entityInput.style.display = 'block';
@@ -1340,7 +1340,7 @@ function renderLog() {
             const st = i.الحالة || '';
             if (matchStatus(st, 'paid')) { borderColor = 'var(--success)'; statusBadge = `<span class="status-badge paid">${translate('statusPaid')}</span>`; }
             else if (matchStatus(st, 'partial')) { borderColor = 'var(--warning)'; statusBadge = `<span class="status-badge partial">${translate('statusPartiallyPaidShort')}</span>`; }
-            else if (matchStatus(st, 'late')) { borderColor = '#e67e22'; statusBadge = `<span class="status-badge late">${translate('statusOverdue')}</span>`; }
+            else if (matchStatus(st, 'late')) { borderColor = '#e67e22'; statusBadge = `<span class="status-badge late">${translate('statusOverdue')</span>`; }
             else { borderColor = 'var(--danger)'; statusBadge = `<span class="status-badge unpaid">${translate('statusUnpaid')}</span>`; }
             amountVal = parseAmount(i.المبلغ);
             amountDisplay = formatCurrency(amountVal);
@@ -1478,7 +1478,7 @@ async function deleteTransaction() {
 }
 
 // =============================================================
-// 12.5 🔔 نصوص المزامنة بثلاث لغات (نطاق عام — تُصلح الإشعارات)
+// 12.5 🔔 نصوص المزامنة (نطاق عام — تصل إليها شاشة الإشعارات)
 // =============================================================
 const SYNC_TEXT = {
     ar: {
@@ -1521,7 +1521,7 @@ const SYNC_TEXT = {
 function SM(k) { const l = (currentLang === 'ur') ? 'ur' : (currentLang === 'en') ? 'en' : 'ar'; return (SYNC_TEXT[l] && SYNC_TEXT[l][k]) || SYNC_TEXT.ar[k]; }
 
 // =============================================================
-// 12.6 🔔 NOTIFICATIONS (مالية + مزامنة — تعمل دائمًا)
+// 12.6 🔔 NOTIFICATIONS (✔ المزامنة ضمن القائمة مع بقية الإشعارات)
 // =============================================================
 function getReadNotifications() {
     try {
@@ -1649,12 +1649,8 @@ function renderNotifications() {
     }
     const unread = items.filter(i => !i.read);
     const read = items.filter(i => i.read);
-    let html = '';
-    if (syncList.length) {
-        html += `<div class="notif-group-title" style="color:var(--p);"> <i class="fas fa-sync-alt"></i> ${SM('syncUpdatesTitle')} <span class="count-pill">${syncList.length}</span> </div>`;
-        html += syncList.map(x => `<div class="notif-item" style="border-right-color:var(--p);cursor:default;"> <div class="notif-head"> <span class="notif-name"><i class="fas fa-cloud-arrow-down" style="color:var(--p);"></i> ${x.msg}</span> </div> <div class="notif-body"> <span class="notif-date"><i class="far fa-clock"></i> ${formatDateTime(x.date)}</span> ${x.action ? `<button class="secondary" style="width:auto;padding:4px 12px;margin:0;" onclick="applyPendingRemote()"><i class="fas fa-cloud-download-alt"></i> ${SM('replaceBtn')}</button>` : ''} </div> </div>`).join('');
-    }
-    html += `<div class="notif-summary"> <div class="notif-sum-card overdue-card"> <span class="sum-label">${translate('unreadNotifications')}</span> <span class="sum-value">${unread.length}</span> </div> <div class="notif-sum-card upcoming-card"> <span class="sum-label">${translate('readNotifications')}</span> <span class="sum-value">${read.length}</span> </div> </div>`;
+    // ✔ البطاقتان أولًا، ثم المجموعات المالية، ثم تحديثات المزامنة ضمن القائمة
+    let html = `<div class="notif-summary"> <div class="notif-sum-card overdue-card"> <span class="sum-label">${translate('unreadNotifications')}</span> <span class="sum-value">${unread.length}</span> </div> <div class="notif-sum-card upcoming-card"> <span class="sum-label">${translate('readNotifications')}</span> <span class="sum-value">${read.length}</span> </div> </div>`;
     const renderItem = (i) => {
         const nid = getNotificationId(i);
         const cls = i.read ? 'notif-item read' : (i.overdue ? 'notif-item overdue' : 'notif-item upcoming');
@@ -1678,11 +1674,15 @@ function renderNotifications() {
         html += `<div class="notif-group-title read-title"> <i class="fas fa-check-circle"></i> ${translate('readNotifications')} <span class="count-pill">${read.length}</span> </div>`;
         html += read.map(renderItem).join('');
     }
+    if (syncList.length) {
+        html += `<div class="notif-group-title" style="color:var(--p);"> <i class="fas fa-sync-alt"></i> ${SM('syncUpdatesTitle')} <span class="count-pill">${syncList.length}</span> </div>`;
+        html += syncList.map(x => `<div class="notif-item" style="border-right-color:var(--p);cursor:default;"> <div class="notif-head"> <span class="notif-name"><i class="fas fa-cloud-arrow-down" style="color:var(--p);"></i> ${x.msg}</span> </div> <div class="notif-body"> <span class="notif-date"><i class="far fa-clock"></i> ${formatDateTime(x.date)}</span> ${x.action ? `<button class="secondary" style="width:auto;padding:4px 12px;margin:0;" onclick="applyPendingRemote()"><i class="fas fa-cloud-download-alt"></i> ${SM('replaceBtn')}</button>` : ''} </div> </div>`).join('');
+    }
     el.innerHTML = html;
 }
 
 // =============================================================
-// 13. UPDATE STATS (مساعدك المالي + فلتر الفترة)
+// 13. UPDATE STATS
 // =============================================================
 const ADVISOR = {
     ar: { good: 'وضعك المالي جيد: مصروفاتك أقل من دخلك.', over: 'تنبيه: مصروفاتك أعلى من دخلك؛ راجع قسم المصروفات.', noIncome: 'لا يوجد دخل مسجل مع وجود مصروفات؛ أضف دخلك من قسم الدخل.', noData: 'لا توجد عمليات في هذه الفترة بعد؛ ابدأ بتسجيل دخل أو مصروف.', tipR: 'لديك حقوق غير محصلة بقيمة', tipD: 'لديك التزامات غير مدفوعة بقيمة' },
@@ -1979,7 +1979,7 @@ function toggleDarkMode() {
 loadDarkModePreference();
 
 // =============================================================
-// 18. 🧩 الحزمة الذكية: ضغط + سلة + مزامنة حيّة (Diff + تعارض + إشعارات)
+// 18. 🧩 الحزمة الذكية: مزامنة حيّة كل 3 ثوانٍ + Diff + تعارض + إشعارات
 // =============================================================
 (function () {
     if (window.__smartSuiteLoaded) return; window.__smartSuiteLoaded = true;
@@ -2070,6 +2070,7 @@ loadDarkModePreference();
     };
     window.deleteTrash = function (id) { setTrash(getTrash().filter(x => x.id !== id)); renderTrash(); };
 
+    // ---------- المزامنة الحيّة ----------
     const SYNC_NAME = 'ميزانيتك_الذكية_مزامنة.json';
     let deviceId = localStorage.getItem('deviceId');
     if (!deviceId) { deviceId = 'dev-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6); localStorage.setItem('deviceId', deviceId); }
@@ -2150,6 +2151,7 @@ loadDarkModePreference();
         } catch (e) { hideLoading(); toastMsg(translate('restoreFailed'), 'error'); }
     };
 
+    // ✔ كل 3 ثوانٍ: نسخة جديدة؟ → إشعار بالتفاصيل ثم تحديث / أو إشعار تعارض
     async function pullSync() {
         if (!autoSync || !isDriveConnected || !accessToken) return;
         try {
@@ -2171,10 +2173,10 @@ loadDarkModePreference();
                 toastMsg('⚠️ ' + SM('conflict'), 'info');
                 return;
             }
+            pushSyncNotif('🔄 ' + SM('applied') + ': ' + diffText(d));
             toastMsg(SM('syncIncoming'), 'info');
             await applyRemote(remote);
             localDirty = false;
-            pushSyncNotif('🔄 ' + SM('applied') + ': ' + diffText(d));
             toastMsg(SM('syncUpdated'), 'success');
             markSynced();
         } catch (e) { console.log('pullSync:', e); }
@@ -2292,7 +2294,7 @@ loadDarkModePreference();
     const _osb = window.openSidebar; window.openSidebar = function () { if (_osb) _osb(); injectSyncUI(); };
     const _udui = window.updateDriveUI; window.updateDriveUI = function () { _udui(); injectSyncUI(); if (isDriveConnected) initialSyncCheck(); };
 
-    setInterval(pullSync, 15000);
+    setInterval(pullSync, 3000); // ✔ كل 3 ثوانٍ
     setTimeout(function () { injectSyncUI(); fmtLast(); }, 1500);
 })();
 
@@ -2325,7 +2327,7 @@ document.addEventListener('click', function (e) {
 });
 
 // =============================================================
-// 20. 🛰️ مراقب اتصال المزامنة (تنبيه عند التوقف/الاستئناف)
+// 20. 🛰️ مراقب اتصال المزامنة
 // =============================================================
 let _authBadNotified = false;
 setInterval(async () => {
