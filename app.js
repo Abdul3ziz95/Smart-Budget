@@ -1435,7 +1435,7 @@ syncFound: '☁️ آپ کا ڈیٹا کسی اور ڈیوائس پر ملا —
 };
 function SM(k) { const l = (currentLang === 'ur') ? 'ur' : (currentLang === 'en') ? 'en' : 'ar'; return (SYNC_TEXT[l] && SYNC_TEXT[l][k]) || SYNC_TEXT.ar[k]; }
 // =============================================================
-// 12.6 🔔 NOTIFICATIONS (✔ غير المقروء أعلى — المقروء أسفل)
+// 12.6 🔔 NOTIFICATIONS (غير المقروء أعلى — المقروء أسفل)
 // =============================================================
 function getReadNotifications() {
 try {
@@ -1557,7 +1557,6 @@ return;
 const unread = items.filter(i => !i.read);
 const read = items.filter(i => i.read);
 let html = '';
-/* بطاقتا الملخص */
 html += `<div class="notif-summary"> <div class="notif-sum-card overdue-card"> <span class="sum-label">${translate('unreadNotifications')}</span> <span class="sum-value">${unread.length}</span> </div> <div class="notif-sum-card upcoming-card"> <span class="sum-label">${translate('readNotifications')}</span> <span class="sum-value">${read.length}</span> </div> </div>`;
 const renderItem = (i) => {
 const nid = getNotificationId(i);
@@ -1574,17 +1573,14 @@ const entity = (i.entity && i.entity !== '—') ? `<span class="notif-entity"><i
 const clickAttr = i.read ? '' : `onclick="viewNotification('${nid}')"`;
 return `<div class="${cls}" ${clickAttr}> <div class="notif-head"> <span class="notif-name"><i class="fas ${icon}"></i> ${translateStoredValue(i.name)}</span> ${readBadge} </div> <span class="notif-type-badge" style="background:${typeColor};"> <i class="fas ${arrowIcon}"></i> ${typeLabel} </span> <div class="notif-body"> <span class="notif-amount">${formatCurrency(i.amount)}</span> <span class="notif-date"><i class="far fa-clock"></i> ${formatDateTime(i.date)}</span> </div> ${entity} ${i.read ? '' : `<div class="notif-read-hint"><i class="fas fa-hand-pointer"></i> ${translate('clickToRead')}</div>`} </div>`;
 };
-/* 1) غير المقروء في الأعلى دائمًا */
 if (unread.length) {
 html += `<div class="notif-group-title unread-title"> <i class="fas fa-bell"></i> ${translate('unreadNotifications')} <span class="count-pill">${unread.length}</span> </div>`;
 html += unread.map(renderItem).join('');
 }
-/* 2) تحديثات المزامنة في المنتصف */
 if (syncList.length) {
 html += `<div class="notif-group-title" style="color:var(--p);"> <i class="fas fa-sync-alt"></i> ${SM('syncUpdatesTitle')} <span class="count-pill">${syncList.length}</span> </div>`;
 html += syncList.map(x => `<div class="notif-item" style="border-right-color:var(--p);cursor:default;"> <div class="notif-head"> <span class="notif-name"><i class="fas fa-cloud-download-alt" style="color:var(--p);"></i> ${x.msg}</span> </div> <div class="notif-body"> <span class="notif-date"><i class="far fa-clock"></i> ${formatDateTime(x.date)}</span> ${x.action ? `<button class="secondary" style="width:auto;padding:4px 12px;margin:0;" onclick="applyPendingRemote()"> <i class="fas fa-cloud-download-alt"></i> ${SM('replaceBtn')} </button>` : ''} </div> </div>`).join('');
 }
-/* 3) المقروء في الأسفل دائمًا */
 if (read.length) {
 html += `<div class="notif-group-title read-title"> <i class="fas fa-check-circle"></i> ${translate('readNotifications')} <span class="count-pill">${read.length}</span> </div>`;
 html += read.map(renderItem).join('');
@@ -1592,7 +1588,7 @@ html += read.map(renderItem).join('');
 el.innerHTML = html;
 }
 // =============================================================
-// 13. UPDATE STATS (مساعدك المالي + فلتر الفترة)
+// 13. UPDATE STATS
 // =============================================================
 const ADVISOR = {
 ar: { good: 'وضعك المالي جيد: مصروفاتك أقل من دخلك.', over: 'تنبيه: مصروفاتك أعلى من دخلك؛ راجع قسم المصروفات.', noIncome: 'لا يوجد دخل مسجل مع وجود مصروفات؛ أضف دخلك من قسم الدخل.', noData: 'لا توجد عمليات في هذه الفترة بعد؛ ابدأ بتسجيل دخل أو مصروف.', tipR: 'لديك حقوق غير محصلة بقيمة', tipD: 'لديك التزامات غير مدفوعة بقيمة' },
@@ -1867,7 +1863,7 @@ toastMsg(isDark ? translate('darkModeOn') : translate('darkModeOff'), "info");
 }
 loadDarkModePreference();
 // =============================================================
-// 18. 🧩 الحزمة الذكية: مزامنة فورية (3ث) + ترتيب + نسخة تلقائية
+// 18. 🧩 الحزمة الذكية — محرك مزامنة مستمر لا يتوقف (بصمة محتوى + لحاق تلقائي)
 // =============================================================
 (function () {
 if (window.__smartSuiteLoaded) return; window.__smartSuiteLoaded = true;
@@ -1917,7 +1913,7 @@ const t = getTrash(); t.unshift(item); while (t.length > TRASH_MAX) t.pop(); set
 function clearAllStoresLocal() {
 return new Promise(res => { const tx = IDB_connection.transaction(STORE_NAMES, 'readwrite'); let d = 0; STORE_NAMES.forEach(sn => { const r = tx.objectStore(sn).clear(); r.onsuccess = () => { d++; if (d === STORE_NAMES.length) res(); }; }); });
 }
-/* ---------- ✅ ترتيب المعاملات (الأحدث أولًا حسب وقت الإنشاء) ---------- */
+/* ---------- ترتيب المعاملات (الأحدث أولًا) ---------- */
 function txTime(i) {
 const m = String((i && i.clientId) || '').match(/(\d{9,})/);
 return m ? parseInt(m[1], 10) : 0;
@@ -1962,7 +1958,7 @@ hideLoading(); closeLayer('trash'); toastMsg(translate('dataRestored'), 'success
 } catch (e) { hideLoading(); toastMsg(translate('restoreFailed'), 'error'); }
 };
 window.deleteTrash = function (id) { setTrash(getTrash().filter(x => x.id !== id)); renderTrash(); };
-/* ---------- المزامنة الحيّة ---------- */
+/* ---------- المزامنة الحيّة (محرك جديد لا يتوقف) ---------- */
 const SYNC_NAME = 'ميزانيتك_الذكية_مزامنة.json';
 const AUTO_BACKUP_NAME = 'AutoBackup_Latest.json';
 let deviceId = localStorage.getItem('deviceId');
@@ -1974,12 +1970,20 @@ let localDirty = false;
 let pendingRemote = null;
 let syncTimer = null;
 let autoBackupBusy = false;
+let pulling = false;
+let lastRemoteHash = localStorage.getItem('lastRemoteHash') || '';
+/* بصمة محتوى: تمنع التكرار وتكشف أي تغيير مهما كان مصدره */
+function strHash(s) { let h = 0; for (let i = 0; i < s.length; i++) { h = ((h << 5) - h + s.charCodeAt(i)) | 0; } return String(h); }
 function liveData() { return JSON.stringify({ dev: deviceId, t: Date.now(), data: { exp: db.exp, rig: db.rig, deb: db.deb, bal: db.bal, inc: db.inc, currency: currentCurrency } }); }
 async function liveFind() {
 if (!isDriveConnected || !accessToken) return null;
+try {
 const q = encodeURIComponent("name='" + SYNC_NAME + "' and trashed=false");
 const r = await fetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&fields=files(id,modifiedTime)', { headers: { 'Authorization': 'Bearer ' + accessToken } });
-if (!r.ok) return null; const j = await r.json(); return (j.files && j.files[0]) || null;
+if (r.status === 401 || r.status === 403) { handleAuthProblem(); return null; }
+if (!r.ok) return null;
+const j = await r.json(); return (j.files && j.files[0]) || null;
+} catch (e) { return null; }
 }
 function fmtLast() {
 const el = document.getElementById('lastSyncLine'); if (!el) return;
@@ -1989,6 +1993,10 @@ else el.textContent = SM('lastUpdate') + ': —';
 }
 window.__fmtLast = fmtLast;
 function markSynced() { lastSync = Date.now(); localStorage.setItem('lastSyncTimestamp', String(lastSync)); fmtLast(); }
+/* ✅ معالجة فشل المصادقة: إعادة محاولة تلقائية بدل التوقف الصامت */
+function handleAuthProblem() {
+if (tokenClient) { try { tokenClient.requestAccessToken({ prompt: '' }); } catch (e) { } }
+}
 async function pushSync() {
 if (!autoSync || !isDriveConnected || !accessToken) return;
 try {
@@ -2005,7 +2013,7 @@ localDirty = true;
 if (syncTimer) clearTimeout(syncTimer);
 syncTimer = setTimeout(() => { syncTimer = null; pushSync(); silentAutoBackup(); }, delay);
 }
-/* ✅ النسخة الاحتياطية التلقائية: تُحدَّث دائمًا بآخر نسخة دون أي تدخل */
+/* ✅ النسخة الاحتياطية التلقائية: تُحدَّث دائمًا بآخر نسخة */
 async function silentAutoBackup() {
 if (!isDriveConnected || !accessToken || !appFolderId || autoBackupBusy) return;
 autoBackupBusy = true;
@@ -2033,16 +2041,18 @@ if (modal && modal.style.display === 'flex') await loadBackupList();
 autoBackupBusy = false;
 }
 function pushNow() { pushSync(); silentAutoBackup(); }
+/* ✅ مقارنة بدون حقل id الداخلي (كان يسبب نتائج خاطئة) */
+function normItem(i) { const c = { ...i }; delete c.id; return JSON.stringify(c); }
 function diffDatabases(local, remote) {
 const res = { added: 0, edited: 0, deleted: 0 };
 ['exp', 'rig', 'deb', 'inc'].forEach(sn => {
 const L = local[sn] || [], R = remote[sn] || [];
-const lm = {}; L.forEach(i => { if (i.clientId) lm[i.clientId] = JSON.stringify(i); });
+const lm = {}; L.forEach(i => { if (i.clientId) lm[i.clientId] = normItem(i); });
 const rm = {}; R.forEach(i => { if (i.clientId) rm[i.clientId] = 1; });
 R.forEach(i => {
 if (!i.clientId) { res.added++; return; }
 if (lm[i.clientId] === undefined) res.added++;
-else if (lm[i.clientId] !== JSON.stringify(i)) res.edited++;
+else if (lm[i.clientId] !== normItem(i)) res.edited++;
 });
 L.forEach(i => { if (i.clientId && !rm[i.clientId]) res.deleted++; });
 });
@@ -2064,6 +2074,7 @@ if (!pendingRemote) return;
 showLoading(translate('restoringData'));
 try {
 await applyRemote(pendingRemote);
+try { lastRemoteHash = strHash(JSON.stringify(pendingRemote.data)); localStorage.setItem('lastRemoteHash', lastRemoteHash); } catch (e) { }
 pendingRemote = null; localDirty = false;
 hideLoading();
 pushSyncNotif('✅ ' + SM('replaced'));
@@ -2071,57 +2082,49 @@ toastMsg('✅ ' + SM('replaced'), 'success');
 pushNow();
 } catch (e) { hideLoading(); toastMsg(translate('restoreFailed'), 'error'); }
 };
-/* ✅ استقبال تغييرات الجهاز الآخر مع تنبيه واضح + كشف التعارض */
-async function pullSync() {
+/* ✅ السحب: يعمل دائمًا — باللحاق التلقائي عند التشغيل وبالبصمة لمنع التكرار */
+async function pullSync(force) {
 if (!autoSync || !isDriveConnected || !accessToken) return;
+if (pulling) return;
+pulling = true;
 try {
-const f = await liveFind(); if (!f) return;
+const f = await liveFind();
+if (!f) { if (force && recCount() > 0) pushNow(); return; }
 const ts = new Date(f.modifiedTime).getTime();
-if (liveSeenTs === null) { liveSeenTs = ts; return; }
-if (ts <= liveSeenTs + 1000) return;
-liveSeenTs = ts;
+if (!force && liveSeenTs !== null && ts <= liveSeenTs) return;
 const r = await fetch('https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media', { headers: { 'Authorization': 'Bearer ' + accessToken } });
+if (r.status === 401 || r.status === 403) { handleAuthProblem(); return; }
 if (!r.ok) return;
-const remote = JSON.parse(await r.text());
-if (remote.dev === deviceId) return;
+liveSeenTs = ts;
+let remote = null;
+try { remote = JSON.parse(await r.text()); } catch (e) { remote = null; }
+if (!remote || !remote.data) return;
+let h = '';
+try { h = strHash(JSON.stringify(remote.data)); } catch (e) { h = String(ts); }
+if (h === lastRemoteHash) return;
+if (remote.dev === deviceId) { lastRemoteHash = h; try { localStorage.setItem('lastRemoteHash', h); } catch (e) { } return; }
 const d = diffDatabases(db, remote.data);
 const total = d.added + d.edited + d.deleted;
-if (total === 0) return;
+if (total === 0) { lastRemoteHash = h; try { localStorage.setItem('lastRemoteHash', h); } catch (e) { } return; }
 if (localDirty) {
 pendingRemote = remote;
 pushSyncNotif('⚠️ ' + SM('conflict') + ' (' + diffText(d) + ')', true);
 toastMsg('⚠️ ' + SM('conflict'), 'info');
 return;
 }
-toastMsg(SM('syncIncoming'), 'info');
+toastMsg((recCount() === 0 ? SM('syncFound') : SM('syncIncoming')), 'info');
 await applyRemote(remote);
+lastRemoteHash = h;
+try { localStorage.setItem('lastRemoteHash', h); } catch (e) { }
 localDirty = false;
 pushSyncNotif('🔄 ' + SM('applied') + ': ' + diffText(d));
 toastMsg('✅ ' + SM('syncUpdated') + ' — ' + diffText(d), 'success');
 markSynced();
 silentAutoBackup();
-} catch (e) { console.log('pullSync:', e); }
+} catch (e) { console.log('pullSync:', e); } finally { pulling = false; }
 }
-async function initialSyncCheck() {
-if (!autoSync || !isDriveConnected || !accessToken) return;
-try {
-const f = await liveFind();
-if (!f) { if (recCount() > 0) pushNow(); return; }
-const r = await fetch('https://www.googleapis.com/drive/v3/files/' + f.id + '?alt=media', { headers: { 'Authorization': 'Bearer ' + accessToken } });
-if (!r.ok) return;
-const remote = JSON.parse(await r.text());
-const rc = (remote.data.exp ? remote.data.exp.length : 0) + (remote.data.rig ? remote.data.rig.length : 0) + (remote.data.deb ? remote.data.deb.length : 0) + (remote.data.inc ? remote.data.inc.length : 0);
-if (recCount() === 0 && rc > 0 && remote.dev !== deviceId) {
-toastMsg(SM('syncFound'), 'info');
-await applyImported(remote.data);
-pushSyncNotif('🔄 ' + SM('applied'));
-toastMsg(SM('syncRestored'), 'success');
-localDirty = false;
-silentAutoBackup();
-}
-liveSeenTs = new Date(f.modifiedTime).getTime(); markSynced();
-} catch (e) { console.log('initialSyncCheck:', e); }
-}
+/* ✅ فحص أولي: لحاق كامل بأي تغييرات وصلت أثناء إغلاق التطبيق */
+async function initialSyncCheck() { await pullSync(true); }
 function injectSyncUI() {
 const driveBtn = document.getElementById('driveMenuItem'); if (!driveBtn) return;
 if (!document.getElementById('autoSyncToggle')) {
@@ -2234,7 +2237,8 @@ if (document.visibilityState === 'hidden' && syncTimer) {
 clearTimeout(syncTimer); syncTimer = null; pushSync(); silentAutoBackup();
 }
 });
-setInterval(pullSync, 10000);
+/* ✅ الفحص الدوري كل 10 ثوانٍ — لا يتوقف أبدًا */
+setInterval(function () { pullSync(false); }, 10000);
 setTimeout(function () { injectSyncUI(); fmtLast(); }, 1500);
 })();
 // =============================================================
@@ -2263,7 +2267,7 @@ if (stats.contains(e.target) || (btn && btn.contains(e.target))) return;
 closeStatsSummary();
 });
 // =============================================================
-// 20. 🛰️ مراقب اتصال المزامنة (تنبيه عند التوقف/الاستئناف)
+// 20. 🛰️ مراقب اتصال المزامنة
 // =============================================================
 let _authBadNotified = false;
 setInterval(async () => {
